@@ -1,25 +1,25 @@
 
-#include "my_pcl/pcl_funcs.h"
+#include "my_pcl/pcl_io.h"
+#include "my_pcl/pcl_visualization.h"
 
 using namespace std;
 using namespace my_pcl;
 
 typedef pcl::PointXYZRGB PointT;
-// typedef pcl::PointXYZ PointT;
 typedef pcl::PointCloud<PointT> PointCloudT;
 
 int main(int argc, char **argv)
 {
-    test_func();
     
     // -- Load point cloud
     string filename = argv[1];
-    PointCloudT::Ptr cloud = read_point_cloud<PointT>(filename);
+    PointCloudT::Ptr cloud;
+    read_point_cloud(filename, cloud);
 
     // -- Test write point cloud
     string output_folder = "data_results/";
     write_point_cloud(output_folder + "tmp.pcd", cloud);
-    // pcl::io::savePCDFileASCII(output_folder + "tmp.pcd", cloud);
+
 
     // -- Init viewer
     boost::shared_ptr<pcl::visualization::PCLVisualizer>

@@ -2,11 +2,13 @@
 
 
 add_library(my_pcl SHARED
-    pcl_funcs.cpp
+    my_pcl/pcl_common.cpp
+    my_pcl/pcl_io.cpp
+    my_pcl/pcl_visualization.cpp
 )
 
 add_library(my_basics SHARED
-    basics.cpp
+    my_basics/basics.cpp
 )
 
 
