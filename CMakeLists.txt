@@ -1,5 +1,5 @@
 cmake_minimum_required( VERSION 2.8 )
-project( test_pcl )
+project( my_pcl )
 
 # set ccache
 find_program(CCACHE_FOUND ccache) 
@@ -47,7 +47,7 @@ set( THIRD_PARTY_LIBS
 include_directories( ${PROJECT_SOURCE_DIR}/include )
 add_subdirectory( src )
 add_subdirectory( test )
-add_subdirectory( tutorials ) # please comment out this line
+# add_subdirectory( tutorials ) # please comment out this line
 
 
 
