@@ -1,3 +1,7 @@
+// Test read, write, display, and change color to the cloud->points.
+// Example usage:
+// $ bin/test_read_write_display data/gray_milk.pcd
+// $ bin/test_read_write_display data/color_milk_and_2bottles.pcd
 
 #include "my_pcl/pcl_io.h"
 #include "my_pcl/pcl_common.h"
@@ -22,25 +26,31 @@ int main(int argc, char **argv)
     write_point_cloud(output_folder + "tmp.pcd", cloud);
 
     // -- Set all colors to red
-    // unsigned char r = 255, g = 0, b = 0;
-    // for (auto &point : cloud->points)
-    //     setPointColor(point, r, g, b);
+    unsigned char r = 255, g = 0, b = 0;
+    for (auto &point : cloud->points)
+        setPointColor(point, r, g, b);
 
     // -- Init viewer
+    string viewer_name="viewer name", cloud_name="cloud name";
     boost::shared_ptr<pcl::visualization::PCLVisualizer>
-        viewer = initPointCloudRGBViewer(cloud);
+        viewer = initPointCloudRGBViewer(cloud, viewer_name, cloud_name);
 
     // -- Display point cloud in a loop
-    int cnt=0;
+    int cnt=0, direction=1;
     while (1)
     {
 
-        // change color
-        // for (auto &point : cloud->Points)
-        //     setPointColor(point, r, g, b);
+        // -- Change color
+        if(r>=255)direction=-1;
+        if(r<=0)direction=+1;
+        r=r+direction;
+        for (auto &point : cloud->points)
+            setPointColor(point, r, g, b);
+        cout <<"color:"<<int(r)<<endl;
 
-        // display
-        viewer->spinOnce(10);
+        // -- Display
+        viewer->spinOnce(50);
+        viewer->updatePointCloud(cloud, cloud_name);
         if (viewer->wasStopped())
             break;
         cnt++;
