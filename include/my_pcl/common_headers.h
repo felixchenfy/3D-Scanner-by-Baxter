@@ -13,4 +13,3 @@
 #include <pcl/common/common_headers.h>
 
 using namespace std;
-

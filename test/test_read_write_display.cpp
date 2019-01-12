@@ -4,7 +4,7 @@
 // $ bin/test_read_write_display data/color_milk_and_2bottles.pcd
 
 #include "my_pcl/pcl_io.h"
-#include "my_pcl/pcl_common.h"
+#include "my_pcl/pcl_commons.h"
 #include "my_pcl/pcl_visualization.h"
 
 using namespace std;
@@ -26,7 +26,7 @@ int main(int argc, char **argv)
     write_point_cloud(output_folder + "tmp.pcd", cloud);
 
     // -- Set all colors to red
-    unsigned char r = 255, g = 0, b = 0;
+    unsigned char r = 255, g = 0, b = 1;
     for (auto &point : cloud->points)
         setPointColor(point, r, g, b);
 
@@ -49,7 +49,7 @@ int main(int argc, char **argv)
         cout <<"color:"<<int(r)<<endl;
 
         // -- Display
-        viewer->spinOnce(50);
+        viewer->spinOnce(40);
         viewer->updatePointCloud(cloud, cloud_name);
         if (viewer->wasStopped())
             break;

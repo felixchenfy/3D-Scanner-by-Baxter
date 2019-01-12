@@ -2,9 +2,10 @@
 
 
 add_library(my_pcl SHARED
-    my_pcl/pcl_common.cpp
+    my_pcl/pcl_commons.cpp
     my_pcl/pcl_io.cpp
     my_pcl/pcl_visualization.cpp
+    my_pcl/pcl_filters.cpp
 )
 
 add_library(my_basics SHARED
