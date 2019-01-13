@@ -1,6 +1,9 @@
 /*
+Test functions in "my_pcl/pcl_filters.h" and "my_pcl/pcl_advanced.h":
+    filter, segment plane, divide cloud into clusters
+
 Example of usage:
-$ bin/test_filt_seg_clustering data/color_milk_and_2bottles.pcd
+$ bin/pcl_test_filt_seg_clustering data/color_milk_and_2bottles.pcd
 
 This script will generate several point cloud files (cloud_cluster_i.pcd), each is a separated object. 
 Use pcl_viewer to view them:
