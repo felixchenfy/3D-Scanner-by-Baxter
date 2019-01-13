@@ -1,7 +1,11 @@
-// Test read, write, display, and change color to the cloud->points.
-// Example usage:
-// $ bin/test_read_write_display data/gray_milk.pcd
-// $ bin/test_read_write_display data/color_milk_and_2bottles.pcd
+/*
+Test functions of: read, write, display, and change color to the cloud->points.
+
+Example of usage:
+$ bin/test_read_write_display data/gray_milk.pcd
+$ bin/test_read_write_display data/color_milk_and_2bottles.pcd
+
+*/
 
 #include "my_pcl/pcl_io.h"
 #include "my_pcl/pcl_commons.h"

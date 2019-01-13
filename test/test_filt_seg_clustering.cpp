@@ -1,5 +1,13 @@
-// Example usage:
-// $ bin/test_filt_seg_clustering data/color_milk_and_2bottles.pcd
+/*
+Example of usage:
+$ bin/test_filt_seg_clustering data/color_milk_and_2bottles.pcd
+
+This script will generate several point cloud files (cloud_cluster_i.pcd), each is a separated object. 
+Use pcl_viewer to view them:
+$ pcl_viewer cloud_cluster_0.pcd cloud_cluster_1.pcd cloud_cluster_2.pcd cloud_cluster_3.pcd cloud_cluster_4.pcd 
+(Or copy from the printed message of this script.)
+
+*/
 
 #include <iostream>
 #include <stdio.h>
