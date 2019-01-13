@@ -22,7 +22,7 @@ int main(int argc, char **argv)
     read_point_cloud(filename, cloud);
 
     // -- Test write point cloud
-    string output_folder = "data_results/";
+    string output_folder = "./";
     write_point_cloud(output_folder + "tmp.pcd", cloud);
 
     // -- Set all colors to red

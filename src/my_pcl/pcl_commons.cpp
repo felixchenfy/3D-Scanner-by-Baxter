@@ -7,10 +7,12 @@ using namespace my_basics;
 namespace my_pcl
 {
 // -- Print
-void printCloudInfo(PointCloud<PointXYZRGB>::Ptr cloud){
+void printCloudSize(PointCloud<PointXYZRGB>::Ptr cloud)
+{
     cout << "Cloud size: " << cloud->width << "x" << cloud->height << endl;
 }
-void printCloudInfo(PointCloud<PointXYZ>::Ptr cloud){
+void printCloudSize(PointCloud<PointXYZ>::Ptr cloud)
+{
     cout << "Cloud size: " << cloud->width << "x" << cloud->height << endl;
 }
 
@@ -22,7 +24,11 @@ void setPointColor(pcl::PointXYZRGB &point, uint8_t r, uint8_t g, uint8_t b)
                     static_cast<uint32_t>(g) << 8 | static_cast<uint32_t>(b));
     point.rgb = *reinterpret_cast<float *>(&rgb);
 }
-
+void setCloudColor(PointCloud<PointXYZRGB>::Ptr cloud, uint8_t r, uint8_t g, uint8_t b)
+{
+    for (auto &p : cloud->points)
+        setPointColor(p, r, g, b);
+}
 void setPointPos(pcl::PointXYZRGB &point, float x, float y, float z)
 {
     point.x = x;

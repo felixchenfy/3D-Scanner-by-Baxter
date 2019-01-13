@@ -6,6 +6,7 @@ add_library(my_pcl SHARED
     my_pcl/pcl_io.cpp
     my_pcl/pcl_visualization.cpp
     my_pcl/pcl_filters.cpp
+    my_pcl/pcl_advanced.cpp
 )
 
 add_library(my_basics SHARED

@@ -169,4 +169,5 @@ PointCloud<pcl::PointXYZRGB>::Ptr extractSubCloudByIndices(
 }
 
 
+
 } // namespace my_pcl

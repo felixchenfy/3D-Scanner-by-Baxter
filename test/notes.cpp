@@ -1,4 +1,4 @@
-
+// These are just some notes I recorded.
 
 #include <pcl/io/pcd_io.h>
 #include <pcl/point_types.h>

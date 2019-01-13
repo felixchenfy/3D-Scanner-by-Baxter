@@ -14,17 +14,20 @@ namespace my_pcl{
     
 using namespace pcl;
 // -- Print
-void printCloudInfo(PointCloud<PointXYZRGB>::Ptr cloud);
-void printCloudInfo(PointCloud<PointXYZ>::Ptr cloud);
+void printCloudSize(PointCloud<PointXYZRGB>::Ptr cloud);
+void printCloudSize(PointCloud<PointXYZ>::Ptr cloud);
 
 // -- Set point color and pos
-void setPointColor(pcl::PointXYZRGB &point, uint8_t r, uint8_t g, uint8_t b);
-void setPointPos(pcl::PointXYZRGB &point, float x, float y, float z);
-void setPointPos(pcl::PointXYZRGB &point, double x, double y, double z);
-void setPointPos(pcl::PointXYZRGB &point, cv::Mat p);
-void setPointPos(pcl::PointXYZ &point, float x, float y, float z);
-void setPointPos(pcl::PointXYZ &point, double x, double y, double z);
-void setPointPos(pcl::PointXYZ &point, cv::Mat p);
+void setPointColor(PointXYZRGB &point, uint8_t r, uint8_t g, uint8_t b);
+void setCloudColor(PointCloud<PointXYZRGB>::Ptr cloud,  uint8_t r, uint8_t g, uint8_t b);
+void setPointPos(PointXYZRGB &point, float x, float y, float z);
+void setPointPos(PointXYZRGB &point, double x, double y, double z);
+void setPointPos(PointXYZRGB &point, cv::Mat p);
+void setPointPos(PointXYZ &point, float x, float y, float z);
+void setPointPos(PointXYZ &point, double x, double y, double z);
+void setPointPos(PointXYZ &point, cv::Mat p);
+
+
 
 }
 
