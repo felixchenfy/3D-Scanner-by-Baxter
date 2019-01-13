@@ -1,5 +1,5 @@
-cmake_minimum_required( VERSION 2.8 )
-project( my_pcl )
+cmake_minimum_required(VERSION 2.8.3)
+project(scan3d-by-baxter)
 
 # set ccache
 find_program(CCACHE_FOUND ccache) 
@@ -45,9 +45,21 @@ set( THIRD_PARTY_LIBS
 
 ############### dependencies ######################
 include_directories( ${PROJECT_SOURCE_DIR}/include )
-add_subdirectory( src )
+add_subdirectory( src_cpp )
 add_subdirectory( test )
-add_subdirectory( tutorials ) # please comment out this line
+# add_subdirectory( tutorials ) # please comment out this line
 
-
-
+############### ROS ######################
+# Set ros package for catkin_make
+# Please comment out the lines below if not using ros
+find_package(catkin REQUIRED COMPONENTS
+  roscpp
+  rospy
+  sensor_msgs
+  std_msgs
+)
+catkin_package()
+add_subdirectory( src_ros )
+include_directories(
+  ${catkin_INCLUDE_DIRS}
+)
