@@ -13,6 +13,9 @@
 namespace my_pcl{
     
 using namespace pcl;
+// -- Print
+void printCloudInfo(PointCloud<PointXYZRGB>::Ptr cloud);
+void printCloudInfo(PointCloud<PointXYZ>::Ptr cloud);
 
 // -- Set point color and pos
 void setPointColor(pcl::PointXYZRGB &point, uint8_t r, uint8_t g, uint8_t b);

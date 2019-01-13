@@ -19,7 +19,11 @@ Some data types are the same in pcl and cv.
 # Others
 
 * error: undefined reference to
-I got the namespace wrong. Stupid bug.
+I got the namespace spelled wrong. Stupid bug.
+
+* error: does not name a type
+I got the namespace brasket before the function, thus my "using namespace pcl" is not working.
+And thus the PointCloud does not name a type.
 
 * template cannot be splitted into .h and .cpp
 Instead, define all template definitions in .hpp. Meanwhile, in .h, include this .hpp.

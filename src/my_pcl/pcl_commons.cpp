@@ -6,6 +6,13 @@ using namespace my_basics;
 
 namespace my_pcl
 {
+// -- Print
+void printCloudInfo(PointCloud<PointXYZRGB>::Ptr cloud){
+    cout << "Cloud size: " << cloud->width << "x" << cloud->height << endl;
+}
+void printCloudInfo(PointCloud<PointXYZ>::Ptr cloud){
+    cout << "Cloud size: " << cloud->width << "x" << cloud->height << endl;
+}
 
 // -- Set point color and pos
 

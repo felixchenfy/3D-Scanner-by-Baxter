@@ -75,12 +75,12 @@ PointCloud<PointXYZRGB>::Ptr read_point_cloud(string filename)
 void write_point_cloud(string filename, PointCloud<PointXYZRGB>::Ptr cloud)
 {
     pcl::io::savePCDFileASCII(filename, *cloud);
-    std::cerr << "Saved " << cloud->points.size() << " data points to " + filename << std::endl;
+    // std::cerr << "Saved " << cloud->points.size() << " data points to " + filename << std::endl<<endl;
 }
 void write_point_cloud(string filename, PointCloud<PointXYZ>::Ptr cloud)
 {
     pcl::io::savePCDFileASCII(filename, *cloud);
-    std::cerr << "Saved " << cloud->points.size() << " data points to " + filename << std::endl;
+    // std::cerr << "Saved " << cloud->points.size() << " data points to " + filename << std::endl<<endl;
 }
 
 
