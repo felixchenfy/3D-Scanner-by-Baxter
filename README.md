@@ -2,6 +2,7 @@
 测试一下XYZRGB的点云是否兼容XYZ。
 读XYZ的，存起来，画出来看一下。
 
+# ------------------------------------------------------------------------------
 # reference
 
 * A 3d scanner project: https://github.com/zjudmd1015/Mini-3D-Scanner.  
@@ -11,8 +12,10 @@ It's a really good example for me to get started.
 My codes for the algorithms are basically copied piece by piece from their official tutorial examples.
 
 * https://github.com/karaage0703/open3d_ros  
-It's for datatype conversion of point cloud between open3d and ros-message. Super useful. I added some notes and stored it in xxxxxxxxxxxxxxxx.
+It's for datatype conversion of point cloud between open3d and ros-message. Super useful.  
+However, it's documentation and variables naming are pretty bad. I re-arranged the code and test cases and stored the file in xxxxxxxxxxxx.
 
+# ------------------------------------------------------------------------------
 # Dependencies and Install
 Below are the dependencies. Some I give the installing commands I used. Others please refer to their official website.  
 In short: OpenCV, Eigen, PCL, Open3D, and other ROS packages.
@@ -47,6 +50,7 @@ $ sudo apt-get install doxygen # a denpendency of octomap
 $ sudo apt install octovis # for octomap visualization  
 clone from https://github.com/OctoMap/octomap, and then "make install" it.  
 
+# ------------------------------------------------------------------------------
 # 简历
 Title: Object 3d Scanning and Locating by Robot Arm with RGB-D Camera
 Calibrate camera. Convert point cloud (RGB-D image) to robot coordinate through forward kinematics.
@@ -54,6 +58,7 @@ Filter, segmentation, and (clustering, or, manually thresholding) to acquire the
 Register the object from different point clouds into one and estimate its true position.
 
 
+# ------------------------------------------------------------------------------
 # ROS file structure
 
 0.5-sim-pub_cloud (py)

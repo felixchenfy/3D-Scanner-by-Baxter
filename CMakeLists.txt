@@ -53,13 +53,14 @@ add_subdirectory( test )
 # Set ros package for catkin_make
 # Please comment out the lines below if not using ros
 find_package(catkin REQUIRED COMPONENTS
+  pcl_ros
   roscpp
   rospy
   sensor_msgs
   std_msgs
 )
 catkin_package()
-add_subdirectory( src_ros )
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
+add_subdirectory( src_ros )
