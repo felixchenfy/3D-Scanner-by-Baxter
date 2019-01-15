@@ -28,11 +28,11 @@ int main(int argc, char **argv)
     ros::Publisher pub = nh.advertise<sensor_msgs::PointCloud2>(topic_name, 1);
 
     // Read file
-    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = my_pcl::read_point_cloud(filename);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pcl_cloud = my_pcl::read_point_cloud(filename);
 
     // Convert file
     sensor_msgs::PointCloud2 ros_cloud;
-    pcl::toROSMsg(*cloud, ros_cloud);
+    pcl::toROSMsg(*pcl_cloud, ros_cloud);
     ros_cloud.header.frame_id = ros_cloud_frame_id;
 
     // Publish
@@ -41,10 +41,12 @@ int main(int argc, char **argv)
     while (ros::ok())
     {
         pub.publish(ros_cloud);
-        printf("Publish %dth cloud.", cnt++);
+        ROS_INFO("Publish %dth cloud.\n", cnt++);
         loop_rate.sleep();
+        // // ros::spinOnce();
     }
 
     // Return
+    ROS_INFO(("This node stops: " + node_name).c_str());
     return 0;
 }

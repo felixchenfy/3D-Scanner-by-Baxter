@@ -14,7 +14,7 @@ import rospy
 from sensor_msgs.msg import PointCloud2
 
 # Include my lib
-sys.path.append(PYTHON_FILE_PATH + "../src")
+sys.path.append(PYTHON_FILE_PATH + "../src_ros")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos, convertCloudFromRosToOpen3d
 
 # Main
@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     # Params setting
     topic_name = "kinect2/qhd/points"
-    cloud_filename = "../table_scene_lms400.pcd"
+    cloud_filename = "../data/cloud_cluster_0.pcd"
     node_name = "read_cloud_and_pub_by_open3d"
     
     # Set node
@@ -36,7 +36,7 @@ if __name__ == "__main__":
     ros_cloud = convertCloudFromOpen3dToRos(open3d_cloud)
 
     # Publish
-    pub = rospy.Publisher(topic_name, PointCloud2, queue_size=1)
+    pub = rospy.Publisher(topic_name, PointCloud2, queue_size=10)
     cnt = 0
     while not rospy.is_shutdown():
         rospy.sleep(1)
