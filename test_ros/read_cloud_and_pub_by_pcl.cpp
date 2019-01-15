@@ -19,7 +19,7 @@ int main(int argc, char **argv)
     // Settings
     string topic_name = "/kinect2/qhd/points";
     string node_name = "read_cloud_and_pub_by_pcl";
-    string filename = "/home/feiyu/baxterws/src/scan3d-by-baxter/data/cloud_cluster_0.pcd";
+    string filename = "/home/feiyu/baxterws/src/scan3d-by-baxter/data_debug/cloud_cluster_0.pcd";
     string ros_cloud_frame_id = "odom";
 
     // Init node

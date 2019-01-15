@@ -5,9 +5,12 @@
 
 # Open3d.Visualizer() currently doesn't have a function of "destroy_geometry", 
 #   something similar to the "removePointCloud" in pcl.
-#   Thus, I don't know how to update the viewer in my situation.
-#   I'm now using "add_geometry". However, I suspect that
-#   it might add more and more points to viewer. (2018.01.14)
+#   Thought it has a "update_geometry()" function, but doesn't work for my case.
+
+# Currently, I'm using "add_geometry", which keeps adding without removing objects,
+#   even the original pointer has been destroyed.
+# I'm really confused how open3d is working with the "object" and "pointer" in Python.      
+# (2018.01.14)
 
 # Include common
 import open3d
@@ -23,6 +26,10 @@ from sensor_msgs.msg import PointCloud2
 # Include my lib
 sys.path.append(PYTHON_FILE_PATH + "../src_ros")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos, convertCloudFromRosToOpen3d
+
+def copyOpen3dCloud(src, dst):
+    dst.points=src.points
+    dst.colors=src.colors
 
 # Main
 if __name__ == "__main__":
@@ -55,12 +62,17 @@ if __name__ == "__main__":
     while not rospy.is_shutdown():
         if received_ros_cloud is not None:
             cnt+=1
-            open3d_cloud = convertCloudFromRosToOpen3d(received_ros_cloud)
-            vis.add_geometry(open3d_cloud) # Though I don't thing I should use "add" here, 
-                # but if without this, the scene will be white for all time.
-                # Something related to python's "pointer". I don't kown.
-                # Besides, open3d document also doesn't give any function like "remove_geometry".
-                # So, my current suggestion is not using open3d's visualization.
+            idx_method=1
+            if idx_method==1:
+                tmp = convertCloudFromRosToOpen3d(received_ros_cloud)
+                copyOpen3dCloud(tmp, open3d_cloud)
+                vis.add_geometry(open3d_cloud) 
+            if idx_method==2: # this is not working!!!
+                open3d_cloud = convertCloudFromRosToOpen3d(received_ros_cloud)
+            if idx_method==3: # this is keep adding clouds to viewer
+                open3d_cloud = convertCloudFromRosToOpen3d(received_ros_cloud)
+                vis.add_geometry(open3d_cloud)
+            vis.update_geometry()
             print("Updating geometry for the {}th time".format(cnt))
             received_ros_cloud = None # clear
         vis.poll_events()

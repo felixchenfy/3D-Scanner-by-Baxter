@@ -14,6 +14,18 @@ But in my test, I need the common_headers for pcl::PointCloud.
 This is a bug related to "cv::" and "pcl::".  
 Some data types are the same in pcl and cv.
 
+# ============================================================
+# ROS bugs
+* ROS_INFO 
+Not ros::ROS_INFO
+Besides, ROS_INFO(str) where str should be a char* instead of string !!!
+
+# ============================================================
+# Open3D
+For its vis=open3d.Visualizer() and its add_geometry, I cannot understand its low level principle.
+When I use vis.add_geometry(cloud), and then cloud=createARandomTestCloud(), 
+    and then update_geometry, the vis does not change.
+Not solved yet. (Except using add_geometry again)
 
 # ============================================================
 # Others

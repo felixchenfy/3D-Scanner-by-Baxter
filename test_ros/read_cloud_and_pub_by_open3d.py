@@ -22,7 +22,7 @@ if __name__ == "__main__":
 
     # Params setting
     topic_name = "kinect2/qhd/points"
-    cloud_filename = "../data/cloud_cluster_0.pcd"
+    cloud_filename = "../data_debug/cloud_cluster_0.pcd"
     node_name = "read_cloud_and_pub_by_open3d"
     
     # Set node
