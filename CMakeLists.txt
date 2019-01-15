@@ -64,3 +64,4 @@ include_directories(
   ${catkin_INCLUDE_DIRS}
 )
 add_subdirectory( test_ros )
+add_subdirectory( src_ros )

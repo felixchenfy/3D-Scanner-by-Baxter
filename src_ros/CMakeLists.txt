@@ -4,7 +4,3 @@
 #     my_pcl
 # )
 
-# add_executable( tmp_test_for_small_funcs tmp_test_for_small_funcs.cpp )
-# target_link_libraries( tmp_test_for_small_funcs
-#     my_pcl my_basics
-# )

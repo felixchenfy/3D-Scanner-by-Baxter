@@ -1,16 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# Not using this script for the project! Reason:
+'''
+Open3d.Visualizer() currently doesn't have a function of "destroy_geometry", 
+  something similar to the "removePointCloud" in pcl.
 
-# Open3d.Visualizer() currently doesn't have a function of "destroy_geometry", 
-#   something similar to the "removePointCloud" in pcl.
-#   Thought it has a "update_geometry()" function, but doesn't work for my case.
+I'm manually copy new_point_cloud's content to the one for visualization
+{
+    def copyOpen3dCloud(src, dst):
+        dst.points=src.points
+        dst.colors=src.colors
+}
 
-# Currently, I'm using "add_geometry", which keeps adding without removing objects,
-#   even the original pointer has been destroyed.
-# I'm really confused how open3d is working with the "object" and "pointer" in Python.      
-# (2018.01.14)
+'''
 
 # Include common
 import open3d
