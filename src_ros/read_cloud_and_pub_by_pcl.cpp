@@ -1,62 +1,50 @@
-#include <ros/ros.h>
-#include <pcl/point_cloud.h>
-#include <pcl_conversions/pcl_conversions.h>
-#include <sensor_msgs/PointCloud2.h>
-
+#include <iostream>
 #include <string>
-#include <pcl/io/pcd_io.h>
 
-typedef pcl::PointXYZRGB PointT;
+#include <ros/ros.h>
+#include <sensor_msgs/PointCloud2.h>
+#include <pcl_conversions/pcl_conversions.h>
 
-int
-main (int argc, char **argv)
+#include <pcl/point_types.h>
+#include <pcl/common/common_headers.h>
+
+#include "my_pcl/pcl_io.h"
+
+using namespace std;
+
+// Main
+int main(int argc, char **argv)
 {
-    // int start_index = std::stoi(argv[1]);
-    // int end_index = std::stoi(argv[2]);
-    int start_index = 0;
-    int end_index = 4;
 
-    ros::init (argc, argv, "kinect2_emulator");
+    // Settings
+    string topic_name = "/kinect2/qhd/points";
+    string node_name = "read_cloud_and_pub_by_pcl";
+    string filename = "/home/feiyu/baxterws/src/scan3d-by-baxter/data/cloud_cluster_0.pcd";
+    string ros_cloud_frame_id = "odom";
 
+    // Init node
+    ros::init(argc, argv, node_name);
     ros::NodeHandle nh;
-    ros::Publisher emu_pub = nh.advertise<sensor_msgs::PointCloud2> ("/kinect2/qhd/points", 1);
+    ros::Publisher pub = nh.advertise<sensor_msgs::PointCloud2>(topic_name, 1);
 
-    sensor_msgs::PointCloud2 output;
-    pcl::PointCloud<PointT>::Ptr cloud_ptr (new pcl::PointCloud<PointT>);
+    // Read file
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = my_pcl::read_point_cloud(filename);
 
-    // std::string dir = "/home/dylan2/catkin_ws/src/scanner/data/emulator/";
-    std::string dir = "/home/feiyu/baxterws/src/scan3d-by-baxter/data/cloud_cluster_";
-    
+    // Convert file
+    sensor_msgs::PointCloud2 ros_cloud;
+    pcl::toROSMsg(*cloud, ros_cloud);
+    ros_cloud.header.frame_id = ros_cloud_frame_id;
 
-    int cloud_index = start_index;
-    std::string filename = dir + std::to_string(cloud_index) + ".pcd";
-
-
+    // Publish
     ros::Rate loop_rate(2);
+    int cnt = 0;
     while (ros::ok())
     {
-        filename = dir + std::to_string(cloud_index) + ".pcd";
-
-        pcl::io::loadPCDFile<PointT> (filename, *cloud_ptr);
-        std::cout << filename << std::endl;
-
-        //Convert the cloud to ROS message
-        pcl::toROSMsg(*cloud_ptr, output);
-        output.header.frame_id = "odom";
-
-        emu_pub.publish(output);
-        std::cout << "have published" << std::endl;
-        cloud_index++;
-        if (cloud_index > end_index){
-            cloud_index=start_index;
-            // break;
-        }
+        pub.publish(ros_cloud);
+        printf("Publish %dth cloud.", cnt++);
         loop_rate.sleep();
-
     }
 
+    // Return
     return 0;
 }
-
-
-
