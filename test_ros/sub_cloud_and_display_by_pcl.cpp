@@ -39,8 +39,8 @@ int main(int argc, char **argv)
   string topic_name_kinect_cloud;
   string viewer_name = "viewer_name";
   string viewer_cloud_name = "cloud_name";
-  if (!nh.getParam("/topic_name_kinect_cloud", topic_name_kinect_cloud))
-    topic_name_kinect_cloud = "kinect2/qhd/points";
+  if (!nh.getParam("topic_name_kinect_cloud", topic_name_kinect_cloud))
+    topic_name_kinect_cloud = "/kinect2/qhd/points";
 
   // Subscriber
   ros::Subscriber sub = nh.subscribe(topic_name_kinect_cloud, 1, subscriber_callback); // 1 is queue size
@@ -62,7 +62,8 @@ int main(int argc, char **argv)
   }
 
   // Return
-  ROS_INFO(("This node stops: " + node_name).c_str());
+  ROS_INFO("This node stops: sub_cloud_and_display_by_pcl");
+  // ROS_INFO(("This node stops: " + node_name).c_str()); // This generates annoying warning.
   return 0;
 }
 

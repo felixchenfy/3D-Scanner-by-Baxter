@@ -17,7 +17,9 @@ using namespace pcl;
 boost::shared_ptr<pcl::visualization::PCLVisualizer>
 initPointCloudRGBViewer(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud,
                         const string &viewer_name = "viewer_name",
-                        const string &cloud_name = "cloud_name");
+                        const string &cloud_name = "cloud_name",
+                        const double coord_unit = 1.0
+                        );
 
 // set the initial viewing angle (Copied from pcl website)
 void  setViewerPose (pcl::visualization::PCLVisualizer& viewer, const Eigen::Affine3f& viewer_pose);

@@ -37,10 +37,9 @@ def copyOpen3dCloud(src, dst):
 if __name__ == "__main__":
 
     # Params settings
-    topic_name_kinect_cloud = rospy.get_param("/topic_name_kinect_cloud",
-        "kinect2/qhd/points")
     node_name = "sub_cloud_and_display_by_open3d"
-    
+    topic_name_kinect_cloud = rospy.get_param("topic_name_kinect_cloud", "kinect2/qhd/points")
+
     # Set node
     rospy.init_node(node_name, anonymous=True)
 

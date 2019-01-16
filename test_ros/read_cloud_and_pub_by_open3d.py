@@ -21,16 +21,17 @@ from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dTo
 if __name__ == "__main__":
 
     # Params setting
+    node_name = "read_cloud_and_pub_by_open3d"
     topic_name_kinect_cloud = rospy.get_param( "/topic_name_kinect_cloud",
         "kinect2/qhd/points")
-    cloud_filename = "../data_debug/cloud_cluster_0.pcd"
-    node_name = "read_cloud_and_pub_by_open3d"
-    
+    file_folder=rospy.get_param("file_folder")
+    file_name=rospy.get_param("file_name")
+    filename = file_folder+file_name
+
     # Set node
     rospy.init_node(node_name, anonymous=True)
 
     # Read file
-    filename = PYTHON_FILE_PATH+cloud_filename
     open3d_cloud = open3d.read_point_cloud(filename)
     rospy.loginfo("Loading cloud file from: \n  " + filename)
     print(open3d_cloud)

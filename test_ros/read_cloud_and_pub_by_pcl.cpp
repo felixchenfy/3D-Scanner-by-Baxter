@@ -23,15 +23,15 @@ int main(int argc, char **argv)
     // Settings
     string ros_cloud_frame_id = "odom";
     string topic_name_kinect_cloud, file_folder, file_name;
-    if (!nh.getParam("/topic_name_kinect_cloud", topic_name_kinect_cloud))
-        topic_name_kinect_cloud = "kinect2/qhd/points";
-    if (!nh.getParam("/file_folder", file_folder))
+    if (!nh.getParam("topic_name_kinect_cloud", topic_name_kinect_cloud))
+        topic_name_kinect_cloud = "/kinect2/qhd/points";
+    if (!nh.getParam("file_folder", file_folder))
         assert(0);
-    if (!nh.getParam("/file_name", file_name))
+    if (!nh.getParam("file_name", file_name))
         assert(0);
     // { // These two are not working?!?!?!?! why
-    //     nh.param<string>("/file_folder", file_folder);
-    //     nh.param("/file_name", file_name);
+    //     nh.param<string>("file_folder", file_folder);
+    //     nh.param("file_name", file_name);
     // }
 
     // Publisher
@@ -59,6 +59,7 @@ int main(int argc, char **argv)
     }
 
     // Return
-    ROS_INFO(("This node stops: " + node_name).c_str());
+    ROS_INFO("This node stops: read_cloud_and_pub_by_pcl"); 
+    // ROS_INFO(("This node stops: " + node_name).c_str()); // This generates annoying warning.
     return 0;
 }

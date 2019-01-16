@@ -14,7 +14,8 @@ namespace my_pcl
 boost::shared_ptr<pcl::visualization::PCLVisualizer>
 initPointCloudRGBViewer(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud,
                         const string &viewer_name,
-                        const string &cloud_name)
+                        const string &cloud_name,
+                        const double coord_unit)
 {
     boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer(
         new pcl::visualization::PCLVisualizer(viewer_name));
@@ -26,7 +27,7 @@ initPointCloudRGBViewer(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud,
     viewer->setPointCloudRenderingProperties(pcl::visualization::PCL_VISUALIZER_POINT_SIZE, POINT_SIZE, cloud_name);
 
     // Add Coordinate system
-    viewer->addCoordinateSystem(1.0, "world frame");
+    viewer->addCoordinateSystem(coord_unit, "world frame");
 
     // Other properties
     viewer->setBackgroundColor(0, 0, 0);

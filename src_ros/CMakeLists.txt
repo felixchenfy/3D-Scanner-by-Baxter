@@ -1,6 +1,7 @@
 
-# add_executable( pcl_test_filt_seg_clustering pcl_test_filt_seg_clustering.cpp )
-# target_link_libraries( pcl_test_filt_seg_clustering
-#     my_pcl
-# )
+add_executable( n2-filt_and_seg_object n2-filt_and_seg_object.cpp )
+target_link_libraries( n2-filt_and_seg_object
+    my_pcl my_basics
+    ${catkin_LIBRARIES} 
+)
 

@@ -7,7 +7,7 @@ import sys, os
 PYTHON_FILE_PATH=os.path.join(os.path.dirname(__file__))+"/"
 
 import rospy
-from std_msgs.msg import Int32  # used for indexing the ith robot pose
+# from std_msgs.msg import Int32  # used for indexing the ith robot pose
 from geometry_msgs.msg import Pose, Point, Quaternion
 from sensor_msgs.msg import PointCloud2 # for DEBUG_MODE
 
@@ -41,68 +41,69 @@ def getCloudSize(open3d_cloud):
     
 # -- Main
 if __name__ == "__main__":
-    rospy.init_node('work_flow_controller')
+    rospy.init_node('node1')
 
     # Param settings
-    topic_name_endeffector_pos = "my/endeffector_pos"
-    topic_name_take_picture = "my/take_picture"
+    topic_endeffector_pos = rospy.get_param("topic_n1_to_n2")
 
-    # Set publisher
-    pub_pose = rospy.Publisher(topic_name_endeffector_pos,
+    # Set publisher: After Baxter moves to the next goalpose position, 
+    #   sends the pose to node2 to tell it to take the picture.
+    pub_pose = rospy.Publisher(topic_endeffector_pos,
                                Pose, queue_size=10)
-    pub_event = rospy.Publisher(topic_name_take_picture,
-                                Int32, queue_size=10)
-
-    def sendTakePictureSignal(ith_pos):
-        pub_event.publish(Int32(ith_pos))
 
     # Boot up Baxter
     if not DEBUG_MODE:
         None
 
-    # Speicify the goal_joint_angles that the Baxter needs to move to
+    # Speicify the goalpose_joint_angles that the Baxter needs to move to
     # 7 numbers of the 7 joint angles
-    goals_joint_angles = [
+    goalposes_joint_angles = [
         [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
     ]
-    num_goals = len(goals_joint_angles)
+    num_goalposes = len(goalposes_joint_angles)
     num_joints = 7
 
     # Settings for DEBUG_MODE
     if DEBUG_MODE:
         # Read point_cloud file for simulating fake point cloud publisher
-        cloud_folder = "../data_debug/"
-        cloud_filename = "cloud_cluster_"
-        topic_name_kinect_cloud = "kinect2/qhd/points"
+
+        debug_file_folder = rospy.get_param("debug_file_folder")
+        debug_file_name = rospy.get_param("debug_file_name") # without suffix "i.pcd"
+        topic_name_kinect_cloud = rospy.get_param("topic_name_kinect_cloud")
+
         pub_sim_cloud = rospy.Publisher(topic_name_kinect_cloud,
             PointCloud2, queue_size=10)
-        def sim_pub_point_cloud(ith_pos):
-            filename = cloud_filename+str(ith_pos)+".pcd"
-            filename_whole = PYTHON_FILE_PATH+cloud_folder+filename
+        def sim_pub_point_cloud(ith_goalpose):
+            filename = debug_file_name+str(ith_goalpose)+".pcd"
+            filename_whole = debug_file_folder+filename
             open3d_cloud = open3d.read_point_cloud(filename_whole)
             rospy.loginfo("node1: sim: load cloud file: " + filename +
                 ", points = " + str(getCloudSize(open3d_cloud)))
             ros_cloud = convertCloudFromOpen3dToRos(open3d_cloud)
-            rospy.loginfo("node1: sim: publishing cloud "+str(ith_pos))
+            rospy.loginfo("node1: sim: publishing cloud "+str(ith_goalpose))
             pub_sim_cloud.publish(ros_cloud)
 
     # Robot moves to position
     rospy.sleep(1)
-    for ith_pos, joint_angles in enumerate(goals_joint_angles):
+    # for ith_goalpose, joint_angles in enumerate(goalposes_joint_angles):
+    ith_goalpose = 0 
+    while ith_goalpose<num_goalposes:
+        joint_angles=goalposes_joint_angles[ith_goalpose]
+
+        # Move robot, and then take picture
         moveBaxterToJointAngles(joint_angles)
         pose = readBaxterEndeffectPose()
         
         rospy.loginfo("--------------------------------")
-        rospy.loginfo("node1: publish pose "+str(ith_pos))
+        rospy.loginfo("node1: publish pose "+str(ith_goalpose))
         pub_pose.publish(pose)
-
-        rospy.loginfo("node1: publish signal to take picture " + str(ith_pos))
-        sendTakePictureSignal(ith_pos)
         
-        if DEBUG_MODE:
+        if DEBUG_MODE: # simulate publishing a point cloud
             rospy.sleep(0.01)
-            sim_pub_point_cloud(ith_pos)
+            sim_pub_point_cloud(ith_goalpose)
 
         rospy.sleep(2)
+        ith_goalpose+=1
+        if ith_goalpose==num_goalposes: ith_goalpose = 0
