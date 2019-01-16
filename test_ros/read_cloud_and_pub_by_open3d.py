@@ -21,7 +21,8 @@ from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dTo
 if __name__ == "__main__":
 
     # Params setting
-    topic_name = "kinect2/qhd/points"
+    topic_name_kinect_cloud = rospy.get_param( "/topic_name_kinect_cloud",
+        "kinect2/qhd/points")
     cloud_filename = "../data_debug/cloud_cluster_0.pcd"
     node_name = "read_cloud_and_pub_by_open3d"
     
@@ -36,7 +37,7 @@ if __name__ == "__main__":
     ros_cloud = convertCloudFromOpen3dToRos(open3d_cloud)
 
     # Publish
-    pub = rospy.Publisher(topic_name, PointCloud2, queue_size=10)
+    pub = rospy.Publisher(topic_name_kinect_cloud, PointCloud2, queue_size=10)
     cnt = 0
     while not rospy.is_shutdown():
         rospy.sleep(1)

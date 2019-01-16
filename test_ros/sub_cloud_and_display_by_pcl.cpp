@@ -30,17 +30,20 @@ void subscriber_callback(const sensor_msgs::PointCloud2 &ros_cloud)
 // Main
 int main(int argc, char **argv)
 {
-
-  // Settings
-  string topic_name = "/kinect2/qhd/points";
-  string node_name = "sub_cloud_and_display_by_pcl";
-  string viewer_name = "viewer_name";
-  string viewer_cloud_name = "cloud_name";
-
   // Init node
+  string node_name = "sub_cloud_and_display_by_pcl";
   ros::init(argc, argv, node_name);
   ros::NodeHandle nh;
-  ros::Subscriber sub = nh.subscribe(topic_name, 1, subscriber_callback); // 1 is queue size
+
+  // Settings
+  string topic_name_kinect_cloud;
+  string viewer_name = "viewer_name";
+  string viewer_cloud_name = "cloud_name";
+  if (!nh.getParam("/topic_name_kinect_cloud", topic_name_kinect_cloud))
+    topic_name_kinect_cloud = "kinect2/qhd/points";
+
+  // Subscriber
+  ros::Subscriber sub = nh.subscribe(topic_name_kinect_cloud, 1, subscriber_callback); // 1 is queue size
 
   // Init viewer
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer =

@@ -37,7 +37,8 @@ def copyOpen3dCloud(src, dst):
 if __name__ == "__main__":
 
     # Params settings
-    topic_name = "kinect2/qhd/points"
+    topic_name_kinect_cloud = rospy.get_param("/topic_name_kinect_cloud",
+        "kinect2/qhd/points")
     node_name = "sub_cloud_and_display_by_open3d"
     
     # Set node
@@ -50,7 +51,7 @@ if __name__ == "__main__":
         global received_ros_cloud
         received_ros_cloud=ros_cloud
         rospy.loginfo("Received ROS PointCloud2 message.")
-    rospy.Subscriber(topic_name, PointCloud2, callback)      
+    rospy.Subscriber(topic_name_kinect_cloud, PointCloud2, callback)      
     
     # Set viewer
     open3d_cloud= open3d.PointCloud()
