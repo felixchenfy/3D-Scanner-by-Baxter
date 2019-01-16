@@ -15,6 +15,7 @@ Main function:
 #include <sensor_msgs/PointCloud2.h>
 #include "geometry_msgs/Pose.h"
 
+#include "my_basics/basics.h"
 #include "my_pcl/pcl_visualization.h"
 #include "my_pcl/pcl_commons.h"
 #include "my_pcl/pcl_filters.h"
@@ -28,9 +29,9 @@ using namespace pcl;
 bool flag_receive_from_node1 = false;
 bool flag_receive_kinect_cloud = false;
 // geometry_msgs::Pose camera_pose;
-vector<int> camera_pose; // Just use an 1x16 array instead. Need to trans to 4x4 later.
+vector<float> camera_pose; // Just use an 1x16 array instead. Need to trans to 4x4 later.
 PointCloud<PointXYZRGB>::Ptr cloud_src(new PointCloud<PointXYZRGB>);
-PointCloud<PointXYZRGB>::Ptr cloud_rotated(new PointCloud<PointXYZRGB>); // this pubs to rviz
+PointCloud<PointXYZRGB>::Ptr cloud_rotated(new PointCloud<PointXYZRGB>);   // this pubs to rviz
 PointCloud<PointXYZRGB>::Ptr cloud_segmented(new PointCloud<PointXYZRGB>); // this pubs to node3
 const string PCL_VIEWER_NAME = "node2: point cloud rotated to the world frame";
 const string PCL_VIEWER_CLOUD_NAME = "cloud_rotated";
@@ -60,12 +61,23 @@ void pubPclCloudToTopic(
     ros_cloud_to_pub.header.frame_id = "odom";
     pub.publish(ros_cloud_to_pub);
 }
+void rotateCloud(PointCloud<PointXYZRGB>::Ptr src, PointCloud<PointXYZRGB>::Ptr dst,
+                 vector<float> transformation_matrix_16x1)
+{
+    float T[4][4] = {0};
+    for (int cnt = 0, i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            T[i][j] = transformation_matrix_16x1[cnt++];
+    dst->points=src->points;
+    for(PointXYZRGB &p:dst->points)
+        my_basics::preTranslatePoint(T, p.x, p.y, p.z);
+}
 
 // -- Main Loop:
 void main_loop(boost::shared_ptr<visualization::PCLVisualizer> viewer,
-          ros::Publisher &pub_to_node3, ros::Publisher &pub_to_rviz)
+               ros::Publisher &pub_to_node3, ros::Publisher &pub_to_rviz)
 {
-    int cnt_cloud=0;
+    int cnt_cloud = 0;
     while (ros::ok() && !viewer->wasStopped())
     {
         if (flag_receive_kinect_cloud)
@@ -83,15 +95,14 @@ void main_loop(boost::shared_ptr<visualization::PCLVisualizer> viewer,
             cloud_src = my_pcl::filtByStatisticalOutlierRemoval(cloud_src, mean_k, std_dev);
 
             // -- rotate cloud, pub to rviz
-            copyPointCloud(*cloud_src, *cloud_rotated);
-            // cloud_rotated.points = cloud_src.points; // copy as rotate cloud
+            rotateCloud(cloud_src, cloud_rotated, camera_pose);
             pubPclCloudToTopic(pub_to_rviz, cloud_rotated);
 
             // -- remove plane, clustering, pub to node3
             copyPointCloud(*cloud_rotated, *cloud_segmented);
             // cloud_segmented.points = cloud_rotated.points; // copy as remove plane and clustering
             pubPclCloudToTopic(pub_to_node3, cloud_segmented);
-        
+
             // -- Update viewer
             viewer->updatePointCloud(cloud_segmented, PCL_VIEWER_CLOUD_NAME);
 
@@ -100,13 +111,16 @@ void main_loop(boost::shared_ptr<visualization::PCLVisualizer> viewer,
             printf("------------------------------------------\n");
             printf("-------- Processing %dth cloud -----------\n", cnt_cloud);
             ROS_INFO("Subscribed a point cloud from ros topic.");
-            
-            cout <<"camera pos:";
-            for(int i=0;i<camera_pose.size();i++){
-                if(i%4==0)cout<<endl;
-                cout<<camera_pose[i]<<" ";
+
+            cout << "camera pos:";
+            for (int i = 0; i < camera_pose.size(); i++)
+            {
+                if (i % 4 == 0)
+                    cout << endl;
+                cout << camera_pose[i] << " ";
             }
-            cout<<endl<<endl;
+            cout << endl
+                 << endl;
 
             cout << "cloud_src: ";
             my_pcl::printCloudSize(cloud_src);
@@ -160,8 +174,8 @@ int main(int argc, char **argv)
     // Init viewer
     boost::shared_ptr<visualization::PCLVisualizer> viewer =
         my_pcl::initPointCloudRGBViewer(cloud_segmented,
-            PCL_VIEWER_NAME, PCL_VIEWER_CLOUD_NAME,
-            0.1); // unit length of the shown coordinate frame
+                                        PCL_VIEWER_NAME, PCL_VIEWER_CLOUD_NAME,
+                                        0.1); // unit length of the shown coordinate frame
 
     // Loop, subscribe ros_cloud, and view
     main_loop(viewer, pub_to_node3, pub_to_rviz);

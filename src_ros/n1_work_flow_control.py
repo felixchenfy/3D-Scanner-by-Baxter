@@ -15,7 +15,7 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler, eul
 # Include my lib
 sys.path.append(PYTHON_FILE_PATH + "../src_ros")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos
-from lib_geo_trans import *
+from lib_geo_trans import form_T, quaternion_to_SO3
 from scan3d_by_baxter.msg import T4x4
 
 # ------------------------------------------------------------
@@ -39,22 +39,22 @@ def moveBaxterToJointAngles(pos):
         return T
 
 def readBaxterEndeffectPose():
-    if DEBUG_MODE:
-        # Define the T4x4era
-        pos = Point(1,0,0)
-        quat = Quaternion(0,0,0,1) # x,y,z,w
+    if DEBUG_MODE: # Manually define the T4x4 matrix
+        pos = Point(-1, 1, 0)
+        quat = quaternion_from_euler(0, 0, 0, 'rxyz') # This is a list
+        # quat = Quaternion(0,0,0,1) # This is a struct, with members of x,y,z,w
     else:
         pos = Point()
         quat = Quaternion()
 
-    # to list
-    # zyx_euler=euler_from_quaternion([quat.w, quat.x, quat.y, quat.z])
-    zyx_euler=euler_from_quaternion([quat.x, quat.y, quat.z, quat.w])
-    R=euler_matrix(zyx_euler[0],zyx_euler[1],zyx_euler[2])[0:3,0:3]
+    # Trans to 4x4 matrix, and then trans to 1x16 array
+    R=quaternion_to_SO3(quat)
     p=[pos.x, pos.y, pos.z]
     T=form_T(R, p)
-    print T
-    pose = [1,0,0]
+    pose=[]
+    for i in range(4):
+        for j in range(4):
+            pose+=[T[i,j]]
     return pose
 
 def getCloudSize(open3d_cloud):
@@ -109,7 +109,7 @@ if __name__ == "__main__":
     rospy.sleep(1)
     # for ith_goalpose, joint_angles in enumerate(goalposes_joint_angles):
     ith_goalpose = 0 
-    while ith_goalpose<num_goalposes:
+    while ith_goalpose<num_goalposes and not rospy.is_shutdown():
         joint_angles=goalposes_joint_angles[ith_goalpose]
 
         # Move robot, and then take picture

@@ -15,7 +15,9 @@ PYTHON_FILE_PATH=os.path.join(os.path.dirname(__file__))+"/"
 import rospy
 from geometry_msgs.msg import Pose, Point, Quaternion
 from tf.transformations import euler_from_quaternion, quaternion_from_euler, euler_matrix
+
 '''
+Input and output of relavant functions:
 euler_matrix: ea.x, ea.y, ea.z
 [q.x, q.y, q.z, q.w] = quaternion_from_euler: [ea.x, ea.y, ea.z]
 [ea.x, ea.y, ea.z] = euler_from_quaternion: [q.x, q.y, q.z, q.w]

@@ -26,4 +26,16 @@ vector<int> getIntersection(vector<int> v1, vector<int> v2)
 }
 
 
+void preTranslatePoint(const float T[4][4], float &x, float &y, float &z){
+    double p[4]={x,y,z,1};
+    double res[3]={0,0,0};
+    for(int row=0;row<3;row++){
+        for(int j=0; j<4; j++)
+            res[row]+=T[row][j]*p[j];
+    }
+    x=res[0];
+    y=res[1];
+    z=res[2];
+}
+
 }
