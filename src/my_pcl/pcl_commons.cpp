@@ -2,6 +2,7 @@
 #include "my_pcl/pcl_commons.h"
 
 #include "my_basics/eigen_funcs.h"
+#include "my_basics/basics.h"
 using namespace my_basics;
 
 namespace my_pcl
@@ -56,6 +57,16 @@ void setPointPos(pcl::PointXYZ &point, double x, double y, double z)
 void setPointPos(pcl::PointXYZ &point, cv::Mat p)
 {
     setPointPos(point, p.at<double>(0, 0), p.at<double>(1, 0), p.at<double>(2, 0));
+}
+
+
+// -- Transformation
+void rotateCloud(PointCloud<PointXYZRGB>::Ptr src, PointCloud<PointXYZRGB>::Ptr dst,
+                 float T_dstFrame_to_srcFrame[4][4])
+{
+    dst->points = src->points;
+    for (PointXYZRGB &p : dst->points)
+        preTranslatePoint(T_dstFrame_to_srcFrame, p.x, p.y, p.z);
 }
 
 } // namespace my_pcl

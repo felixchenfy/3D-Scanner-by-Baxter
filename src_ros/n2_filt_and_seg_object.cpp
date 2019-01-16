@@ -29,7 +29,7 @@ using namespace pcl;
 bool flag_receive_from_node1 = false;
 bool flag_receive_kinect_cloud = false;
 // geometry_msgs::Pose camera_pose;
-vector<float> camera_pose; // Just use an 1x16 array instead. Need to trans to 4x4 later.
+float camera_pose[4][4];
 PointCloud<PointXYZRGB>::Ptr cloud_src(new PointCloud<PointXYZRGB>);
 PointCloud<PointXYZRGB>::Ptr cloud_rotated(new PointCloud<PointXYZRGB>);   // this pubs to rviz
 PointCloud<PointXYZRGB>::Ptr cloud_segmented(new PointCloud<PointXYZRGB>); // this pubs to node3
@@ -41,7 +41,10 @@ const string PCL_VIEWER_CLOUD_NAME = "cloud_rotated";
 void callbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message)
 {
     flag_receive_from_node1 = true;
-    camera_pose = pose_message->TransformationMatrix;
+    const vector<float> &trans_mat_16x1 = pose_message->TransformationMatrix;
+    for (int cnt = 0, i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            camera_pose[i][j] = trans_mat_16x1[cnt++];
 }
 void callbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud)
 {
@@ -61,17 +64,7 @@ void pubPclCloudToTopic(
     ros_cloud_to_pub.header.frame_id = "odom";
     pub.publish(ros_cloud_to_pub);
 }
-void rotateCloud(PointCloud<PointXYZRGB>::Ptr src, PointCloud<PointXYZRGB>::Ptr dst,
-                 vector<float> transformation_matrix_16x1)
-{
-    float T[4][4] = {0};
-    for (int cnt = 0, i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-            T[i][j] = transformation_matrix_16x1[cnt++];
-    dst->points=src->points;
-    for(PointXYZRGB &p:dst->points)
-        my_basics::preTranslatePoint(T, p.x, p.y, p.z);
-}
+
 
 // -- Main Loop:
 void main_loop(boost::shared_ptr<visualization::PCLVisualizer> viewer,
@@ -95,7 +88,7 @@ void main_loop(boost::shared_ptr<visualization::PCLVisualizer> viewer,
             cloud_src = my_pcl::filtByStatisticalOutlierRemoval(cloud_src, mean_k, std_dev);
 
             // -- rotate cloud, pub to rviz
-            rotateCloud(cloud_src, cloud_rotated, camera_pose);
+            my_pcl::rotateCloud(cloud_src, cloud_rotated, camera_pose);
             pubPclCloudToTopic(pub_to_rviz, cloud_rotated);
 
             // -- remove plane, clustering, pub to node3
@@ -112,15 +105,14 @@ void main_loop(boost::shared_ptr<visualization::PCLVisualizer> viewer,
             printf("-------- Processing %dth cloud -----------\n", cnt_cloud);
             ROS_INFO("Subscribed a point cloud from ros topic.");
 
-            cout << "camera pos:";
-            for (int i = 0; i < camera_pose.size(); i++)
+            cout << "camera pos:" << endl;
+            for (int i = 0; i < 4; i++)
             {
-                if (i % 4 == 0)
-                    cout << endl;
-                cout << camera_pose[i] << " ";
+                for (int j = 0; j < 4; j++)
+                    cout << camera_pose[i][j] << " ";
+                cout << endl;
             }
-            cout << endl
-                 << endl;
+            cout << endl;
 
             cout << "cloud_src: ";
             my_pcl::printCloudSize(cloud_src);
