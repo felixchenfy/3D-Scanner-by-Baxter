@@ -7,6 +7,7 @@ Main function:
 #include <iostream>
 #include <string>
 #include <stdio.h>
+#include <vector>
 
 #include <ros/ros.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -18,6 +19,7 @@ Main function:
 #include "my_pcl/pcl_commons.h"
 #include "my_pcl/pcl_filters.h"
 #include "my_pcl/pcl_advanced.h"
+#include "scan3d_by_baxter/T4x4.h" // my message
 
 using namespace std;
 using namespace pcl;
@@ -25,7 +27,8 @@ using namespace pcl;
 // -- Vars
 bool flag_receive_from_node1 = false;
 bool flag_receive_kinect_cloud = false;
-geometry_msgs::Pose camera_pose = geometry_msgs::Pose();
+// geometry_msgs::Pose camera_pose;
+vector<int> camera_pose; // Just use an 1x16 array instead. Need to trans to 4x4 later.
 PointCloud<PointXYZRGB>::Ptr cloud_src(new PointCloud<PointXYZRGB>);
 PointCloud<PointXYZRGB>::Ptr cloud_rotated(new PointCloud<PointXYZRGB>); // this pubs to rviz
 PointCloud<PointXYZRGB>::Ptr cloud_segmented(new PointCloud<PointXYZRGB>); // this pubs to node3
@@ -34,10 +37,10 @@ const string PCL_VIEWER_CLOUD_NAME = "cloud_rotated";
 
 // -- Functions
 
-void callbackFromNode1(geometry_msgs::Pose pose)
+void callbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message)
 {
     flag_receive_from_node1 = true;
-    camera_pose = pose;
+    camera_pose = pose_message->TransformationMatrix;
 }
 void callbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud)
 {
@@ -97,6 +100,13 @@ void main_loop(boost::shared_ptr<visualization::PCLVisualizer> viewer,
             printf("------------------------------------------\n");
             printf("-------- Processing %dth cloud -----------\n", cnt_cloud);
             ROS_INFO("Subscribed a point cloud from ros topic.");
+            
+            cout <<"camera pos:";
+            for(int i=0;i<camera_pose.size();i++){
+                if(i%4==0)cout<<endl;
+                cout<<camera_pose[i]<<" ";
+            }
+            cout<<endl<<endl;
 
             cout << "cloud_src: ";
             my_pcl::printCloudSize(cloud_src);

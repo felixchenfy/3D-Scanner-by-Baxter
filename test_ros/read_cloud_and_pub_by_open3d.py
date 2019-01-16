@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
-# $ rosrun scan3d-by-baxter read_cloud_and_pub_by_open3d.py
+# $ rosrun scan3d_by_baxter read_cloud_and_pub_by_open3d.py
 
 # Include common
 import open3d

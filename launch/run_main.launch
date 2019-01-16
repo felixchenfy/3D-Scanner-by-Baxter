@@ -1,21 +1,21 @@
 <launch>
 
-    <!-- roslaunch scan3d-by-baxter run_main.launch -->
+    <!-- roslaunch scan3d_by_baxter run_main.launch -->
 
    <!--================================== Parameters ======================================== -->
 
     <!-- Number of poses the Baxter will move to for taking picture -->
-    <param name="num_goalposes" type="int" value="3" /> 
+    <param name="num_goalposes" type="int" value="1" /> 
 
     <!-- The topic for receiving PointCloud2 from Kinect -->
     <param name="topic_name_kinect_cloud" value="/kinect2/qhd/points" /> 
 
     <!-- File names for readign point cloud and debug -->
-    <param name="debug_file_folder" value="$(find scan3d-by-baxter)/data_debug/" /> 
+    <param name="debug_file_folder" value="$(find scan3d_by_baxter)/data_debug/" /> 
     <param name="debug_file_name" value="cloud_cluster_"  />
 
     <!-- File names for saving results -->
-    <param name="file_folder" value="$(find scan3d-by-baxter)/data/" /> 
+    <param name="file_folder" value="$(find scan3d_by_baxter)/data/" /> 
     <param name="file_name_cloud_rotated" value="transed_" /> 
     <param name="file_name_cloud_segmented" value="segmented_" /> 
     <param name="file_name_cloud_final" value="final" /> 
@@ -31,25 +31,25 @@
 
    <!-- node 1: main node for controlling work flow -->
     <node name="node1"
-        type="n1-work_flow_control.py" 
-        pkg="scan3d-by-baxter" output = "screen">
+        type="n1_work_flow_control.py" 
+        pkg="scan3d_by_baxter" output = "screen">
     </node>
 
     <node name="node2"
-        type="n2-filt_and_seg_object" 
-        pkg="scan3d-by-baxter" output = "screen">
+        type="n2_filt_and_seg_object" 
+        pkg="scan3d_by_baxter" output = "screen">
             <param name="T" type="double" value="5.0" />     
     </node>
 
-    <node name="node3"
-        type="n3-register_clouds_to_object.py" 
-        pkg="scan3d-by-baxter" output = "screen">
-    </node>
+    <!-- <node name="node3"
+        type="n3_register_clouds_to_object.py" 
+        pkg="scan3d_by_baxter" output = "screen">
+    </node> -->
 
     <node type="rviz" name="rviz" pkg="rviz"
-        args="-d $(find scan3d-by-baxter)/config/rviz_pc_rotated.rviz" />
+        args="-d $(find scan3d_by_baxter)/config/rviz_pc_rotated.rviz" />
 
 
-n3-register_clouds_to_object
+n3_register_clouds_to_object
 </launch>
 

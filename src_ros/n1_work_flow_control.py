@@ -10,10 +10,13 @@ import rospy
 # from std_msgs.msg import Int32  # used for indexing the ith robot pose
 from geometry_msgs.msg import Pose, Point, Quaternion
 from sensor_msgs.msg import PointCloud2 # for DEBUG_MODE
+from tf.transformations import euler_from_quaternion, quaternion_from_euler, euler_matrix
 
 # Include my lib
 sys.path.append(PYTHON_FILE_PATH + "../src_ros")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos
+from lib_geo_trans import *
+from scan3d_by_baxter.msg import T4x4
 
 # ------------------------------------------------------------
 # -- Param settings
@@ -24,16 +27,34 @@ def moveBaxterToJointAngles(pos):
     if DEBUG_MODE:
         None
     else:
-        None  # read
-
+        (trans, rot) = self.tf_listener.lookupTransform(
+            '/base', '/left_hand_camera', rospy.Time(0))
+        # print "quaternion from tf = ", rot
+        r3=euler_from_quaternion(rot)
+        # print "euler_matrix=",euler_matrix(r3[0],r3[1],r3[2])
+        R=euler_matrix(r3[0],r3[1],r3[2])[0:3,0:3]
+        # R,_=cv2.Rodrigues(r3)
+        # R=np.linalg.inv(R)
+        T = form_T(R,trans)
+        return T
 
 def readBaxterEndeffectPose():
     if DEBUG_MODE:
-        pose = Pose()
+        # Define the T4x4era
+        pos = Point(1,0,0)
+        quat = Quaternion(0,0,0,1) # x,y,z,w
     else:
-        position = Point()
-        orientation = Quaternion()
-        pose = Pose(position, orientation)
+        pos = Point()
+        quat = Quaternion()
+
+    # to list
+    # zyx_euler=euler_from_quaternion([quat.w, quat.x, quat.y, quat.z])
+    zyx_euler=euler_from_quaternion([quat.x, quat.y, quat.z, quat.w])
+    R=euler_matrix(zyx_euler[0],zyx_euler[1],zyx_euler[2])[0:3,0:3]
+    p=[pos.x, pos.y, pos.z]
+    T=form_T(R, p)
+    print T
+    pose = [1,0,0]
     return pose
 
 def getCloudSize(open3d_cloud):
@@ -45,11 +66,12 @@ if __name__ == "__main__":
 
     # Param settings
     topic_endeffector_pos = rospy.get_param("topic_n1_to_n2")
+    num_goalposes = rospy.get_param("num_goalposes")
 
     # Set publisher: After Baxter moves to the next goalpose position, 
     #   sends the pose to node2 to tell it to take the picture.
     pub_pose = rospy.Publisher(topic_endeffector_pos,
-                               Pose, queue_size=10)
+                               T4x4, queue_size=10)
 
     # Boot up Baxter
     if not DEBUG_MODE:
@@ -62,13 +84,11 @@ if __name__ == "__main__":
         [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
     ]
-    num_goalposes = len(goalposes_joint_angles)
     num_joints = 7
 
-    # Settings for DEBUG_MODE
+    # Settings for DEBUG_MODE:
+    #   Read point_cloud file for simulating fake point cloud publisher
     if DEBUG_MODE:
-        # Read point_cloud file for simulating fake point cloud publisher
-
         debug_file_folder = rospy.get_param("debug_file_folder")
         debug_file_name = rospy.get_param("debug_file_name") # without suffix "i.pcd"
         topic_name_kinect_cloud = rospy.get_param("topic_name_kinect_cloud")
@@ -103,6 +123,7 @@ if __name__ == "__main__":
         if DEBUG_MODE: # simulate publishing a point cloud
             rospy.sleep(0.01)
             sim_pub_point_cloud(ith_goalpose)
+        rospy.loginfo("--------------------------------")
 
         rospy.sleep(2)
         ith_goalpose+=1

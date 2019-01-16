@@ -1,36 +1,36 @@
 <launch>
 
-    <!-- roslaunch scan3d-by-baxter test_open3d_read_pub_sub_display.launch -->
+    <!-- roslaunch scan3d_by_baxter test_open3d_read_pub_sub_display.launch -->
 
     <!-- The topic for pub/sub PointCloud2 -->
     <param name="topic_name_kinect_cloud" value="/kinect2/qhd/points" /> 
 
     <!-- The filename to read the point cloud from -->
-    <param name="file_folder" value="$(find scan3d-by-baxter)/data_debug/" /> 
+    <param name="file_folder" value="$(find scan3d_by_baxter)/data_debug/" /> 
     <param name="file_name" value="cloud_cluster_0.pcd"/> 
 
     <!-- open3d pub -->
     <node name="read_pointcloud_from_file_and_publish"
         type="read_cloud_and_pub_by_open3d.py" 
-        pkg="scan3d-by-baxter" output = "screen">
+        pkg="scan3d_by_baxter" output = "screen">
     </node>
 
     <!-- pcl pub -->
     <!-- <node name="read_pointcloud_from_file_and_publish"
         type="read_cloud_and_pub_by_pcl" 
-        pkg="scan3d-by-baxter" output = "screen">
+        pkg="scan3d_by_baxter" output = "screen">
     </node> -->
 
     <!-- open3d sub -->
     <node name="sub_pointcloud_from_topic_and_display"
         type="sub_cloud_and_display_by_open3d.py"
-        pkg="scan3d-by-baxter" output = "screen">
+        pkg="scan3d_by_baxter" output = "screen">
     </node>
         
     <!-- pcl sub -->
     <!-- <node name="sub_pointcloud_from_topic_and_display"
         type="sub_cloud_and_display_by_pcl"
-        pkg="scan3d-by-baxter" output = "screen">
+        pkg="scan3d_by_baxter" output = "screen">
     </node> -->
 
 </launch>

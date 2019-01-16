@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>scan3d-by-baxter</name>
+  <name>scan3d_by_baxter</name>
   <version>0.0.0</version>
-  <description>The scan3d-by-baxter package</description>
+  <description>The scan3d_by_baxter package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <maintainer email="felixchenfy@gmail.com">feiyu</maintainer>
@@ -32,6 +32,13 @@
   <build_depend>pcl_ros</build_depend>
   <build_export_depend>pcl_ros</build_export_depend>
   <exec_depend>pcl_ros</exec_depend>
+
+  <!-- message -->
+  <build_depend>message_generation</build_depend>
+  <exec_depend>message_runtime</exec_depend>
+
+  <build_export_depend>geometry_msgs</build_export_depend>
+  <exec_depend>geometry_msgs</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>

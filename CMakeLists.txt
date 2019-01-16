@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 2.8.3)
-project(scan3d-by-baxter)
+project(scan3d_by_baxter)
 
 # set ccache
 find_program(CCACHE_FOUND ccache) 
@@ -58,8 +58,19 @@ find_package(catkin REQUIRED COMPONENTS
   rospy
   sensor_msgs
   std_msgs
+  geometry_msgs
+  message_generation
 )
-catkin_package()
+add_message_files( # add my message
+  FILES
+  T4x4.msg
+)
+generate_messages( # dependencies to my message
+  DEPENDENCIES
+  std_msgs
+)
+catkin_package(CATKIN_DEPENDS message_runtime) # declares dependencies for packages that depend on this package.
+
 include_directories(
   ${catkin_INCLUDE_DIRS}
 )
