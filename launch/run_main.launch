@@ -12,8 +12,9 @@
 
     <!-- File names for readign point cloud and debug -->
     <param name="debug_file_folder" value="$(find scan3d_by_baxter)/data_debug/" /> 
-    <param name="debug_file_name" value="cloud_cluster_"  />
-    <param name="debug_file_name" value="milk_and_2bottles_"  />
+    <!-- <param name="debug_file_name" value="cloud_cluster_"  />
+    <param name="debug_file_name" value="milk_and_2bottles_"  /> -->
+    <param name="debug_file_name" value="ColoredICP_"  />
 
     <!-- File names for saving results -->
     <param name="file_folder" value="$(find scan3d_by_baxter)/data/" /> 
@@ -34,23 +35,29 @@
         pkg="scan3d_by_baxter" output = "screen">
     </node>
 
+   <!-- node 2: read cloud from kinect, filter, remove plane, do clustering, pub -->
     <node name="node2"
         type="n2_filt_and_seg_object" 
         pkg="scan3d_by_baxter" output = "screen">
+
             <!-- filtering -->
             <param name="x_grid_size" type="double" value="0.005" />     
             <param name="y_grid_size" type="double" value="0.005" />     
-            <param name="z_grid_size" type="double" value="0.005" />     
+            <param name="z_grid_size" type="double" value="0.005" />   
+
             <!-- segment plane -->
             <param name="plane_distance_threshold" type="double" value="0.01" />     
             <param name="plane_max_iterations" type="int" value="100" />     
-            <param name="num_planes" type="int" value="1" />     
+            <param name="num_planes" type="int" value="0" />     
+
             <!-- divide cloud into clusters -->
+            <param name="flag_do_clustering" type="bool" value="false" />     
             <param name="cluster_tolerance" type="double" value="0.02" />     
-            <param name="min_cluster_size" type="int" value="100" />     
+            <param name="min_cluster_size" type="int" value="1000" />     
             <param name="max_cluster_size" type="int" value="10000" />    
     </node>
 
+   <!-- node 3: register clouds -->
     <node name="node3"
         type="n3_register_clouds_to_object.py" 
         pkg="scan3d_by_baxter" output = "screen">

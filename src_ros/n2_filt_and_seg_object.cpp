@@ -135,7 +135,7 @@ int main(int argc, char **argv)
     boost::shared_ptr<visualization::PCLVisualizer> viewer =
         my_pcl::initPointCloudRGBViewer(cloud_segmented,
                                         PCL_VIEWER_NAME, PCL_VIEWER_CLOUD_NAME,
-                                        0.1); // unit length of the shown coordinate frame
+                                        1.0); // unit length of the shown coordinate frame
 
     // Loop, subscribe ros_cloud, and view
     main_loop(viewer, pub_to_node3, pub_to_rviz);
@@ -199,6 +199,7 @@ void update_cloud_segmented()
     static float ratio_of_rest_points = -1; // disabled
 
     // divide cloud into clusters
+    static bool flag_do_clustering = true;
     static double cluster_tolerance = 0.02;
     static int min_cluster_size = 100, max_cluster_size = 10000;
 
@@ -213,6 +214,8 @@ void update_cloud_segmented()
             assert(0);
         if (!nh.getParam("num_planes", num_planes))
             assert(0);
+        if (!nh.getParam("flag_do_clustering", flag_do_clustering))
+            assert(0);
         if (!nh.getParam("cluster_tolerance", cluster_tolerance))
             assert(0);
         if (!nh.getParam("min_cluster_size", min_cluster_size))
@@ -223,18 +226,22 @@ void update_cloud_segmented()
 
     // -- Remove planes
     copyPointCloud(*cloud_rotated, *cloud_segmented);
-    int num_removed_planes = my_pcl::removePlanes(cloud_segmented,
-                                                  plane_distance_threshold, plane_max_iterations,
-                                                  num_planes, ratio_of_rest_points);
+    int num_removed_planes = my_pcl::removePlanes(
+        cloud_segmented,
+        plane_distance_threshold, plane_max_iterations,
+        num_planes, ratio_of_rest_points);
 
     // -- Clustering: Divide the remaining point cloud into different clusters
-    vector<PointIndices> clusters_indices = my_pcl::divideIntoClusters(
-        cloud_segmented, cluster_tolerance, min_cluster_size, max_cluster_size);
+    if (flag_do_clustering)
+    {
+        vector<PointIndices> clusters_indices = my_pcl::divideIntoClusters(
+            cloud_segmented, cluster_tolerance, min_cluster_size, max_cluster_size);
 
-    // -- Extract indices into cloud clusters
-    vector<PointCloud<PointXYZRGB>::Ptr> cloud_clusters =
-        my_pcl::extractSubCloudsByIndices(cloud_segmented, clusters_indices);
-    cloud_segmented = cloud_clusters[0];
+        // -- Extract indices into cloud clusters
+        vector<PointCloud<PointXYZRGB>::Ptr> cloud_clusters =
+            my_pcl::extractSubCloudsByIndices(cloud_segmented, clusters_indices);
+        cloud_segmented = cloud_clusters[0];
+    }
 }
 
 // -----------------------------------------------------
