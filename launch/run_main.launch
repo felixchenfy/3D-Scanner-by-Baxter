@@ -5,7 +5,7 @@
    <!--================================== Parameters ======================================== -->
 
     <!-- Number of poses the Baxter will move to for taking picture -->
-    <param name="num_goalposes" type="int" value="1" /> 
+    <param name="num_goalposes" type="int" value="2" /> 
 
     <!-- The topic for receiving PointCloud2 from Kinect -->
     <param name="topic_name_kinect_cloud" value="/kinect2/qhd/points" /> 

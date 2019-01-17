@@ -4,6 +4,7 @@
 import open3d
 import numpy as np
 import sys, os
+import cv2
 PYTHON_FILE_PATH=os.path.join(os.path.dirname(__file__))+"/"
 
 import rospy
@@ -13,7 +14,7 @@ from sensor_msgs.msg import PointCloud2 # for DEBUG_MODE
 from tf.transformations import euler_from_quaternion, quaternion_from_euler, euler_matrix
 
 # Include my lib
-sys.path.append(PYTHON_FILE_PATH + "../src_ros")
+sys.path.append(PYTHON_FILE_PATH + "../src_python")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos
 from lib_geo_trans import form_T, quaternion_to_SO3
 from scan3d_by_baxter.msg import T4x4
@@ -63,6 +64,8 @@ def getCloudSize(open3d_cloud):
 # -- Main
 if __name__ == "__main__":
     rospy.init_node('node1')
+    print("Waiting for keypress to start ...")
+    cv2.waitKey(0)
 
     # Param settings
     topic_endeffector_pos = rospy.get_param("topic_n1_to_n2")
