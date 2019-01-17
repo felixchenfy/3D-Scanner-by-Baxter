@@ -83,7 +83,7 @@ def registerClouds(src, target, radius_base=0.01):
         if 1:
             print("\n{}th loop: radius={:.4f}, max_iter={}".format(
                 ith_loop, radius, max_iter))
-            print(result_icp)
+            # print(current_transformation)
 
     # Transform src to target's frame
     src_tmp = copy.deepcopy(src)

@@ -32,12 +32,12 @@ if __name__ == "__main__":
     num_goalposes = rospy.get_param("num_goalposes")  # DEBUG, NOT USED NOW
 
     # -- Set subscriber
-    global received_ros_clouds
-    received_ros_cloud = list()
+    global received_ros_clouds # store received clouds in a deque
+    received_ros_clouds = deque()
 
     def callback(ros_cloud):
-        global received_ros_cloud
-        received_ros_cloud = ros_cloud
+        global received_ros_clouds
+        received_ros_clouds.append(ros_cloud)
     rospy.Subscriber(topic_n2_to_n3, PointCloud2, callback)
 
     # -- Set viewer
@@ -54,7 +54,8 @@ if __name__ == "__main__":
     rate = rospy.Rate(100)
     cnt = 0
     while not rospy.is_shutdown():
-        if received_ros_cloud is not None:
+        if len(received_ros_clouds)>0:
+            received_ros_cloud = received_ros_clouds.popleft()
             cnt += 1
             rospy.loginfo("=========================================")
             rospy.loginfo(
@@ -75,8 +76,6 @@ if __name__ == "__main__":
             vis.add_geometry(vis_cloud)
             vis.update_geometry()
 
-            # clear
-            received_ros_cloud = None
 
         # Update viewer
         vis.poll_events()
