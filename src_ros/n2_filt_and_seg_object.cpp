@@ -162,25 +162,12 @@ void update_cloud_rotated()
     float mean_k = 50, std_dev = 1.0;
     cloud_src = my_pcl::filtByStatisticalOutlierRemoval(cloud_src, mean_k, std_dev);
 
-    cout<<"tmp test cloud_src:"<<endl;
-    cout<<"tmp test cloud_rotated:"<<endl;
-    my_pcl::printCloudSize(cloud_src);
-    my_pcl::printCloudSize(cloud_rotated);
-
-
-    // -- rotate cloud, pub to rviz
-    // my_pcl::rotateCloud(cloud_src, cloud_rotated, camera_pose);
-
+    // -- rotate cloud
     pcl::copyPointCloud(*cloud_src, *cloud_rotated);
-    // dst->points = src->points; // Why this doesn't work?
     for (PointXYZRGB &p : cloud_rotated->points)
         my_basics::preTranslatePoint(camera_pose, p.x, p.y, p.z);
-
-    cout<<"tmp test cloud_src:"<<endl;
-    cout<<"tmp test cloud_rotated:"<<endl;
-    my_pcl::printCloudSize(cloud_src);
-    my_pcl::printCloudSize(cloud_rotated);
-
+    // Or use this:
+    //      my_pcl::rotateCloud(cloud_src, cloud_rotated, camera_pose);
 }
 void update_cloud_segmented()
 {

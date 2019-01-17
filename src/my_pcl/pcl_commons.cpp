@@ -3,7 +3,9 @@
 
 #include "my_basics/eigen_funcs.h"
 #include "my_basics/basics.h"
+#include <pcl/common/io.h> // copyPointCloud
 using namespace my_basics;
+
 
 namespace my_pcl
 {
@@ -61,14 +63,16 @@ void setPointPos(pcl::PointXYZ &point, cv::Mat p)
 
 
 // -- Transformation
-// void rotateCloud(const PointCloud<PointXYZRGB>::Ptr src, PointCloud<PointXYZRGB>::Ptr &dst,
-//                  float T_dstFrame_to_srcFrame[4][4])
-// {
-//      #include <pcl_conversions/pcl_conversions.h> // Why no such file or directory?
-//     pcl::copyPointCloud(*src, *dst); // Why  ‘copyPointCloud’ is not a member of ‘pcl’?
-//     // dst->points = src->points; // Why this doesn't work?
-//     for (PointXYZRGB &p : dst->points)
-//         preTranslatePoint(T_dstFrame_to_srcFrame, p.x, p.y, p.z);
-// }
+void rotateCloud(const PointCloud<PointXYZRGB>::Ptr src, PointCloud<PointXYZRGB>::Ptr &dst,
+                 float T_dstFrame_to_srcFrame[4][4])
+{
+    //  #include <pcl_conversions/pcl_conversions.h> // Why no such file or directory? Due to ROS?
+    pcl::copyPointCloud(*src, *dst); // Why  ‘copyPointCloud’ is not a member of ‘pcl’?
+                    // because need to include this #include <pcl/common/io.h>
+    // dst->points = src->points; // Why this doesn't work? Because there are also
+                    // other contents in cloud. The size field is not changed. 
+    for (PointXYZRGB &p : dst->points)
+        preTranslatePoint(T_dstFrame_to_srcFrame, p.x, p.y, p.z);
+}
 
 } // namespace my_pcl
