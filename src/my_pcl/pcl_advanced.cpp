@@ -32,11 +32,11 @@ int removePlanes(PointCloud<PointXYZRGB>::Ptr &cloud,
     int stop_criteria_num_planes, float stop_criteria_rest_points_ratio,
     bool print_res)
 {
-    assert(stop_criteria_num_planes>0 || stop_criteria_rest_points_ratio>0);
+    assert(stop_criteria_num_planes>=0 || stop_criteria_rest_points_ratio>=0);
     int total_points = (int)cloud->points.size();
     int cnt_planes=0;
     while(1){
-        if(stop_criteria_num_planes>0){
+        if(stop_criteria_num_planes>=0){
             if(cnt_planes>=stop_criteria_num_planes)break;
         }else{
             if(cloud->points.size() <= stop_criteria_rest_points_ratio * total_points)break;

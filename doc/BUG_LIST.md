@@ -8,6 +8,10 @@ ROS seems to
   2. Or, linking the .so into another folder
 which makes the linking error.
 
+Even if I commented out the ROS related lines in CMakeLists and re-cmake, it still gives error.
+So another reason that further causes this problem might be:
+    ccache, which stores the old .so info, and not updating it.
+
 * Smart pointer passes to function
 
 Once it happens to be: Passing a smart pointer to a function, change the content it points to, after the function is finished, the content is still not changed!
@@ -36,10 +40,11 @@ Some data types are the same in pcl and cv.
 # ============================================================
 # ROS bugs
 
+* private namespace in cpp
 
-Even if I commented out the ROS related lines in CMakeLists and re-cmake, it still gives error.
-So another reason that further causes this problem might be:
-    ccache, which stores the old .so info, and not updating it.
+what():  Using ~ names with NodeHandle methods is not allowed.  If you want to use private names with the NodeHandle interface, construct a NodeHandle using a private name as its namespace.  e.g. ros::NodeHandle nh("~");  nh.getParam("my_private_name"); (name = [~plane_distance_threshold])
+
+in short: use this:ros::NodeHandle nh("~");
 
 * ROS_INFO 
 Not ros::ROS_INFO

@@ -26,8 +26,6 @@
     <param name="topic_n2_to_rviz" value="my/cloud_rotated" /> 
     <param name="topic_n2_to_n3" value="my/cloud_segmented" /> 
 
-
-
    <!--================================== Nodes ============================================== -->
 
    <!-- node 1: main node for controlling work flow -->
@@ -39,7 +37,18 @@
     <node name="node2"
         type="n2_filt_and_seg_object" 
         pkg="scan3d_by_baxter" output = "screen">
-            <param name="T" type="double" value="5.0" />     
+            <!-- filtering -->
+            <param name="x_grid_size" type="double" value="0.005" />     
+            <param name="y_grid_size" type="double" value="0.005" />     
+            <param name="z_grid_size" type="double" value="0.005" />     
+            <!-- segment plane -->
+            <param name="plane_distance_threshold" type="double" value="0.01" />     
+            <param name="plane_max_iterations" type="int" value="100" />     
+            <param name="num_planes" type="int" value="1" />     
+            <!-- divide cloud into clusters -->
+            <param name="cluster_tolerance" type="double" value="0.02" />     
+            <param name="min_cluster_size" type="int" value="100" />     
+            <param name="max_cluster_size" type="int" value="10000" />    
     </node>
 
     <node name="node3"

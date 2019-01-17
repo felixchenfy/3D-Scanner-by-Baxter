@@ -149,13 +149,29 @@ int main(int argc, char **argv)
 // =========================== Cloud Processing====================================
 // ================================================================================
 
+// -----------------------------------------------------
+// -----------------------------------------------------
 void update_cloud_rotated()
 {
     // Func: Filtering, rotate cloud to Baxter robot frame
 
+    // voxel filtering
+    static float x_grid_size = 0.005, y_grid_size = 0.005, z_grid_size = 0.005;
+
+    // read params from ros
+    static int cnt_called_times = 0;
+    if (cnt_called_times++ == 0)
+    {
+        ros::NodeHandle nh("~");
+        if (!nh.getParam("x_grid_size", x_grid_size))
+            assert(0);
+        if (!nh.getParam("y_grid_size", y_grid_size))
+            assert(0);
+        if (!nh.getParam("z_grid_size", z_grid_size))
+            assert(0);
+    }
+
     // -- filtByVoxelGrid
-    float x_grid_size = 0.005, y_grid_size = 0.005, z_grid_size = 0.005;
-    // float x_grid_size = 0.02, y_grid_size = 0.02, z_grid_size = 0.02;
     cloud_src = my_pcl::filtByVoxelGrid(cloud_src, x_grid_size, y_grid_size, z_grid_size);
 
     // -- filtByStatisticalOutlierRemoval
@@ -169,23 +185,49 @@ void update_cloud_rotated()
     // Or use this:
     //      my_pcl::rotateCloud(cloud_src, cloud_rotated, camera_pose);
 }
+
+// -----------------------------------------------------
+// -----------------------------------------------------
 void update_cloud_segmented()
 {
     // Func: Remove plane(table), do clustering, choose the largest one
 
+    // plane segmentation
+    static float plane_distance_threshold = 0.01;
+    static int plane_max_iterations = 100;
+    static int num_planes = 1;
+    static float ratio_of_rest_points = -1; // disabled
+
+    // divide cloud into clusters
+    static double cluster_tolerance = 0.02;
+    static int min_cluster_size = 100, max_cluster_size = 10000;
+
+    // read params from ros
+    static int cnt_called_times = 0;
+    if (cnt_called_times++ == 0)
+    {
+        ros::NodeHandle nh("~");
+        if (!nh.getParam("plane_distance_threshold", plane_distance_threshold))
+            assert(0);
+        if (!nh.getParam("plane_max_iterations", plane_max_iterations))
+            assert(0);
+        if (!nh.getParam("num_planes", num_planes))
+            assert(0);
+        if (!nh.getParam("cluster_tolerance", cluster_tolerance))
+            assert(0);
+        if (!nh.getParam("min_cluster_size", min_cluster_size))
+            assert(0);
+        if (!nh.getParam("max_cluster_size", max_cluster_size))
+            assert(0);
+    }
+
     // -- Remove planes
     copyPointCloud(*cloud_rotated, *cloud_segmented);
-    float plane_distance_threshold = 0.01;
-    int plane_max_iterations = 100;
-    int num_planes = 1; 
-    float ratio_of_rest_points = -1; // disabled
     int num_removed_planes = my_pcl::removePlanes(cloud_segmented,
-        plane_distance_threshold, plane_max_iterations,
-        num_planes, ratio_of_rest_points);
+                                                  plane_distance_threshold, plane_max_iterations,
+                                                  num_planes, ratio_of_rest_points);
 
     // -- Clustering: Divide the remaining point cloud into different clusters
-    double cluster_tolerance = 0.02;
-    int min_cluster_size = 100, max_cluster_size = 20000;
     vector<PointIndices> clusters_indices = my_pcl::divideIntoClusters(
         cloud_segmented, cluster_tolerance, min_cluster_size, max_cluster_size);
 
@@ -194,6 +236,9 @@ void update_cloud_segmented()
         my_pcl::extractSubCloudsByIndices(cloud_segmented, clusters_indices);
     cloud_segmented = cloud_clusters[0];
 }
+
+// -----------------------------------------------------
+// -----------------------------------------------------
 void print_cloud_processing_result(int cnt_cloud)
 {
 
