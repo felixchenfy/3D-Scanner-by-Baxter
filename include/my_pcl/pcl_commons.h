@@ -28,7 +28,7 @@ void setPointPos(PointXYZ &point, double x, double y, double z);
 void setPointPos(PointXYZ &point, cv::Mat p);
 
 // -- Transformation
-void rotateCloud(PointCloud<PointXYZRGB>::Ptr src, PointCloud<PointXYZRGB>::Ptr dst,
+void rotateCloud(const PointCloud<PointXYZRGB>::Ptr src, PointCloud<PointXYZRGB>::Ptr &dst,
                  float T_dstFrame_to_srcFrame[4][4]);
 
 }

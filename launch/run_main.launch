@@ -13,6 +13,7 @@
     <!-- File names for readign point cloud and debug -->
     <param name="debug_file_folder" value="$(find scan3d_by_baxter)/data_debug/" /> 
     <param name="debug_file_name" value="cloud_cluster_"  />
+    <param name="debug_file_name" value="milk_and_2bottles_"  />
 
     <!-- File names for saving results -->
     <param name="file_folder" value="$(find scan3d_by_baxter)/data/" /> 
@@ -41,15 +42,14 @@
             <param name="T" type="double" value="5.0" />     
     </node>
 
-    <!-- <node name="node3"
+    <node name="node3"
         type="n3_register_clouds_to_object.py" 
         pkg="scan3d_by_baxter" output = "screen">
-    </node> -->
+    </node>
 
-    <node type="rviz" name="rviz" pkg="rviz"
-        args="-d $(find scan3d_by_baxter)/config/rviz_pc_rotated.rviz" />
+    <!-- <node type="rviz" name="rviz" pkg="rviz"
+        args="-d $(find scan3d_by_baxter)/config/rviz_pc_rotated.rviz" /> -->
 
 
-n3_register_clouds_to_object
 </launch>
 

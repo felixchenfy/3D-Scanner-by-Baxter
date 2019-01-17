@@ -65,8 +65,10 @@ void pubPclCloudToTopic(
     pub.publish(ros_cloud_to_pub);
 }
 
-
 // -- Main Loop:
+void update_cloud_rotated();
+void update_cloud_segmented();
+void print_cloud_processing_result(int cnt_cloud);
 void main_loop(boost::shared_ptr<visualization::PCLVisualizer> viewer,
                ros::Publisher &pub_to_node3, ros::Publisher &pub_to_rviz)
 {
@@ -78,51 +80,17 @@ void main_loop(boost::shared_ptr<visualization::PCLVisualizer> viewer,
             flag_receive_kinect_cloud = false;
             cnt_cloud++;
 
-            // -- filtByVoxelGrid
-            // float x_grid_size = 0.005, y_grid_size = 0.005, z_grid_size = 0.005;
-            float x_grid_size = 0.02, y_grid_size = 0.02, z_grid_size = 0.02;
-            cloud_src = my_pcl::filtByVoxelGrid(cloud_src, x_grid_size, y_grid_size, z_grid_size);
-
-            // -- filtByStatisticalOutlierRemoval
-            float mean_k = 50, std_dev = 1.0;
-            cloud_src = my_pcl::filtByStatisticalOutlierRemoval(cloud_src, mean_k, std_dev);
-
-            // -- rotate cloud, pub to rviz
-            my_pcl::rotateCloud(cloud_src, cloud_rotated, camera_pose);
+            // Process cloud
+            update_cloud_rotated();
             pubPclCloudToTopic(pub_to_rviz, cloud_rotated);
 
-            // -- remove plane, clustering, pub to node3
-            copyPointCloud(*cloud_rotated, *cloud_segmented);
-            // cloud_segmented.points = cloud_rotated.points; // copy as remove plane and clustering
+            update_cloud_segmented();
             pubPclCloudToTopic(pub_to_node3, cloud_segmented);
 
-            // -- Update viewer
-            viewer->updatePointCloud(cloud_segmented, PCL_VIEWER_CLOUD_NAME);
-
-            // -- Print info
-            cout << endl;
-            printf("------------------------------------------\n");
-            printf("-------- Processing %dth cloud -----------\n", cnt_cloud);
-            ROS_INFO("Subscribed a point cloud from ros topic.");
-
-            cout << "camera pos:" << endl;
-            for (int i = 0; i < 4; i++)
-            {
-                for (int j = 0; j < 4; j++)
-                    cout << camera_pose[i][j] << " ";
-                cout << endl;
-            }
-            cout << endl;
-
-            cout << "cloud_src: ";
-            my_pcl::printCloudSize(cloud_src);
-
-            cout << "cloud_src: ";
-            my_pcl::printCloudSize(cloud_rotated);
-
-            cout << "cloud_src: ";
-            my_pcl::printCloudSize(cloud_segmented);
-            printf("------------------------------------------\n\n");
+            // Update
+            viewer->updatePointCloud( // Update viewer
+                cloud_segmented, PCL_VIEWER_CLOUD_NAME);
+            print_cloud_processing_result(cnt_cloud); // Print info
         }
         viewer->spinOnce(10);
         ros::spinOnce(); // In python, sub is running in different thread. In C++, same thread. So need this.
@@ -175,4 +143,94 @@ int main(int argc, char **argv)
     // Return
     ROS_INFO("Node2 stops");
     return 0;
+}
+
+// ================================================================================
+// =========================== Cloud Processing====================================
+// ================================================================================
+
+void update_cloud_rotated()
+{
+    // Func: Filtering, rotate cloud to Baxter robot frame
+
+    // -- filtByVoxelGrid
+    float x_grid_size = 0.005, y_grid_size = 0.005, z_grid_size = 0.005;
+    // float x_grid_size = 0.02, y_grid_size = 0.02, z_grid_size = 0.02;
+    cloud_src = my_pcl::filtByVoxelGrid(cloud_src, x_grid_size, y_grid_size, z_grid_size);
+
+    // -- filtByStatisticalOutlierRemoval
+    float mean_k = 50, std_dev = 1.0;
+    cloud_src = my_pcl::filtByStatisticalOutlierRemoval(cloud_src, mean_k, std_dev);
+
+    cout<<"tmp test cloud_src:"<<endl;
+    cout<<"tmp test cloud_rotated:"<<endl;
+    my_pcl::printCloudSize(cloud_src);
+    my_pcl::printCloudSize(cloud_rotated);
+
+
+    // -- rotate cloud, pub to rviz
+    // my_pcl::rotateCloud(cloud_src, cloud_rotated, camera_pose);
+
+    pcl::copyPointCloud(*cloud_src, *cloud_rotated);
+    // dst->points = src->points; // Why this doesn't work?
+    for (PointXYZRGB &p : cloud_rotated->points)
+        my_basics::preTranslatePoint(camera_pose, p.x, p.y, p.z);
+
+    cout<<"tmp test cloud_src:"<<endl;
+    cout<<"tmp test cloud_rotated:"<<endl;
+    my_pcl::printCloudSize(cloud_src);
+    my_pcl::printCloudSize(cloud_rotated);
+
+}
+void update_cloud_segmented()
+{
+    // Func: Remove plane(table), do clustering, choose the largest one
+
+    // -- Remove planes
+    copyPointCloud(*cloud_rotated, *cloud_segmented);
+    float plane_distance_threshold = 0.01;
+    int plane_max_iterations = 100;
+    int num_planes = 1; 
+    float ratio_of_rest_points = -1; // disabled
+    int num_removed_planes = my_pcl::removePlanes(cloud_segmented,
+        plane_distance_threshold, plane_max_iterations,
+        num_planes, ratio_of_rest_points);
+
+    // -- Clustering: Divide the remaining point cloud into different clusters
+    double cluster_tolerance = 0.02;
+    int min_cluster_size = 100, max_cluster_size = 20000;
+    vector<PointIndices> clusters_indices = my_pcl::divideIntoClusters(
+        cloud_segmented, cluster_tolerance, min_cluster_size, max_cluster_size);
+
+    // -- Extract indices into cloud clusters
+    vector<PointCloud<PointXYZRGB>::Ptr> cloud_clusters =
+        my_pcl::extractSubCloudsByIndices(cloud_segmented, clusters_indices);
+    cloud_segmented = cloud_clusters[0];
+}
+void print_cloud_processing_result(int cnt_cloud)
+{
+
+    cout << endl;
+    printf("------------------------------------------\n");
+    printf("-------- Processing %dth cloud -----------\n", cnt_cloud);
+    ROS_INFO("Subscribed a point cloud from ros topic.");
+
+    cout << "camera pos:" << endl;
+    for (int i = 0; i < 4; i++)
+    {
+        for (int j = 0; j < 4; j++)
+            cout << camera_pose[i][j] << " ";
+        cout << endl;
+    }
+    cout << endl;
+
+    cout << "cloud_src: ";
+    my_pcl::printCloudSize(cloud_src);
+
+    cout << "cloud_rotated: ";
+    my_pcl::printCloudSize(cloud_rotated);
+
+    cout << "cloud_segmented: ";
+    my_pcl::printCloudSize(cloud_segmented);
+    printf("------------------------------------------\n\n");
 }

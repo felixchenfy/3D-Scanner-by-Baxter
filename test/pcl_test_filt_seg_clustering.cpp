@@ -3,12 +3,14 @@ Test functions in "my_pcl/pcl_filters.h" and "my_pcl/pcl_advanced.h":
     filter, segment plane, divide cloud into clusters
 
 Example of usage:
-$ bin/pcl_test_filt_seg_clustering data/color_milk_and_2bottles.pcd
+$ bin/pcl_test_filt_seg_clustering data_others/color_milk_and_2bottles.pcd
 
 This script will generate several point cloud files (cloud_cluster_i.pcd), each is a separated object. 
 Use pcl_viewer to view them:
 $ pcl_viewer cloud_cluster_0.pcd cloud_cluster_1.pcd cloud_cluster_2.pcd cloud_cluster_3.pcd cloud_cluster_4.pcd 
 (Or copy from the printed message of this script.)
+
+// $ rosrun scan3d_by_baxter pcl_test_filt_seg_clustering /home/feiyu/baxterws/src/scan3d_by_baxter/data_others/color_milk_and_2bottles.pcd
 
 */
 
@@ -28,6 +30,10 @@ typedef pcl::PointCloud<PointT> PointCloudT;
 int main(int argc, char **argv)
 {
     // -- Load point cloud
+    if(argc-1!=1){
+        cout<<"my ERROR: please input an argument of the point cloud file name."<<endl;
+        assert(0);
+    }
     string filename = argv[1];
     PointCloudT::Ptr cloud = read_point_cloud(filename);
     PointCloudT::Ptr cloud_filtered;
@@ -59,42 +65,20 @@ int main(int argc, char **argv)
 
     // -- Remove the floor plane and table plane by:
     // detectPlane && extractSubCloudByIndices
-    int total_points = (int)cloud->points.size();
-    for (int cnt = 1; cloud->points.size() > 0.3 * total_points; cnt++) // stop when there is few points
-    {
-        printf("\n-----------------------------\n");
-        printf("Detecting the %dth plane:\n\n", cnt);
-
-        // -- detectPlane
-        ModelCoefficients::Ptr coefficients;
-        PointIndices::Ptr inliers;
-        float distance_threshold = 0.01;
-        int max_iterations = 100;
-        bool res = detectPlane(cloud, coefficients, inliers,
-                               distance_threshold, max_iterations);
-        printPlaneCoef(coefficients);
-        cout << endl;
-
-        // -- extractSubCloudByIndices
-        bool invert_indices = false;
-        PointCloudT::Ptr plane = extractSubCloudByIndices(cloud, inliers, invert_indices);
-        cloud = extractSubCloudByIndices(cloud, inliers, !invert_indices);
-
-        {
-            cout << "Detected plane: ";
-            printCloudSize(plane);
-            write_point_cloud("seg_res_plane_" + to_string(cnt) + ".pcd", plane);
-
-            cout << "The rest part: ";
-            printCloudSize(cloud);
-            write_point_cloud("seg_res_remained_" + to_string(cnt) + ".pcd", cloud);
-            cout << endl;
-        }
-    }
+    float plane_distance_threshold = 0.01;
+    int plane_max_iterations = 100;
+    int stop_criteria_num_planes = 0;
+    float stop_criteria_rest_points_ratio = 0.3; // disabled
+    int num_removed_planes = removePlanes(cloud,
+        plane_distance_threshold, plane_max_iterations,
+        stop_criteria_num_planes, stop_criteria_rest_points_ratio,
+        true);
 
     // -- Clustering: Divide the remaining point cloud into different clusters (by pcl::EuclideanClusterExtraction)
-    double cluster_tolerance = 0.02;
+    double cluster_tolerance = 0.05;
     int min_cluster_size = 100, max_cluster_size = 20000;
+    cout<<"Cloud before clustering:";
+    printCloudSize(cloud);
     vector<PointIndices> clusters_indices = divideIntoClusters(
         cloud, cluster_tolerance, min_cluster_size, max_cluster_size);
 

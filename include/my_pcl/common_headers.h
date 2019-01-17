@@ -12,5 +12,4 @@
 
 #include <pcl/point_types.h>
 #include <pcl/common/common_headers.h>
-
 using namespace std;

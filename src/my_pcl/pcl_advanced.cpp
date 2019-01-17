@@ -1,6 +1,9 @@
 
 #include "my_pcl/pcl_advanced.h"
 #include "my_pcl/pcl_filters.h"
+#include "my_pcl/pcl_commons.h"
+#include "my_pcl/pcl_io.h"
+
 
 namespace my_pcl
 {
@@ -23,9 +26,60 @@ vector<PointCloud<PointXYZRGB>::Ptr> extractSubCloudsByIndices(
     return cloud_clusters;
 }
 
+// Remove planes
+int removePlanes(PointCloud<PointXYZRGB>::Ptr &cloud,
+    float plane_distance_threshold, int plane_max_iterations,
+    int stop_criteria_num_planes, float stop_criteria_rest_points_ratio,
+    bool print_res)
+{
+    assert(stop_criteria_num_planes>0 || stop_criteria_rest_points_ratio>0);
+    int total_points = (int)cloud->points.size();
+    int cnt_planes=0;
+    while(1){
+        if(stop_criteria_num_planes>0){
+            if(cnt_planes>=stop_criteria_num_planes)break;
+        }else{
+            if(cloud->points.size() <= stop_criteria_rest_points_ratio * total_points)break;
+        }        
+        cnt_planes++;
+        // -- detectPlane
+        ModelCoefficients::Ptr coefficients;
+        PointIndices::Ptr inliers;
+        bool res = detectPlane(cloud, coefficients, inliers,
+            plane_distance_threshold, plane_max_iterations);
+        if (res==false){
+            cnt_planes--;
+            cout<<"my WARNING: removePlanes' iteration fails to reach the desired times."<<endl;
+            break;
+        }
+        // -- extractSubCloudByIndices
+        bool invert_indices = false;
+        PointCloud<PointXYZRGB>::Ptr plane = extractSubCloudByIndices(cloud, inliers, invert_indices);
+        cloud = extractSubCloudByIndices(cloud, inliers, !invert_indices);
+
+        if(print_res){
+            printf("\n-----------------------------\n");
+            printf("Detecting the %dth plane:\n\n", cnt_planes);
+
+            printPlaneCoef(coefficients);
+            cout << endl;
+
+            cout << "Detected plane: ";
+            printCloudSize(plane);
+            // write_point_cloud("seg_res_plane_" + to_string(cnt_planes) + ".pcd", plane);
+
+            cout << "The rest part: ";
+            printCloudSize(cloud);
+            // write_point_cloud("seg_res_remained_" + to_string(cnt_planes) + ".pcd", cloud);
+            cout << endl;
+        }
+    }
+    return cnt_planes;
+}
+
 // Do clustering using pcl::EuclideanClusterExtraction. Return the indices of each cluster.
 vector<PointIndices> divideIntoClusters(const PointCloud<PointXYZRGB>::Ptr cloud,
-                                  double cluster_tolerance, int min_cluster_size, int max_cluster_size)
+        double cluster_tolerance, int min_cluster_size, int max_cluster_size)
 {
     vector<PointIndices> clusters_indices; // Output
 
@@ -35,9 +89,9 @@ vector<PointIndices> divideIntoClusters(const PointCloud<PointXYZRGB>::Ptr cloud
 
     // Set extractor
     EuclideanClusterExtraction<PointXYZRGB> ec;
-    ec.setClusterTolerance(0.02); // similar to mean distance between points inside a point cloud
-    ec.setMinClusterSize(100);
-    ec.setMaxClusterSize(25000);
+    ec.setClusterTolerance(cluster_tolerance); // similar to mean distance between points inside a point cloud
+    ec.setMinClusterSize(min_cluster_size);
+    ec.setMaxClusterSize(max_cluster_size);
     ec.setSearchMethod(tree);
     ec.setInputCloud(cloud);
     ec.extract(clusters_indices);

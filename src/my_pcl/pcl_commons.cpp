@@ -61,12 +61,14 @@ void setPointPos(pcl::PointXYZ &point, cv::Mat p)
 
 
 // -- Transformation
-void rotateCloud(PointCloud<PointXYZRGB>::Ptr src, PointCloud<PointXYZRGB>::Ptr dst,
-                 float T_dstFrame_to_srcFrame[4][4])
-{
-    dst->points = src->points;
-    for (PointXYZRGB &p : dst->points)
-        preTranslatePoint(T_dstFrame_to_srcFrame, p.x, p.y, p.z);
-}
+// void rotateCloud(const PointCloud<PointXYZRGB>::Ptr src, PointCloud<PointXYZRGB>::Ptr &dst,
+//                  float T_dstFrame_to_srcFrame[4][4])
+// {
+//      #include <pcl_conversions/pcl_conversions.h> // Why no such file or directory?
+//     pcl::copyPointCloud(*src, *dst); // Why  ‘copyPointCloud’ is not a member of ‘pcl’?
+//     // dst->points = src->points; // Why this doesn't work?
+//     for (PointXYZRGB &p : dst->points)
+//         preTranslatePoint(T_dstFrame_to_srcFrame, p.x, p.y, p.z);
+// }
 
 } // namespace my_pcl

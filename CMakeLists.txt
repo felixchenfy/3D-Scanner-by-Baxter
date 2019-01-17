@@ -50,8 +50,9 @@ add_subdirectory( test )
 # add_subdirectory( tutorials ) # please comment out this line
 
 ############### ROS ######################
-# Set ros package for catkin_make
-# Please comment out the lines below if not using ros
+# -- Set ros package for catkin_make
+# -- Please comment out the lines below if not using ros
+
 find_package(catkin REQUIRED COMPONENTS
   pcl_ros
   roscpp
