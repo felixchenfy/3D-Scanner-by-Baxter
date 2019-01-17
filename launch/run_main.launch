@@ -20,7 +20,7 @@
     <param name="file_folder" value="$(find scan3d_by_baxter)/data/" /> 
     <param name="file_name_cloud_rotated" value="transed_" /> 
     <param name="file_name_cloud_segmented" value="segmented_" /> 
-    <param name="file_name_cloud_final" value="final" /> 
+    <param name="file_name_cloud_final" value="final.pcd" /> 
 
     <!-- My topics -->
     <param name="topic_n1_to_n2" value="my/robot_end_effector_pose" /> 
@@ -63,9 +63,10 @@
         pkg="scan3d_by_baxter" output = "screen">
     </node>
 
+   <!--================================== rviz ============================================== -->
+
     <!-- <node type="rviz" name="rviz" pkg="rviz"
         args="-d $(find scan3d_by_baxter)/config/rviz_pc_rotated.rviz" /> -->
-
 
 </launch>
 

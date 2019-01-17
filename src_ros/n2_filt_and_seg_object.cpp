@@ -33,8 +33,8 @@ float camera_pose[4][4];
 PointCloud<PointXYZRGB>::Ptr cloud_src(new PointCloud<PointXYZRGB>);
 PointCloud<PointXYZRGB>::Ptr cloud_rotated(new PointCloud<PointXYZRGB>);   // this pubs to rviz
 PointCloud<PointXYZRGB>::Ptr cloud_segmented(new PointCloud<PointXYZRGB>); // this pubs to node3
-const string PCL_VIEWER_NAME = "node2: point cloud rotated to the world frame";
-const string PCL_VIEWER_CLOUD_NAME = "cloud_rotated";
+const string PCL_VIEWER_NAME = "node2: point cloud after segmentation";
+const string PCL_VIEWER_CLOUD_NAME = "cloud_segmented";
 
 // -- Functions
 

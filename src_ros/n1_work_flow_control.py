@@ -41,14 +41,14 @@ def moveBaxterToJointAngles(pos):
 def readBaxterEndeffectPose():
     if DEBUG_MODE: # Manually define the T4x4 matrix
         pos = Point(-1, 1, 0)
-        quat = quaternion_from_euler(0, 0, 0, 'rxyz') # This is a list
-        # quat = Quaternion(0,0,0,1) # This is a struct, with members of x,y,z,w
+        pos = Point(0,0, 0)
+        quat = quaternion_from_euler(0, 0, 0, 'rxyz')
     else:
         pos = Point()
         quat = Quaternion()
 
     # Trans to 4x4 matrix, and then trans to 1x16 array
-    R=quaternion_to_SO3(quat)
+    R=quaternion_to_SO3(quat) # this is my func. support both list and quat-struct.
     p=[pos.x, pos.y, pos.z]
     T=form_T(R, p)
     pose=[]
@@ -127,4 +127,7 @@ if __name__ == "__main__":
 
         rospy.sleep(2)
         ith_goalpose+=1
-        if ith_goalpose==num_goalposes: ith_goalpose = 0
+        # if ith_goalpose==num_goalposes: ith_goalpose = 0
+
+    # -- Node stops
+    rospy.loginfo("!!!!! Node 1 stops.")
