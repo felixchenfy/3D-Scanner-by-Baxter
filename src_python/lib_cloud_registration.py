@@ -81,9 +81,10 @@ def registerClouds(src, target, radius_base=0.01):
         current_transformation = result_icp.transformation
 
         if 1:
-            print("\n{}th loop: radius={:.4f}, max_iter={}".format(
+            print("  {}th loop: radius={:.4f}, max_iter={}".format(
                 ith_loop, radius, max_iter))
             # print(current_transformation)
+    print("  Colored ICP completes.\n\n")
 
     # Transform src to target's frame
     src_tmp = copy.deepcopy(src)

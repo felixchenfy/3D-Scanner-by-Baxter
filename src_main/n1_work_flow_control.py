@@ -42,21 +42,12 @@ def moveBaxterToJointAngles(pos):
 def readBaxterEndeffectPose():
     if DEBUG_MODE: # Manually define the T4x4 matrix
         pos = Point(-1, 1, 0)
-        pos = Point(0,0, 0)
-        quat = quaternion_from_euler(0, 0, 0, 'rxyz')
+        pos = Point(0, 0, 0)
+        quaternion = quaternion_from_euler(0, 0, 0, 'rxyz')
     else:
-        pos = Point()
-        quat = Quaternion()
-
-    # Trans to 4x4 matrix, and then trans to 1x16 array
-    R=quaternion_to_SO3(quat) # this is my func. support both list and quat-struct.
-    p=[pos.x, pos.y, pos.z]
-    T=form_T(R, p)
-    pose=[]
-    for i in range(4):
-        for j in range(4):
-            pose+=[T[i,j]]
-    return pose
+        (pos, quaternion) = self.tf_listener.lookupTransform(
+            '/base', '/left_hand_camera', rospy.Time(0))
+    return Pose(pos, quaternion)
 
 def getCloudSize(open3d_cloud):
     return np.asarray(open3d_cloud.points).shape[0]
@@ -75,6 +66,18 @@ if __name__ == "__main__":
     #   sends the pose to node2 to tell it to take the picture.
     pub_pose = rospy.Publisher(topic_endeffector_pos,
                                T4x4, queue_size=10)
+    def publishPose(pose):
+        # Trans to 4x4 matrix
+        R = quaternion_to_SO3(pose.orientation) # this is my func. support both list and quat-struct.
+        p = [pose.position.x, pose.position.y, pose.position.z]
+        T = form_T(R, p)
+
+        # Trans to 1x16 array
+        pose_1x16 = []
+        for i in range(4):
+            for j in range(4):
+                pose_1x16+=[T[i,j]]
+        pub_pose.publish(pose_1x16)
 
     # Boot up Baxter
     if not DEBUG_MODE:
@@ -121,8 +124,8 @@ if __name__ == "__main__":
         
         rospy.loginfo("--------------------------------")
         rospy.loginfo("node1: publish pose "+str(ith_goalpose))
-        pub_pose.publish(pose)
-        
+        publishPose(pose)
+
         if DEBUG_MODE: # simulate publishing a point cloud
             rospy.sleep(0.01)
             sim_pub_point_cloud(ith_goalpose)
