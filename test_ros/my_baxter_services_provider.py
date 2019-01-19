@@ -1,6 +1,8 @@
 #!/usr/bin/python
 
 # Some simple services for printing Baxter status.
+# (However, I just found if we only want the end-effector pose, 
+#       it would be easier just to use "rosrun tf tf_echo /base /left_gripper")
 ''' Command line usage:
     rosservice list |grep my
     rosservice call my/PrintBaxterGripperPose

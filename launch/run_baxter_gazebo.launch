@@ -13,4 +13,9 @@
     <!-- joint_position_keyboard -->
   <node name="joint_position_keyboard" pkg="baxter_examples" type="joint_position_keyboard.py"/>
 
+  <!-- ============================ MY ============================-->
+
+  <node name="my_baxter_services_provider" pkg="scan3d_by_baxter"
+    type="my_baxter_services_provider.py" output="screen" />
+
 </launch>

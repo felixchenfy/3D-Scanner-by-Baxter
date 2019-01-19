@@ -47,6 +47,7 @@ set( THIRD_PARTY_LIBS
 include_directories( ${PROJECT_SOURCE_DIR}/include )
 add_subdirectory( src_cpp )
 add_subdirectory( test )
+# add_subdirectory( docs_not_track )
 
 ############### ROS ######################
 find_package(catkin REQUIRED COMPONENTS
