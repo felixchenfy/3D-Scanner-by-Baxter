@@ -23,14 +23,14 @@ def get_Rp_from_T(T):
 
 # a bit wrap for geometry_msgs.msg.Pose
 def toRosPose(pos, quaternion):
-    if(type(pos)==list):
+    if(type(pos)==list or type(pos) == np.ndarray):
         pos = Point(pos[0],pos[1],pos[2])
-    if(type(quaternion)==list):
+    if(type(quaternion)==list or type(quaternion) == np.ndarray):
         quaternion = Quaternion(quaternion[0],quaternion[1],quaternion[2],quaternion[3])
     return Pose(pos, quaternion)
 
 def quaternion_to_R(quat_xyzw):
-    if type(quat_xyzw) != list:
+    if type(quat_xyzw) != list or type(quat_xyzw) != np.ndarray:
         quat_xyzw=[quat_xyzw.x, quat_xyzw.y, quat_xyzw.z, quat_xyzw.w]
     euler_xyz = euler_from_quaternion(quat_xyzw)
     R = euler_matrix(euler_xyz[0], euler_xyz[1],

@@ -20,21 +20,32 @@ Main function:
 #include "my_pcl/pcl_commons.h"
 #include "my_pcl/pcl_filters.h"
 #include "my_pcl/pcl_advanced.h"
+#include "my_pcl/pcl_io.h"
 #include "scan3d_by_baxter/T4x4.h" // my message
 
 using namespace std;
 using namespace pcl;
 
 // -- Vars
+
+// Filenames for writing tofile
+string file_folder, file_name_cloud_rotated, file_name_cloud_segmented; // filenames for writing cloud to file
+int file_name_index_width;
+
+// PCL viewer setting
+const string PCL_VIEWER_NAME = "node2: point cloud after segmentation";
+const string PCL_VIEWER_CLOUD_NAME = "cloud_segmented";
+
+// Vars for workflow control
 bool flag_receive_from_node1 = false;
 bool flag_receive_kinect_cloud = false;
-// geometry_msgs::Pose camera_pose;
+
+// Data contents
 float camera_pose[4][4];
+// geometry_msgs::Pose camera_pose;
 PointCloud<PointXYZRGB>::Ptr cloud_src(new PointCloud<PointXYZRGB>);
 PointCloud<PointXYZRGB>::Ptr cloud_rotated(new PointCloud<PointXYZRGB>);   // this pubs to rviz
 PointCloud<PointXYZRGB>::Ptr cloud_segmented(new PointCloud<PointXYZRGB>); // this pubs to node3
-const string PCL_VIEWER_NAME = "node2: point cloud after segmentation";
-const string PCL_VIEWER_CLOUD_NAME = "cloud_segmented";
 
 // -- Functions
 
@@ -55,9 +66,7 @@ void callbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud)
         fromROSMsg(ros_cloud, *cloud_src);
     }
 }
-void pubPclCloudToTopic(
-    ros::Publisher &pub,
-    PointCloud<PointXYZRGB>::Ptr pcl_cloud)
+void pubPclCloudToTopic(ros::Publisher &pub, PointCloud<PointXYZRGB>::Ptr pcl_cloud)
 {
     sensor_msgs::PointCloud2 ros_cloud_to_pub;
     pcl::toROSMsg(*pcl_cloud, ros_cloud_to_pub);
@@ -86,6 +95,13 @@ void main_loop(boost::shared_ptr<visualization::PCLVisualizer> viewer,
 
             update_cloud_segmented();
             pubPclCloudToTopic(pub_to_node3, cloud_segmented);
+
+            // Save to file
+            string suffix = my_basics::int2str(cnt_cloud, file_name_index_width) + ".pcd";
+            string f1 = file_folder + file_name_cloud_rotated + suffix;
+            my_pcl::write_point_cloud(f1, cloud_rotated);
+            string f2 = file_folder + file_name_cloud_segmented + suffix;
+            my_pcl::write_point_cloud(f2, cloud_segmented);
 
             // Update
             viewer->updatePointCloud( // Update viewer
@@ -117,12 +133,13 @@ int main(int argc, char **argv)
         assert(0);
 
     // Settings: file names for saving point cloud
-    string file_folder, file_name_cloud_rotated, file_name_cloud_segmented;
     if (!nh.getParam("file_folder", file_folder))
         assert(0);
     if (!nh.getParam("file_name_cloud_rotated", file_name_cloud_rotated))
         assert(0);
     if (!nh.getParam("file_name_cloud_segmented", file_name_cloud_segmented))
+        assert(0);
+    if (!nh.getParam("file_name_index_width", file_name_index_width))
         assert(0);
 
     // Subscriber and Publisher

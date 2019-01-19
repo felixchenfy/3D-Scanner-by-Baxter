@@ -12,7 +12,7 @@ PYTHON_FILE_PATH=os.path.join(os.path.dirname(__file__))+"/"
 import rospy
 # from std_msgs.msg import Int32  # used for indexing the ith robot pose
 from geometry_msgs.msg import Pose, Point, Quaternion
-from sensor_msgs.msg import PointCloud2 # for DEBUG_MODE
+from sensor_msgs.msg import PointCloud2 # for DEBUG_MODE_FOR_BAXTER
 from tf.transformations import euler_from_quaternion, quaternion_from_euler, euler_matrix
 
 # -- My lib
@@ -28,14 +28,14 @@ from scan3d_by_baxter.msg import T4x4
 
 # -- Functions
 def moveBaxterToJointAngles(joint_angles):
-    if DEBUG_MODE:
+    if DEBUG_MODE_FOR_BAXTER:
         None
     else:
         myBaxter.moveToJointAngles(joint_angles)
     return
 
 def readKinectCameraPose():
-    if DEBUG_MODE: # Manually define the T4x4 matrix
+    if DEBUG_MODE_FOR_BAXTER: # Manually define the T4x4 matrix
         pos = Point(0, 0, 0)
         quaternion = quaternion_from_euler(0, 0, 0, 'rxyz')
     else:
@@ -43,17 +43,33 @@ def readKinectCameraPose():
         (pos, quaternion) = myBaxter.getFramePose('/left_gripper')
     return toRosPose(pos, quaternion)
 
+int2str=lambda x, width:("{:0"+str(width)+"d}").format(x) # int2str with specified width filled by 0
+def savePoseToFile(pose, ith_goalpose):
+    filename = file_folder+file_name_pose+ int2str(ith_goalpose, 2)+".txt"
+    p = pose.position
+    q = pose.orientation
+    data = [p.x, p.y, p.z, q.x, q.y, q.z, q.w]
+    np.savetxt(filename, data, delimiter=" ")
+
 def getCloudSize(open3d_cloud):
     return np.asarray(open3d_cloud.points).shape[0]
     
 # -- Main
 if __name__ == "__main__":
     rospy.init_node('node1')
-    DEBUG_MODE = rospy.get_param("DEBUG_MODE")
-    if not DEBUG_MODE:
+    DEBUG_MODE_FOR_BAXTER = rospy.get_param("DEBUG_MODE_FOR_BAXTER")
+    DEBUG_MODE_FOR_KINECT = rospy.get_param("DEBUG_MODE_FOR_KINECT")
+
+    file_folder = rospy.get_param("file_folder")
+    file_name_pose = rospy.get_param("file_name_pose")
+    file_name_index_width = rospy.get_param("file_name_index_width")
+
+    # Set Baxter
+    if not DEBUG_MODE_FOR_BAXTER:
         myBaxter = MyBaxter(['left','right'][0])
         myBaxter.enableBaxter()
     
+    # Start node when pressing enter
     rospy.loginfo("\n\nWaiting for pressing 'enter' to start ...")
     raw_input("")
 
@@ -89,9 +105,9 @@ if __name__ == "__main__":
     ] # its len >= num_goalposes 
     num_joints = 7
 
-    # Settings for DEBUG_MODE:
-    #   Read point_cloud file for simulating fake point cloud publisher
-    if DEBUG_MODE:
+    # Settings for debug kinect:
+    #   Simulate fake point cloud publisher by reading point_cloud from file.
+    if DEBUG_MODE_FOR_KINECT:
         debug_file_folder = rospy.get_param("debug_file_folder")
         debug_file_name = rospy.get_param("debug_file_name") # without suffix "i.pcd"
         topic_name_kinect_cloud = rospy.get_param("topic_name_kinect_cloud")
@@ -111,9 +127,10 @@ if __name__ == "__main__":
     # Robot moves to position
     rospy.sleep(1)
     # for ith_goalpose, joint_angles in enumerate(goalposes_joint_angles):
-    ith_goalpose = 0 
+    ith_goalpose = 0
     while ith_goalpose<num_goalposes and not rospy.is_shutdown():
-        joint_angles=goalposes_joint_angles[ith_goalpose]
+        ith_goalpose+=1
+        joint_angles=goalposes_joint_angles[ith_goalpose-1]
 
         # Move robot to the next pose for taking picture
         rospy.loginfo("--------------------------------")
@@ -124,17 +141,17 @@ if __name__ == "__main__":
         # Publish the signal to node2
         rospy.loginfo("node1: Wait until stable for 1 more second")
         rospy.sleep(1.0)
-        rospy.loginfo("node1: publish camera pose"+str(ith_goalpose)+" to node2")
+        rospy.loginfo("node1: publish "+str(ith_goalpose)+"th camera pose to node2")
         pose = readKinectCameraPose()
         publishPose(pose)
+        savePoseToFile(pose, ith_goalpose)
 
-        if DEBUG_MODE: # simulate publishing a point cloud
+        if DEBUG_MODE_FOR_KINECT: # simulate publishing a point cloud
             rospy.sleep(0.01)
             sim_pub_point_cloud(ith_goalpose)
         rospy.loginfo("--------------------------------")
 
         rospy.sleep(5)
-        ith_goalpose+=1
         # if ith_goalpose==num_goalposes: ith_goalpose = 0
 
     # -- Node stops
