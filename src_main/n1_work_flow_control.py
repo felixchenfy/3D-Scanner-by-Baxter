@@ -1,22 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
+# -- Standard
 import open3d
 import numpy as np
 import sys, os
 import cv2
 PYTHON_FILE_PATH=os.path.join(os.path.dirname(__file__))+"/"
 
+# -- ROS
 import rospy
 # from std_msgs.msg import Int32  # used for indexing the ith robot pose
 from geometry_msgs.msg import Pose, Point, Quaternion
 from sensor_msgs.msg import PointCloud2 # for DEBUG_MODE
 from tf.transformations import euler_from_quaternion, quaternion_from_euler, euler_matrix
 
-# Include my lib
+# -- My lib
 sys.path.append(PYTHON_FILE_PATH + "../src_python")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos
 from lib_geo_trans import form_T, quaternion_to_SO3
+from lib_baxter import MyBaxter
+
+# -- Message types
 from scan3d_by_baxter.msg import T4x4
 
 # ------------------------------------------------------------
@@ -24,20 +29,11 @@ from scan3d_by_baxter.msg import T4x4
 DEBUG_MODE = True
 
 # -- Functions
-def moveBaxterToJointAngles(pos):
-    if DEBUG_MODE:
-        None
-    else:
+def moveBaxterToJointAngles(joint_angles):
+    if not DEBUG_MODE:
+        myBaxter.moveToJointAngles(joint_angles)
         (trans, rot) = self.tf_listener.lookupTransform(
             '/base', '/left_hand_camera', rospy.Time(0))
-        # print "quaternion from tf = ", rot
-        r3=euler_from_quaternion(rot)
-        # print "euler_matrix=",euler_matrix(r3[0],r3[1],r3[2])
-        R=euler_matrix(r3[0],r3[1],r3[2])[0:3,0:3]
-        # R,_=cv2.Rodrigues(r3)
-        # R=np.linalg.inv(R)
-        T = form_T(R,trans)
-        return T
 
 def readBaxterEndeffectPose():
     if DEBUG_MODE: # Manually define the T4x4 matrix
@@ -55,6 +51,9 @@ def getCloudSize(open3d_cloud):
 # -- Main
 if __name__ == "__main__":
     rospy.init_node('node1')
+    if not DEBUG_MODE:
+        myBaxter = MyBaxter()
+    
     print("Waiting for keypress to start ...")
     cv2.waitKey(0)
 

@@ -1,0 +1,4 @@
+---
+# bool success
+# geometry_msgs/Pose pose
+string res_to_print

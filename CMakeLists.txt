@@ -50,22 +50,34 @@ add_subdirectory( test )
 
 ############### ROS ######################
 find_package(catkin REQUIRED COMPONENTS
-  pcl_ros
   roscpp
   rospy
-  sensor_msgs
+  
   std_msgs
+  sensor_msgs
   geometry_msgs
+
   message_generation
+
+  pcl_ros
+
 )
 add_message_files( # add my message
   FILES
   T4x4.msg
 )
+add_service_files(
+  FILES
+  PrintBaxterGripperPose.srv
+  PrintBaxterJointAngles.srv
+)
 generate_messages( # dependencies to my message
   DEPENDENCIES
   std_msgs
+  geometry_msgs
+  baxter_core_msgs
 )
+
 catkin_package(CATKIN_DEPENDS message_runtime) # declares dependencies for packages that depend on this package.
 
 include_directories(

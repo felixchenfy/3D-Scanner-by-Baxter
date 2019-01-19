@@ -1,0 +1,8 @@
+<launch>
+
+    <!-- ============================ MY ============================-->
+
+    <node name="my_baxter_services_provider" pkg="scan3d_by_baxter"
+    type="my_baxter_services_provider.py" output="screen" />
+
+</launch>
