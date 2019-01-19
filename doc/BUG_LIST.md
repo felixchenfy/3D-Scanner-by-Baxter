@@ -52,25 +52,25 @@ Besides, ROS_INFO(str) where str should be a char* instead of string !!!
 
 # ============================================================
 # Open3D
-For its vis=open3d.Visualizer() and its add_geometry, I cannot understand its low level principle.
+
+* For its vis=open3d.Visualizer() and its add_geometry, I cannot understand its low level principle.
 When I use vis.add_geometry(cloud), and then cloud=createARandomTestCloud(), 
     and then update_geometry, the vis does not change.
-Not solved yet. (Except using add_geometry again)
+Result: this bug is Partially solved, by manullay copying fields of a pointcloud to another.
 
 # ============================================================
 # Others
 
-* error: undefined reference to
-I got the namespace spelled wrong. Stupid bug.
+* error: undefined reference to (Stupid bug)
+I got my namespace spelled wrong.
 
-* error: does not name a type
+* error: does not name a type (Stupid bug)
 I got the namespace brasket before the function, thus my "using namespace pcl" is not working.
 And thus the PointCloud does not name a type.
 
 * template cannot be splitted into .h and .cpp
 Instead, define all template definitions in .hpp. Meanwhile, in .h, include this .hpp.
 (Will this slow the compile, compared to linking only?)
-
 
 * About Cmake and linking
 In my A.cpp, I linked it with B.so.

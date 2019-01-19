@@ -61,7 +61,7 @@ void pubPclCloudToTopic(
 {
     sensor_msgs::PointCloud2 ros_cloud_to_pub;
     pcl::toROSMsg(*pcl_cloud, ros_cloud_to_pub);
-    ros_cloud_to_pub.header.frame_id = "odom";
+    ros_cloud_to_pub.header.frame_id = "base";
     pub.publish(ros_cloud_to_pub);
 }
 

@@ -1,3 +1,4 @@
 <launch>
-  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find scan3d_by_baxter)/config/rviz_pc_src.rviz" />
+  <!-- <node type="rviz" name="rviz" pkg="rviz" args="-d $(find scan3d_by_baxter)/config/rviz_pc_only.rviz" /> -->
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find scan3d_by_baxter)/config/rviz_with_baxter.rviz" />
 </launch>

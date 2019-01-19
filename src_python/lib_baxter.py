@@ -42,7 +42,7 @@ class MyBaxter(object):
         return self.getFramePose('/'+self.arm_name+'_hand_camera')
 
     def moveToJointAngles(self, joint_angles):
-        print "Moving robot to joint angles : ", joint_angles
+        # print "Moving robot to joint angles : ", joint_angles
         output_angles = dict(zip(self.joint_names, joint_angles))
         self.limb.set_joint_positions(output_angles)
 

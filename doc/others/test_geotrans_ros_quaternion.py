@@ -33,10 +33,10 @@ print "result:",R
 # Test Quaternion: result: z, y, x, w
 def quaternion_to_matrix(quat_xyzw):
     if type(quat_xyzw)==np.ndarray:
-        xyz_euler=euler_from_quaternion(quat_xyzw)
+        euler_xyz=euler_from_quaternion(quat_xyzw)
     else: # geometry_msgs.msg.Quaternion
-        xyz_euler=euler_from_quaternion([quat_xyzw.x, quat_xyzw.y, quat_xyzw.z, quat_xyzw.w])
-    R=euler_matrix(xyz_euler[0],xyz_euler[1],xyz_euler[2],'rxyz')[0:3,0:3]
+        euler_xyz=euler_from_quaternion([quat_xyzw.x, quat_xyzw.y, quat_xyzw.z, quat_xyzw.w])
+    R=euler_matrix(euler_xyz[0],euler_xyz[1],euler_xyz[2],'rxyz')[0:3,0:3]
     return R
 
 ea_xyz=[0,0,0]

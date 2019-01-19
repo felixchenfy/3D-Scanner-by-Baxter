@@ -43,7 +43,7 @@ Official explanation{
 
 alpha, beta, gamma = 0.3, 0.5, 1.0
 origin, xaxis, yaxis, zaxis = (0, 0, 0), (1, 0, 0), (0, 1, 0), (0, 0, 1)
-xyz_euler = [alpha, beta, gamma]
+euler_xyz = [alpha, beta, gamma]
 
 # ---------------- Ground truth ---------------- 
 print "\n\n-------------------------------------------------------"
@@ -61,7 +61,7 @@ print "\nR = concatenate_matrices(Rx, Ry, Rz):\n", R
 print "\nR = Rx.dot(Ry).dot(Rz):\n", Rx.dot(Ry).dot(Rz)
 print "\neuler_from_matrix(R, 'rxyz')\n", euler
 
-def test_euler_matrix(xyz_euler, i, j, k):
-    return euler_matrix(xyz_euler[i],xyz_euler[j],xyz_euler[k], 'rxyz')[0:3,0:3]
-    # return euler_matrix(xyz_euler[i],xyz_euler[j],xyz_euler[k], 'sxyz')[0:3,0:3]
-print "\neuler_matrix(x, y, z)[0:3,0:3]\n", test_euler_matrix(xyz_euler, 0, 1, 2)
+def test_euler_matrix(euler_xyz, i, j, k):
+    return euler_matrix(euler_xyz[i],euler_xyz[j],euler_xyz[k], 'rxyz')[0:3,0:3]
+    # return euler_matrix(euler_xyz[i],euler_xyz[j],euler_xyz[k], 'sxyz')[0:3,0:3]
+print "\neuler_matrix(x, y, z)[0:3,0:3]\n", test_euler_matrix(euler_xyz, 0, 1, 2)

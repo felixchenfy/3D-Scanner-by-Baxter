@@ -1,8 +1,8 @@
 import numpy as np
-from tf.transformations import euler_from_quaternion, quaternion_from_euler, euler_matrix
-from geometry_msgs.msg import Pose, Point
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
+from tf.transformations import euler_matrix, euler_from_matrix, quaternion_from_matrix
+from geometry_msgs.msg import Pose, Point, Quaternion
 import cv2
-
 
 def form_T(R, p):
     T = np.identity(4)
@@ -21,28 +21,54 @@ def get_Rp_from_T(T):
     p = T[0:3, 3:4]
     return (R, p)
 
+# a bit wrap for geometry_msgs.msg.Pose
+def toRosPose(pos, quaternion):
+    if(type(pos)==list):
+        pos = Point(pos[0],pos[1],pos[2])
+    if(type(quaternion)==list):
+        quaternion = Quaternion(quaternion[0],quaternion[1],quaternion[2],quaternion[3])
+    return Pose(pos, quaternion)
 
-def quaternion_to_SO3(quat_xyzw):
-    if type(quat_xyzw) == np.ndarray:
-        xyz_euler = euler_from_quaternion(quat_xyzw)
-    else:  # type == geometry_msgs.msg.Quaternion
-        xyz_euler = euler_from_quaternion(
-            [quat_xyzw.x, quat_xyzw.y, quat_xyzw.z, quat_xyzw.w])
-    R = euler_matrix(xyz_euler[0], xyz_euler[1],
-                     xyz_euler[2], 'rxyz')[0:3, 0:3]
+def quaternion_to_R(quat_xyzw):
+    if type(quat_xyzw) != list:
+        quat_xyzw=[quat_xyzw.x, quat_xyzw.y, quat_xyzw.z, quat_xyzw.w]
+    euler_xyz = euler_from_quaternion(quat_xyzw)
+    R = euler_matrix(euler_xyz[0], euler_xyz[1],
+                     euler_xyz[2], 'rxyz')[0:3, 0:3]
     return R
 
-# def Rp_to_pose(R,p):
-#     pose=Pose()
+def Rp_to_pose(R, p):
+    if R.shape[0]==3: # expand the matrix to 4x4
+        tmp=np.identity(4)
+        tmp[0:3,0:3]=R
+        R=tmp
+    quaternion = quaternion_from_matrix(R)
+    return Pose(p ,quaternion)
 
-#     R_vec, _ = cv2.Rodrigues(R)
-#     q=quaternion_from_euler(R_vec[2],R_vec[1],R_vec[0])
-#     pose.orientation.w=q[0]
-#     pose.orientation.x=q[1]
-#     pose.orientation.y=q[2]
-#     pose.orientation.z=q[3]
 
-#     pose.position.x=p[0]
-#     pose.position.y=p[1]
-#     pose.position.z=p[2]
-#     return pose
+
+if __name__=="__main__":
+
+    # -- Prepare data
+    p = [1,2,3]
+    euler = [ 0.3, 0.5, 1.0]
+    R = euler_matrix(euler[0],euler[1],euler[2], 'rxyz')[0:3,0:3]
+    quaternion = quaternion_from_euler(
+        euler[0],euler[1],euler[2]) # [0.24434723 0.1452622  0.4917509  0.82302756]
+    
+    # -----------------------------------------------------------------------
+    # -- Copy test case below
+
+    # ================================
+    # print(form_T(R, p))
+
+    # ================================
+    # print(R)
+    # print(quaternion_to_R(quaternion))
+
+    # ================================
+    # print(quaternion)
+    # print(toRosPose(p, quaternion))
+
+    # ================================
+    # print(Rp_to_pose(R, p))

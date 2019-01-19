@@ -1,5 +1,5 @@
 <launch>
-    <!-- ============================ OFFICIAL SCRIPTS ============================-->
+    <!-- ===================== Official Scripts for Baxter Gazebo =====================-->
 
     <!-- run gazebo-->
   <include file="$(find baxter_gazebo)/launch/baxter_world.launch"></include>
@@ -13,7 +13,11 @@
     <!-- joint_position_keyboard -->
   <node name="joint_position_keyboard" pkg="baxter_examples" type="joint_position_keyboard.py"/>
 
-  <!-- ============================ MY ============================-->
+  <!-- ============================ RVIZ ============================-->
+
+  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find scan3d_by_baxter)/config/rviz_with_baxter.rviz" />
+
+  <!-- ============================ MY SERVICE ============================-->
 
   <node name="my_baxter_services_provider" pkg="scan3d_by_baxter"
     type="my_baxter_services_provider.py" output="screen" />

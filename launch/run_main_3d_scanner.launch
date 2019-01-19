@@ -1,6 +1,9 @@
 <launch>
 
     <!-- roslaunch scan3d_by_baxter run_main.launch -->
+    <arg name="run_node1"  default="true" doc="DEBUG: run node 1"/>
+    <arg name="run_node2"  default="false" doc="DEBUG: run node 2"/>
+    <arg name="run_node3"  default="false" doc="DEBUG: run node 3"/>
 
    <!--================================== Parameters ======================================== -->
 
@@ -30,13 +33,15 @@
    <!--================================== Nodes ============================================== -->
 
    <!-- node 1: main node for controlling work flow -->
-    <node name="node1"
+    <node if="$(arg run_node1)" 
+        name="node1"
         type="n1_work_flow_control.py" 
         pkg="scan3d_by_baxter" output = "screen">
     </node>
 
    <!-- node 2: read cloud from kinect, filter, remove plane, do clustering, pub -->
-    <node name="node2"
+    <node if="$(arg run_node2)" 
+        name="node2"
         type="n2_filt_and_seg_object" 
         pkg="scan3d_by_baxter" output = "screen">
 
@@ -58,7 +63,8 @@
     </node>
 
    <!-- node 3: register clouds -->
-    <node name="node3"
+    <node if="$(arg run_node3)" 
+        name="node3"
         type="n3_register_clouds_to_object.py" 
         pkg="scan3d_by_baxter" output = "screen">
     </node>
@@ -66,7 +72,7 @@
    <!--================================== rviz ============================================== -->
 
     <!-- <node type="rviz" name="rviz" pkg="rviz"
-        args="-d $(find scan3d_by_baxter)/config/rviz_pc_rotated.rviz" /> -->
+        args="-d $(find scan3d_by_baxter)/config/rviz_pc_only.rviz" /> -->
 
 </launch>
 
