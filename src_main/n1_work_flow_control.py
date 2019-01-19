@@ -19,14 +19,12 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler, eul
 sys.path.append(PYTHON_FILE_PATH + "../src_python")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos
 from lib_geo_trans import form_T, quaternion_to_R, toRosPose
-from lib_baxter import MyBaxter, enableBaxter
+from lib_baxter import MyBaxter
 
 # -- Message types
 from scan3d_by_baxter.msg import T4x4
 
 # ------------------------------------------------------------
-# -- Param settings
-DEBUG_MODE = False
 
 # -- Functions
 def moveBaxterToJointAngles(joint_angles):
@@ -34,8 +32,9 @@ def moveBaxterToJointAngles(joint_angles):
         None
     else:
         myBaxter.moveToJointAngles(joint_angles)
+    return
 
-def readBaxterEndeffectPose():
+def readKinectCameraPose():
     if DEBUG_MODE: # Manually define the T4x4 matrix
         pos = Point(0, 0, 0)
         quaternion = quaternion_from_euler(0, 0, 0, 'rxyz')
@@ -50,9 +49,10 @@ def getCloudSize(open3d_cloud):
 # -- Main
 if __name__ == "__main__":
     rospy.init_node('node1')
+    DEBUG_MODE = rospy.get_param("DEBUG_MODE")
     if not DEBUG_MODE:
-        enableBaxter()
         myBaxter = MyBaxter(['left','right'][0])
+        myBaxter.enableBaxter()
     
     rospy.loginfo("\n\nWaiting for pressing 'enter' to start ...")
     raw_input("")
@@ -81,8 +81,9 @@ if __name__ == "__main__":
     # Speicify the goalpose_joint_angles that the Baxter needs to move to
     # 7 numbers of the 7 joint angles
     goalposes_joint_angles = [
-        [-1.1804217100143433, -0.029582848772406578, -0.13919752836227417, -0.26763084530830383, 0.21256370842456818, 0.1755865514278412, 0.5648331046104431],
-        [0.21167179942131042, 0.5152220726013184, 0.6683925986289978, 0.06200781092047691, -0.04826340079307556, 0.31762468814849854, 0.9482439756393433]
+        [-0.1375, -0.775, -1.4375, 1.65, 1.0, 1.5875, 2.9875],
+        [-0.0825, -0.465, -0.8625, 0.99, 0.6, 0.9525, 1.7925],
+        [-0.11, -0.62, -1.15, 1.32,  0.80, 1.27,  2.39]
         # [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
         # [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
     ] # its len >= num_goalposes 
@@ -114,15 +115,17 @@ if __name__ == "__main__":
     while ith_goalpose<num_goalposes and not rospy.is_shutdown():
         joint_angles=goalposes_joint_angles[ith_goalpose]
 
-        # Move robot, and then take picture
-
+        # Move robot to the next pose for taking picture
         rospy.loginfo("--------------------------------")
         rospy.loginfo("node1: Baxter is moving to pos: "+str(joint_angles))
         moveBaxterToJointAngles(joint_angles)
-        rospy.loginfo("node1: Baxter reached the pose!\n")
-        pose = readBaxterEndeffectPose()
+        rospy.loginfo("node1: Baxter reached the pose!")
         
-        rospy.loginfo("node1: publish pose "+str(ith_goalpose))
+        # Publish the signal to node2
+        rospy.loginfo("node1: Wait until stable for 1 more second")
+        rospy.sleep(1.0)
+        rospy.loginfo("node1: publish camera pose"+str(ith_goalpose)+" to node2")
+        pose = readKinectCameraPose()
         publishPose(pose)
 
         if DEBUG_MODE: # simulate publishing a point cloud

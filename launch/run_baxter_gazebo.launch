@@ -8,10 +8,10 @@
   <node name="enable_robot" pkg="baxter_tools" type="enable_robot.py" output="screen" args="-e"/>
 
     <!-- trajectory action server -->
-  <!-- <node name="joint_trajectory_action_server" pkg="baxter_interface" type="joint_trajectory_action_server.py"/> -->
+  <node name="joint_trajectory_action_server" pkg="baxter_interface" type="joint_trajectory_action_server.py" args="-m position"/>
 
-    <!-- joint_position_keyboard -->
-  <node name="joint_position_keyboard" pkg="baxter_examples" type="joint_position_keyboard.py"/>
+    <!-- Keyboard input. Please commented this out if running trajectory action server -->
+  <!-- <node name="joint_position_keyboard" pkg="baxter_examples" type="joint_position_keyboard.py"/> -->
 
   <!-- ============================ RVIZ ============================-->
 

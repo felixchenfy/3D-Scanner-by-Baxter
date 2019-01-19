@@ -1,25 +1,51 @@
 #!/usr/bin/python
 
 import numpy as np
+import sys
+
 import rospy
-import baxter_interface
-from baxter_interface import CHECK_VERSION
-from baxter_pykdl import baxter_kinematics
 import tf
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
-# Basic operations of Baxter robot
+import baxter_interface # For basic baxter movement
+from baxter_interface import CHECK_VERSION
+from baxter_pykdl import baxter_kinematics
+
+import actionlib # For trajectory action server
+from copy import copy
+from control_msgs.msg import (
+    FollowJointTrajectoryAction,
+    FollowJointTrajectoryGoal,
+)
+from trajectory_msgs.msg import (
+    JointTrajectoryPoint,
+)
+
+# This class define functions for reading states and moving the Baxter robot
 class MyBaxter(object):
-    def __init__(self, arm_name):
-        self.arm_name = arm_name
-        self.limb_kinematics = baxter_kinematics(arm_name)
-        self.limb = baxter_interface.Limb(arm_name)
-        self.limb_interface = baxter_interface.limb.Limb(arm_name)
+    def __init__(self, limb_name):
+        self.limb_name = limb_name
+        self.limb_kinematics = baxter_kinematics(limb_name)
+        self.limb = baxter_interface.Limb(limb_name)
+        self.limb_interface = baxter_interface.limb.Limb(limb_name)
         self.joint_names = self.limb_interface.joint_names()
         self.tf_listener = tf.TransformListener()
 
+        # trajectory action client
+        self.traj = Trajectory(self.limb_name)
+        rospy.on_shutdown(self.traj.stop)
+
+        if 0: # optional
+            self.enableRobot()
+
     def getJointAngles(self):
-        angles = self.limb.joint_angles().values()
+        if 0:
+            # joint orders: [w0,w1,w2,e0,e1,s0,s1]
+            angles = self.limb.joint_angles().values()
+        else:
+            # joint orders: [s0,s1,e0,e1,w0,w1,w2]
+            angles = [self.limb_interface.joint_angle(joint) \
+                for joint in self.limb_interface.joint_names()]
         return angles
 
     def getGripperPose(self, flag_return_euler=True):
@@ -39,12 +65,42 @@ class MyBaxter(object):
         return pos_list, quaternion_list
 
     def getCameraPose(self):
-        return self.getFramePose('/'+self.arm_name+'_hand_camera')
+        return self.getFramePose('/'+self.limb_name+'_hand_camera')
 
-    def moveToJointAngles(self, joint_angles):
-        # print "Moving robot to joint angles : ", joint_angles
-        output_angles = dict(zip(self.joint_names, joint_angles))
-        self.limb.set_joint_positions(output_angles)
+    def moveToJointAngles(self, goal_angles, time_cost=3.0):
+        if 0:     
+            # joint orders: [w0,w1,w2,e0,e1,s0,s1]
+            # WARNING: This method cannot control time,
+            #   Baxter moves to target at whole speed, which is very unstable.
+            output_angles = dict(zip(self.joint_names, goal_angles))
+            print output_angles
+            self.limb.set_joint_positions(output_angles)
+            rospy.sleep(time_cost)
+        else:
+            # joint orders: [s0,s1,e0,e1,w0,w1,w2]
+            # current_angles = self.getJointAngles()
+            current_angles = [self.limb_interface.joint_angle(joint) for joint in self.limb_interface.joint_names()]
+
+            self.traj.clear()
+            self.traj.add_point(current_angles, 0.0)
+            self.traj.add_point(goal_angles,time_cost)
+            self.traj.start()
+            self.traj.wait(time_cost)
+            
+            # -- Wait more times until reach the target
+            # -- (This is not needed, the traj.wait() is defining the total time cost)
+            # error_pre = 999999
+            # for cnt_wait in range(10):
+            #     diff_angles = np.array(self.getJointAngles())-np.array(goal_angles)
+            #     error = np.linalg.norm(diff_angles)
+            #     print("error: ", error)
+            #     if error<0.01 or abs(error-error_pre)<0.01:
+            #         break
+            #     else:
+            #         rospy.sleep(1.0)
+            #     error_pre=error
+            
+            return
 
     def computeIK(self, pos, orientation=None):
         print("Computing IK:\n")
@@ -76,6 +132,61 @@ class MyBaxter(object):
             print("my WARNING: IK solution not found.")
         return joint_angles
 
+    def enableBaxter(self):
+        rs = baxter_interface.RobotEnable(CHECK_VERSION)
+        print("getGripperPosegetGripperPoseEnabling robot... ")
+        rs.enable()
+        print("Running. Ctrl-c to quit")
+
+# The class for trajectory action client. Copied from:
+# http://sdk.rethinkrobotics.com/wiki/Joint_Trajectory_Client_-_Code_Walkthrough
+class Trajectory(object):
+    def __init__(self, limb_name):
+        ns = 'robot/limb/' + limb_name + '/'
+        self.limb_name=limb_name
+        self._client = actionlib.SimpleActionClient(
+            ns + "follow_joint_trajectory",
+            FollowJointTrajectoryAction,
+        )
+        self._goal = FollowJointTrajectoryGoal()
+        self._goal_time_tolerance = rospy.Time(0.1)
+        self._goal.goal_time_tolerance = self._goal_time_tolerance
+        server_up = self._client.wait_for_server(timeout=rospy.Duration(10.0))
+        if not server_up:
+            rospy.logerr("Timed out waiting for Joint Trajectory"
+                         " Action Server to connect. Start the action server"
+                         " before running example.")
+            rospy.signal_shutdown("Timed out waiting for Action Server")
+            sys.exit(1)
+        self.clear()
+
+    def add_point(self, positions, time):
+        point = JointTrajectoryPoint()
+        point.positions = copy(positions)
+        point.time_from_start = rospy.Duration(time)
+        self._goal.trajectory.points.append(point)
+
+    def start(self):
+        self._goal.trajectory.header.stamp = rospy.Time.now()
+        self._client.send_goal(self._goal)
+
+    def stop(self):
+        self._client.cancel_goal()
+
+    def wait(self, timeout=15.0):
+        self._client.wait_for_result(timeout=rospy.Duration(timeout))
+
+    def result(self):
+        return self._client.get_result()
+
+    def clear(self):
+        self._goal = FollowJointTrajectoryGoal()
+        self._goal.goal_time_tolerance = self._goal_time_tolerance
+        self._goal.trajectory.joint_names = [self.limb_name + '_' + joint for joint in \
+            ['s0', 's1', 'e0', 'e1', 'w0', 'w1', 'w2']]
+    
+
+
  # A template for calling service
 def callService(service_name, service_type, args=None):
     rospy.wait_for_service(service_name)
@@ -87,11 +198,7 @@ def callService(service_name, service_type, args=None):
         print "The error is: ", e
         return None
         
-def enableBaxter():
-    rs = baxter_interface.RobotEnable(CHECK_VERSION)
-    print("getGripperPosegetGripperPoseEnabling robot... ")
-    rs.enable()
-    print("Running. Ctrl-c to quit")
+
 
 
 if __name__ == "__main__":
@@ -99,13 +206,37 @@ if __name__ == "__main__":
 
     # -- Setting Baxter
     # enableBaxter()
-    arm_name = ['left', 'right'][0]
-    my_baxter = MyBaxter(arm_name)
+    limb_name = ['left', 'right'][0]
+    my_baxter = MyBaxter(limb_name)
 
-    # -- TEST
+    # ====================================================================
     print("\n\n-------------------- TESTING --------------------")
+    # -- test reading poses
     pose = my_baxter.getGripperPose()
     print("print end-effector pose:")
     print(pose)
+    
+    angles = my_baxter.getJointAngles()
+    print("print joint angles:")
+    print(angles)
 
+    # # -- test moving baxter to poses
+    goal_angle1 =[-0.11, -0.62, -1.15, 1.32,  0.80, 1.27,  2.39]
+    goal_angle2 =[x * 0.75 for x in goal_angle1]
+    goal_angle3 =[x * 1.25 for x in goal_angle1]
+
+    rospy.loginfo("Start moving to goal 1 ...")
+    my_baxter.moveToJointAngles(goal_angle1, 7.0)
+    rospy.loginfo("Reached goal 1\n")
+
+    rospy.loginfo("Start moving to goal 2 ...")
+    my_baxter.moveToJointAngles(goal_angle2, 2.0)
+    rospy.loginfo("Reached goal 2\n")
+    
+    rospy.loginfo("Start moving to goal 3 ...")
+    my_baxter.moveToJointAngles(goal_angle3, 3.0)
+    rospy.loginfo("Reached goal 3\n")
+
+    # ====================================================================
+    print("Test of lib_baxter completes")
     rospy.spin()
