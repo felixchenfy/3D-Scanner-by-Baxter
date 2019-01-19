@@ -23,7 +23,7 @@ class MyBaxter(object):
         return angles
 
     def getGripperPose(self, flag_return_euler=True):
-        tmp = self.limb_kinematics.forward_position_kinematics()
+        tmp = self.limb_kinematics.forward_position_kinematics().tolist()
         # fk returned type: [x, y, z, quat_i, quat_j, quat_k, quat_w]
         position = tmp[0:3]
         quaternion = tmp[3:]

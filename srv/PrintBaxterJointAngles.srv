@@ -1,4 +1,4 @@
 ---
-# bool success
-# float32[] joint_angles
-string res_to_print
+bool success
+float32[] joint_angles
+# string res_to_print

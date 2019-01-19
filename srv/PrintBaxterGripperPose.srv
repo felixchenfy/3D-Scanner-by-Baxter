@@ -1,4 +1,7 @@
 ---
-# bool success
+bool success
+float32[] position
+float32[] quaternion
+float32[] euler
 # geometry_msgs/Pose pose
-string res_to_print
+# string res_to_print
