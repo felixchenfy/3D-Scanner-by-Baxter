@@ -24,7 +24,7 @@ int main(int argc, char **argv)
     string ros_cloud_frame_id = "base";
     string topic_name_kinect_cloud, file_folder, file_name;
     if (!nh.getParam("topic_name_kinect_cloud", topic_name_kinect_cloud))
-        topic_name_kinect_cloud = "/kinect2/qhd/points";
+        topic_name_kinect_cloud = "/camera/depth_registered/points";
     if (!nh.getParam("file_folder", file_folder))
         assert(0);
     if (!nh.getParam("file_name", file_name))

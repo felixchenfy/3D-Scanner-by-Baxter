@@ -40,7 +40,7 @@ int main(int argc, char **argv)
   string viewer_name = "viewer_name";
   string viewer_cloud_name = "cloud_name";
   if (!nh.getParam("topic_name_kinect_cloud", topic_name_kinect_cloud))
-    topic_name_kinect_cloud = "/kinect2/qhd/points";
+    topic_name_kinect_cloud = "/camera/depth_registered/points";
 
   // Subscriber
   ros::Subscriber sub = nh.subscribe(topic_name_kinect_cloud, 1, subscriber_callback); // 1 is queue size

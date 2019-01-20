@@ -1,5 +1,10 @@
 # This is just for storing usefull command-line commands
 
+
+## ===============================
+## Start Asus rgb-d camera
+$ roslaunch openni2_launch openni2.launch
+
 ## ===============================
 ## my services to print Baxter pose
 rosservice list |grep my

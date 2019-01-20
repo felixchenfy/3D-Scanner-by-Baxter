@@ -22,7 +22,7 @@
     <param name="num_goalposes" type="int" value="2" /> 
 
     <!-- The topic for receiving PointCloud2 from Kinect -->
-    <param name="topic_name_kinect_cloud" value="/kinect2/qhd/points" /> 
+    <param name="topic_name_kinect_cloud" value="/camera/depth_registered/points" /> 
 
     <!-- File names for readign point cloud and debug -->
     <param name="debug_file_folder" value="$(find scan3d_by_baxter)/data_debug/" /> 
