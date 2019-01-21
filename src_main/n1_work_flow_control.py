@@ -18,7 +18,7 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler, eul
 # -- My lib
 sys.path.append(PYTHON_FILE_PATH + "../src_python")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos
-from lib_geo_trans_ros import form_T, quaternion_to_R, toRosPose
+from lib_geo_trans_ros import form_T, quaternion_to_R, toRosPose, pose2T
 from lib_baxter import MyBaxter
 
 # -- Message types
@@ -38,10 +38,16 @@ def readKinectCameraPose():
     if DEBUG_MODE_FOR_BAXTER: # Manually define the T4x4 matrix
         pos = Point(0, 0, 0)
         quaternion = quaternion_from_euler(0, 0, 0, 'rxyz')
+        T=pose2T(pos, quaternion)
     else:
         # (pos, quaternion) = myBaxter.getFramePose('/left_hand_camera')
-        (pos, quaternion) = myBaxter.getFramePose('/left_gripper')
-    return toRosPose(pos, quaternion)
+        # (pos, quaternion) = myBaxter.getFramePose('/left_gripper')
+        (pos, quaternion) = myBaxter.getFramePose('/left_lower_forearm')
+        T_base_to_forearm=pose2T(pos, quaternion)
+        T_forearm_to_camera=!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+
+    return 
 
 int2str=lambda x, width:("{:0"+str(width)+"d}").format(x) # int2str with specified width filled by 0
 def savePoseToFile(pose, ith_goalpose):
@@ -80,10 +86,7 @@ if __name__ == "__main__":
     # Set publisher: After Baxter moves to the next goalpose position, 
     #   sends the pose to node2 to tell it to take the picture.
     def publishPose(pose):
-        # Trans to 4x4 matrix
-        R = quaternion_to_R(pose.orientation)
-        p = [pose.position.x, pose.position.y, pose.position.z]
-        T = form_T(R, p)
+        T = pose
 
         # Trans to 1x16 array
         pose_1x16 = []

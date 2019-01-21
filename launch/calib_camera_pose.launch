@@ -1,0 +1,21 @@
+<launch>
+
+
+    <arg name="topic_pub_images_with_chessboard"  default="my/image_chessboard_pose" doc=""/>
+
+
+    <node name="calib_camera_pose" type="calib_camera_pose.py" pkg="scan3d_by_baxter" output = "screen">
+        <!-- <param name="topic_baxter_left_hand_camera" value="cameras/left_hand_camera/image" />     
+        <param name="topic_rgbd_camera" value="XXX RGBD CAMERA'S COLOR TOPIC XXX" />      -->
+        <param name="topic_pub_images_with_chessboard" value="$(arg topic_pub_images_with_chessboard)" />
+    </node>
+
+    <!-- Display result in rqt_image_view --> -->
+    <!-- rosrun rqt_image_view rqt_image_view image:=/my/image_chessboard_pese -->
+    <node name="rqt_image_view" type="rqt_image_view" pkg="rqt_image_view"
+        output = "screen" args="image:=/$(arg topic_pub_images_with_chessboard)">
+    </node>
+
+
+</launch>
+

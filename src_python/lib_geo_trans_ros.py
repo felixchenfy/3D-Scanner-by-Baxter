@@ -29,6 +29,15 @@ def toRosPose(pos, quaternion):
         quaternion = Quaternion(quaternion[0],quaternion[1],quaternion[2],quaternion[3])
     return Pose(pos, quaternion)
 
+# ROS pose to T4x4
+def pose2T(pos, quaternion):
+    # Trans to 4x4 matrix
+    if(type(pos)!=list and type(pos) != np.ndarray):
+        pos = [pos.x, pos.y, pos.z]
+    R = quaternion_to_R(quaternion)
+    T = form_T(R, pos)
+    return T
+
 def quaternion_to_R(quat_xyzw):
     if type(quat_xyzw) != list or type(quat_xyzw) != np.ndarray:
         quat_xyzw=[quat_xyzw.x, quat_xyzw.y, quat_xyzw.z, quat_xyzw.w]

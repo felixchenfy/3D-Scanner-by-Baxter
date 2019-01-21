@@ -43,7 +43,8 @@ def getChessboardPose(img,
     # -- If found, estimate T_cam_to_chessboard 
     R = p = None
     if flag_find_chessboard == False:
-        print("chessboard not found")
+        # print("chessboard not found")
+        return False, None, None, None
 
     if flag_find_chessboard == True:
         print("chessboard found")
@@ -64,7 +65,7 @@ def getChessboardPose(img,
         # solve PnP: transformation of chessboard wrt CAMERA
         objpoints = objpoints
         imgpoints = corners
-        if 0:
+        if 1: # If you are sure that corners are all correct, use this one
             err_value, R_vec, p = cv2.solvePnP(
                 objpoints, imgpoints, camera_intrinsics, distortion_coeffs)
         else: 
@@ -141,6 +142,9 @@ if __name__=="__main__":
     # Solve T_cam_to_chessboard
     res, R, p, imgpoints = getChessboardPose(I,
       camera_intrinsics, distortion_coeffs, SQUARE_SIZE, CHECKER_ROWS, CHECKER_COLS)
+    if res==False:
+        "\n\nmy ERROR: NO CHESSBOARD\n\n"
+
     print "\nR_cam_to_chessboard:\n", R
     print "\np_cam_to_chessboard:\n", p
     
@@ -150,6 +154,5 @@ if __name__=="__main__":
     drawPosTextToImage(img_display, p)
     
     # Draw coordinate    
-#    drawCoordinateToImage(img_display, R, p, camera_intrinsics, distortion_coeffs=None)
     drawCoordinateToImage(img_display, R, p, camera_intrinsics, distortion_coeffs)
     showImg(img_display)
