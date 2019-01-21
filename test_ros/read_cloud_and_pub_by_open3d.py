@@ -22,8 +22,8 @@ if __name__ == "__main__":
 
     # Params setting
     node_name = "read_cloud_and_pub_by_open3d"
-    topic_name_kinect_cloud = rospy.get_param( "/topic_name_kinect_cloud",
-        "kinect2/qhd/points")
+    topic_name_rgbd_cloud = rospy.get_param( "/topic_name_rgbd_cloud",
+        "camera/depth_registered/points")
     file_folder=rospy.get_param("file_folder")
     file_name=rospy.get_param("file_name")
     filename = file_folder+file_name
@@ -38,7 +38,7 @@ if __name__ == "__main__":
     ros_cloud = convertCloudFromOpen3dToRos(open3d_cloud)
 
     # Publish
-    pub = rospy.Publisher(topic_name_kinect_cloud, PointCloud2, queue_size=10)
+    pub = rospy.Publisher(topic_name_rgbd_cloud, PointCloud2, queue_size=10)
     cnt = 0
     while not rospy.is_shutdown():
         rospy.sleep(1)

@@ -2,7 +2,11 @@
 # -*- coding: utf-8 -*-
 
 '''
-Open3d.Visualizer() currently doesn't have a function of "destroy_geometry", 
+WARNINGS:
+
+1. This is much much slower than pcl!
+
+2. Open3d.Visualizer() currently doesn't have a function of "destroy_geometry", 
   something similar to the "removePointCloud" in pcl.
 
 I'm manually copy new_point_cloud's content to the one for visualization
@@ -26,8 +30,10 @@ import rospy
 from sensor_msgs.msg import PointCloud2
 
 # Include my lib
+rospy.loginfo("----------------------------:"+PYTHON_FILE_PATH)
 sys.path.append(PYTHON_FILE_PATH + "../src_python")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos, convertCloudFromRosToOpen3d
+
 
 def copyOpen3dCloud(src, dst):
     dst.points=src.points
@@ -35,13 +41,11 @@ def copyOpen3dCloud(src, dst):
 
 # Main
 if __name__ == "__main__":
+    node_name = "sub_cloud_and_display_by_open3d"
+    rospy.init_node(node_name, anonymous=True)
 
     # Params settings
-    node_name = "sub_cloud_and_display_by_open3d"
-    topic_name_kinect_cloud = rospy.get_param("topic_name_kinect_cloud", "kinect2/qhd/points")
-
-    # Set node
-    rospy.init_node(node_name, anonymous=True)
+    topic_name_rgbd_cloud = rospy.get_param("topic_name_rgbd_cloud", "camera/depth_registered/points")
 
     # Set subscriber
     global received_ros_cloud
@@ -50,7 +54,7 @@ if __name__ == "__main__":
         global received_ros_cloud
         received_ros_cloud=ros_cloud
         rospy.loginfo("Received ROS PointCloud2 message.")
-    rospy.Subscriber(topic_name_kinect_cloud, PointCloud2, callback)      
+    rospy.Subscriber(topic_name_rgbd_cloud, PointCloud2, callback)      
     
     # Set viewer
     open3d_cloud= open3d.PointCloud()

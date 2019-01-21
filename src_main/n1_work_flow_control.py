@@ -58,7 +58,7 @@ def getCloudSize(open3d_cloud):
 if __name__ == "__main__":
     rospy.init_node('node1')
     DEBUG_MODE_FOR_BAXTER = rospy.get_param("DEBUG_MODE_FOR_BAXTER")
-    DEBUG_MODE_FOR_KINECT = rospy.get_param("DEBUG_MODE_FOR_KINECT")
+    DEBUG_MODE_FOR_RGBDCAM = rospy.get_param("DEBUG_MODE_FOR_RGBDCAM")
 
     file_folder = rospy.get_param("file_folder")
     file_name_pose = rospy.get_param("file_name_pose")
@@ -107,12 +107,12 @@ if __name__ == "__main__":
 
     # Settings for debug kinect:
     #   Simulate fake point cloud publisher by reading point_cloud from file.
-    if DEBUG_MODE_FOR_KINECT:
+    if DEBUG_MODE_FOR_RGBDCAM:
         debug_file_folder = rospy.get_param("debug_file_folder")
         debug_file_name = rospy.get_param("debug_file_name") # without suffix "i.pcd"
-        topic_name_kinect_cloud = rospy.get_param("topic_name_kinect_cloud")
+        topic_name_rgbd_cloud = rospy.get_param("topic_name_rgbd_cloud")
 
-        pub_sim_cloud = rospy.Publisher(topic_name_kinect_cloud,
+        pub_sim_cloud = rospy.Publisher(topic_name_rgbd_cloud,
             PointCloud2, queue_size=10)
         def sim_pub_point_cloud(ith_goalpose):
             filename = debug_file_name+str(ith_goalpose)+".pcd"
@@ -146,7 +146,7 @@ if __name__ == "__main__":
         publishPose(pose)
         savePoseToFile(pose, ith_goalpose)
 
-        if DEBUG_MODE_FOR_KINECT: # simulate publishing a point cloud
+        if DEBUG_MODE_FOR_RGBDCAM: # simulate publishing a point cloud
             rospy.sleep(0.01)
             sim_pub_point_cloud(ith_goalpose)
         rospy.loginfo("--------------------------------")

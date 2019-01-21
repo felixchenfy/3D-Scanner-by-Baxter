@@ -1,9 +1,9 @@
 # This is just for storing usefull command-line commands
 
-
 ## ===============================
-## Start Asus rgb-d camera
-$ roslaunch openni2_launch openni2.launch
+# connect to Baxter
+$ nmcli connection up Rethink
+$ rosrun baxter_tools enable_robot.py -e
 
 ## ===============================
 ## my services to print Baxter pose

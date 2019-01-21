@@ -122,12 +122,12 @@ int main(int argc, char **argv)
     ros::NodeHandle nh;
 
     // Settings: topic names
-    string topic_n1_to_n2, topic_n2_to_n3, topic_name_kinect_cloud, topic_n2_to_rviz;
+    string topic_n1_to_n2, topic_n2_to_n3, topic_name_rgbd_cloud, topic_n2_to_rviz;
     if (!nh.getParam("topic_n1_to_n2", topic_n1_to_n2))
         assert(0);
     if (!nh.getParam("topic_n2_to_n3", topic_n2_to_n3))
         assert(0);
-    if (!nh.getParam("topic_name_kinect_cloud", topic_name_kinect_cloud))
+    if (!nh.getParam("topic_name_rgbd_cloud", topic_name_rgbd_cloud))
         assert(0);
     if (!nh.getParam("topic_n2_to_rviz", topic_n2_to_rviz))
         assert(0);
@@ -144,7 +144,7 @@ int main(int argc, char **argv)
 
     // Subscriber and Publisher
     ros::Subscriber sub_from_node1 = nh.subscribe(topic_n1_to_n2, 1, callbackFromNode1); // 1 is queue size
-    ros::Subscriber sub_from_kinect = nh.subscribe(topic_name_kinect_cloud, 1, callbackFromKinect);
+    ros::Subscriber sub_from_kinect = nh.subscribe(topic_name_rgbd_cloud, 1, callbackFromKinect);
     ros::Publisher pub_to_node3 = nh.advertise<sensor_msgs::PointCloud2>(topic_n2_to_n3, 1);
     ros::Publisher pub_to_rviz = nh.advertise<sensor_msgs::PointCloud2>(topic_n2_to_rviz, 1);
 

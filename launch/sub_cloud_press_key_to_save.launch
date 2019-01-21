@@ -1,0 +1,16 @@
+<launch>
+
+    <!-- not implemented yet -->
+    
+    <!-- <param name="topic_name_rgbd_cloud" value="/camera/depth_registered/points" /> 
+
+    <param name="file_folder" value="$(find scan3d_by_baxter)/data_debug/" /> 
+    <param name="file_name_to_save" value="sample_cloud_" /> 
+   
+    <node name="sub_cloud_press_key_to_save"
+        type="sub_cloud_press_key_to_save"
+        pkg="scan3d_by_baxter" output = "screen">
+    </node> -->
+
+</launch>
+

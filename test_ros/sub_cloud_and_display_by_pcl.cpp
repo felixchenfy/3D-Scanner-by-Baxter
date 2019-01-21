@@ -36,14 +36,14 @@ int main(int argc, char **argv)
   ros::NodeHandle nh;
 
   // Settings
-  string topic_name_kinect_cloud;
+  string topic_name_rgbd_cloud;
   string viewer_name = "viewer_name";
   string viewer_cloud_name = "cloud_name";
-  if (!nh.getParam("topic_name_kinect_cloud", topic_name_kinect_cloud))
-    topic_name_kinect_cloud = "/camera/depth_registered/points";
+  if (!nh.getParam("topic_name_rgbd_cloud", topic_name_rgbd_cloud))
+    topic_name_rgbd_cloud = "/camera/depth_registered/points";
 
   // Subscriber
-  ros::Subscriber sub = nh.subscribe(topic_name_kinect_cloud, 1, subscriber_callback); // 1 is queue size
+  ros::Subscriber sub = nh.subscribe(topic_name_rgbd_cloud, 1, subscriber_callback); // 1 is queue size
 
   // Init viewer
   boost::shared_ptr<pcl::visualization::PCLVisualizer> viewer =

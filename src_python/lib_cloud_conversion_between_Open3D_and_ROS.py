@@ -123,7 +123,7 @@ if __name__ == "__main__":
     print("")
 
     # -- Set publisher
-    topic_name="kinect2/qhd/points"
+    topic_name="camera/depth_registered/points"
     pub = rospy.Publisher(topic_name, PointCloud2, queue_size=1)
     
     # -- Set subscriber

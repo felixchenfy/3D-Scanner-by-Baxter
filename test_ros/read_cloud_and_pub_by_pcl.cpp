@@ -22,9 +22,9 @@ int main(int argc, char **argv)
 
     // Settings
     string ros_cloud_frame_id = "base";
-    string topic_name_kinect_cloud, file_folder, file_name;
-    if (!nh.getParam("topic_name_kinect_cloud", topic_name_kinect_cloud))
-        topic_name_kinect_cloud = "/camera/depth_registered/points";
+    string topic_name_rgbd_cloud, file_folder, file_name;
+    if (!nh.getParam("topic_name_rgbd_cloud", topic_name_rgbd_cloud))
+        topic_name_rgbd_cloud = "/camera/depth_registered/points";
     if (!nh.getParam("file_folder", file_folder))
         assert(0);
     if (!nh.getParam("file_name", file_name))
@@ -35,7 +35,7 @@ int main(int argc, char **argv)
     // }
 
     // Publisher
-    ros::Publisher pub = nh.advertise<sensor_msgs::PointCloud2>(topic_name_kinect_cloud, 1);
+    ros::Publisher pub = nh.advertise<sensor_msgs::PointCloud2>(topic_name_rgbd_cloud, 1);
 
     // Read file
     string filename_whole = file_folder + file_name;
