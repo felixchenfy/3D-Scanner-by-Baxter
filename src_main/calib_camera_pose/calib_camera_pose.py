@@ -119,6 +119,8 @@ if __name__ == "__main__":
         pubImage(pub, I_disp)
         rospy.loginfo("Published a new image with chessboard result")
 
+        # -- Wait for user keypress to calib poses
+        
         rospy.sleep(0.05)
 
     rospy.spin()
