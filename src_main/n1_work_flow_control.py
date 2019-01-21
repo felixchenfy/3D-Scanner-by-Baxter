@@ -18,7 +18,7 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler, eul
 # -- My lib
 sys.path.append(PYTHON_FILE_PATH + "../src_python")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos
-from lib_geo_trans import form_T, quaternion_to_R, toRosPose
+from lib_geo_trans_ros import form_T, quaternion_to_R, toRosPose
 from lib_baxter import MyBaxter
 
 # -- Message types
