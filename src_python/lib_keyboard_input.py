@@ -3,10 +3,10 @@
 
 ''' 4 functions for reading input from keyboard
 {
-    getRawInput
-    waitRawInput
-    getKeyPress
-    waitKeyPress
+    getRawInput(), return string
+    waitRawInput(time_out), return string or None
+    getKeyPress(), return char
+    waitKeyPress(time_out), return char or None
 }
 Tested on Ubuntu
 '''
@@ -83,6 +83,6 @@ def waitKeyPress(time_out=1.0):
 if __name__=="__main__":
 
     c = waitKeyPress(time_out=2.0)
-    print c
+    print "\nDetected keypress: ", c
 
     None

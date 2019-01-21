@@ -1,19 +1,27 @@
 <launch>
 
 
-    <arg name="topic_pub_images_with_chessboard"  default="my/image_chessboard_pose" doc=""/>
+    <arg name="debug_topic_to_pub_image_result"  default="my/image_chessboard_pose" doc=""/>
 
 
     <node name="calib_camera_pose" type="calib_camera_pose.py" pkg="scan3d_by_baxter" output = "screen">
         <!-- <param name="topic_baxter_left_hand_camera" value="cameras/left_hand_camera/image" />     
         <param name="topic_rgbd_camera" value="XXX RGBD CAMERA'S COLOR TOPIC XXX" />      -->
-        <param name="topic_pub_images_with_chessboard" value="$(arg topic_pub_images_with_chessboard)" />
+        <param name="debug_topic_to_pub_image_result" value="$(arg debug_topic_to_pub_image_result)" />
+        <param name="the_frame_depth_camera_connected_to" value="/left_lower_forearm" />
+
+
+        <param name="file_folder" value="$(find scan3d_by_baxter)/config/" /> 
+        <param name="file_name_T_baxter_to_chess" value="T_baxter_to_chess.txt"  />
+        <param name="file_name_T_arm_to_depth" value="T_arm_to_depth.txt"  />
+
     </node>
 
-    <!-- Display result in rqt_image_view --> -->
+
+    <!-- Display result in rqt_image_view -->
     <!-- rosrun rqt_image_view rqt_image_view image:=/my/image_chessboard_pese -->
     <node name="rqt_image_view" type="rqt_image_view" pkg="rqt_image_view"
-        output = "screen" args="image:=/$(arg topic_pub_images_with_chessboard)">
+        output = "screen" args="image:=/$(arg debug_topic_to_pub_image_result)">
     </node>
 
 
