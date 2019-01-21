@@ -8,7 +8,6 @@ This script provides:
 import numpy as np
 import copy
 import cv2
-CALIB_CRITERIA = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER + cv2.CALIB_CB_FAST_CHECK, 30, 0.001) # termination CALIB_CRITERIA
 
 from lib_geo_trans import *
 
@@ -49,16 +48,22 @@ def getChessboardPose(img,
     if flag_find_chessboard == True:
         print("chessboard found")
 
-        # corners pos in image
+        # Refine corners' pos in image
+        # https://docs.opencv.org/2.4/modules/imgproc/doc/feature_detection.html?highlight=cornersubpix
         def refineImageCorners(gray_image, corners):
+            CRITERIA = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER + cv2.CALIB_CB_FAST_CHECK,
+                100, 0.0005)
+            grid_resolution = 7
+            SIZE_OF_SEARCH_WINDOW=(grid_resolution, grid_resolution)
+            HALF_SIZE_OF_ZERO_ZONE=(-1, -1)
             refined_corners = cv2.cornerSubPix(
-                gray_image, corners, (11, 11), (-1, -1), CALIB_CRITERIA)
+                gray_image, corners, SIZE_OF_SEARCH_WINDOW, HALF_SIZE_OF_ZERO_ZONE, CRITERIA)
             return refined_corners
+        corners = refineImageCorners(gray, corners)
 
         # solve PnP: transformation of chessboard wrt CAMERA
         objpoints = objpoints
-        imgpoints = refineImageCorners(gray, corners)
-    
+        imgpoints = corners
         if 0:
             err_value, R_vec, p = cv2.solvePnP(
                 objpoints, imgpoints, camera_intrinsics, distortion_coeffs)
