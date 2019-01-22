@@ -49,6 +49,7 @@ PointCloud<PointXYZRGB>::Ptr cloud_segmented(new PointCloud<PointXYZRGB>); // th
 
 // -- Functions
 
+void read_T_from_file(float T_16x1[16], string filename);
 void callbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message)
 {
     flag_receive_from_node1 = true;
@@ -174,22 +175,64 @@ void update_cloud_rotated()
 
     // voxel filtering
     static float x_grid_size = 0.005, y_grid_size = 0.005, z_grid_size = 0.005;
+    static float x_range_radius, y_range_radius, z_range_low, z_range_up;
+    static bool flag_do_range_filt;
+    static float chessboard_x = 0.0, chessboard_y = 0.0, chessboard_z = 0.0; // Should read from txt
+    static float T_baxter_to_chess[16] = {0};
 
-    // read params from ros
+    // read params from ros for filtering settings
     static int cnt_called_times = 0;
     if (cnt_called_times++ == 0)
     {
         ros::NodeHandle nh("~");
+
+        // -- filtByVoxelGrid
         if (!nh.getParam("x_grid_size", x_grid_size))
             assert(0);
         if (!nh.getParam("y_grid_size", y_grid_size))
             assert(0);
         if (!nh.getParam("z_grid_size", z_grid_size))
             assert(0);
+
+        // -- filtByPassThrough
+        if (!nh.getParam("flag_do_range_filt", flag_do_range_filt))
+            assert(0);
+        if (!nh.getParam("x_range_radius", x_range_radius))
+            assert(0);
+        if (!nh.getParam("y_range_radius", y_range_radius))
+            assert(0);
+        if (!nh.getParam("z_range_low", z_range_low))
+            assert(0);
+        if (!nh.getParam("z_range_up", z_range_up))
+            assert(0);
+
+        // Read chessboard's pose
+        string file_folder_config, file_name_T_baxter_to_chess;
+        if (!nh.getParam("file_folder_config", file_folder_config))
+            assert(0);
+        if (!nh.getParam("file_name_T_baxter_to_chess", file_name_T_baxter_to_chess))
+            assert(0);
+        read_T_from_file(T_baxter_to_chess, file_folder_config + file_name_T_baxter_to_chess);
+        chessboard_x = T_baxter_to_chess[3];
+        chessboard_y = T_baxter_to_chess[7];
+        chessboard_z = T_baxter_to_chess[11];
     }
 
     // -- filtByVoxelGrid
     cloud_src = my_pcl::filtByVoxelGrid(cloud_src, x_grid_size, y_grid_size, z_grid_size);
+
+    // -- filtByPassThrough
+    if (flag_do_range_filt)
+    {
+        cloud_src = my_pcl::filtByPassThrough(
+            cloud_src, "x", chessboard_x + x_range_radius, chessboard_x - x_range_radius);
+
+        cloud_src = my_pcl::filtByPassThrough(
+            cloud_src, "y", chessboard_y + y_range_radius, chessboard_y - y_range_radius);
+
+        cloud_src = my_pcl::filtByPassThrough(
+            cloud_src, "z", chessboard_z + z_range_up, chessboard_z - z_range_low);
+    }
 
     // -- filtByStatisticalOutlierRemoval
     float mean_k = 50, std_dev = 1.0;
@@ -289,4 +332,17 @@ void print_cloud_processing_result(int cnt_cloud)
     cout << "cloud_segmented: ";
     my_pcl::printCloudSize(cloud_segmented);
     printf("------------------------------------------\n\n");
+}
+
+void read_T_from_file(float T_16x1[16], string filename)
+{
+    ifstream fin;
+    fin.open(filename);
+    float val;
+    int cnt = 0;
+    assert(fin.is_open()); // Fail to find the config file
+    while (fin >> val)
+        T_16x1[cnt++] = val;
+    fin.close();
+    return;
 }

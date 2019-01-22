@@ -25,6 +25,11 @@
     <param name="file_name_pose" value="pose_" /> 
     <param name="file_name_index_width" value="1" />   <!-- e.g.: width=2: pose_01, pose_02 -->
 
+    <!-- File names for storing T_baxter_to_chess and T_arm_to_depth-->
+    <param name="file_folder_config" value="$(find scan3d_by_baxter)/config/" /> 
+    <param name="file_name_T_baxter_to_chess" value="T_baxter_to_chess.txt"  />
+    <param name="file_name_T_arm_to_depth" value="T_arm_to_depth.txt"  />
+
     <!-- My topics -->
     <param name="topic_n1_to_n2" value="my/robot_end_effector_pose" /> 
     <param name="topic_n2_to_rviz" value="my/cloud_rotated" /> 
@@ -63,6 +68,17 @@
             <param name="x_grid_size" type="double" value="0.005" />     
             <param name="y_grid_size" type="double" value="0.005" />     
             <param name="z_grid_size" type="double" value="0.005" />   
+
+            <!-- filtering by range. Centered at the chessboard -->
+            <param name="flag_do_range_filt" type="bool" value="false" />     
+            <!-- <param name="x_range_low" type="double" value="0.0" />     
+            <param name="x_range_up" type="double" value="0.0" />     
+            <param name="y_range_low" type="double" value="0.0" />     
+            <param name="y_range_up" type="double" value="0.0" /> -->
+            <param name="z_range_low" type="double" value="0.0" />     
+            <param name="z_range_up" type="double" value="999.0" />     
+            <param name="x_range_radius" type="double" value="0.3" />     
+            <param name="y_range_radius" type="double" value="0.3" />     
 
             <!-- segment plane -->
             <param name="plane_distance_threshold" type="double" value="0.01" />     

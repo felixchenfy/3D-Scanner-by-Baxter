@@ -47,7 +47,7 @@ def getChessboardPose(img,
         return False, None, None, None
 
     if flag_find_chessboard == True:
-        print("chessboard found")
+        # print("chessboard found")
 
         # Refine corners' pos in image
         # https://docs.opencv.org/2.4/modules/imgproc/doc/feature_detection.html?highlight=cornersubpix
