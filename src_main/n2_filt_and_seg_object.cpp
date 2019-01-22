@@ -175,7 +175,6 @@ void update_cloud_rotated()
 
     // voxel filtering
     static float x_grid_size = 0.005, y_grid_size = 0.005, z_grid_size = 0.005;
-    static float x_range_radius, y_range_radius, z_range_low, z_range_up;
 
     // read params from ros for filtering settings
     static int cnt_called_times = 0;
@@ -216,6 +215,7 @@ void update_cloud_segmented()
 
     // Range filtering
     static bool flag_do_range_filt;
+    static float x_range_radius, y_range_radius, z_range_low, z_range_up;
     static float chessboard_x = 0.0, chessboard_y = 0.0, chessboard_z = 0.0; // Should read from txt
     static float T_baxter_to_chess[16] = {0};
 
