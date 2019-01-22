@@ -176,9 +176,6 @@ void update_cloud_rotated()
     // voxel filtering
     static float x_grid_size = 0.005, y_grid_size = 0.005, z_grid_size = 0.005;
     static float x_range_radius, y_range_radius, z_range_low, z_range_up;
-    static bool flag_do_range_filt;
-    static float chessboard_x = 0.0, chessboard_y = 0.0, chessboard_z = 0.0; // Should read from txt
-    static float T_baxter_to_chess[16] = {0};
 
     // read params from ros for filtering settings
     static int cnt_called_times = 0;
@@ -193,6 +190,51 @@ void update_cloud_rotated()
             assert(0);
         if (!nh.getParam("z_grid_size", z_grid_size))
             assert(0);
+
+    }
+
+    // -- filtByVoxelGrid
+    cloud_src = my_pcl::filtByVoxelGrid(cloud_src, x_grid_size, y_grid_size, z_grid_size);
+
+    // -- filtByStatisticalOutlierRemoval
+    float mean_k = 50, std_dev = 1.0;
+    cloud_src = my_pcl::filtByStatisticalOutlierRemoval(cloud_src, mean_k, std_dev);
+
+    // -- rotate cloud
+    pcl::copyPointCloud(*cloud_src, *cloud_rotated);
+    for (PointXYZRGB &p : cloud_rotated->points)
+        my_basics::preTranslatePoint(camera_pose, p.x, p.y, p.z);
+    // Or use this:
+    //      my_pcl::rotateCloud(cloud_src, cloud_rotated, camera_pose);
+}
+
+// -----------------------------------------------------
+// -----------------------------------------------------
+void update_cloud_segmented()
+{
+    // Func: Range filtering，　Remove plane(table), do clustering, choose the largest one
+
+    // Range filtering
+    static bool flag_do_range_filt;
+    static float chessboard_x = 0.0, chessboard_y = 0.0, chessboard_z = 0.0; // Should read from txt
+    static float T_baxter_to_chess[16] = {0};
+
+    // plane segmentation
+    static float plane_distance_threshold = 0.01;
+    static int plane_max_iterations = 100;
+    static int num_planes = 1;
+    static float ratio_of_rest_points = -1; // disabled
+
+    // divide cloud into clusters
+    static bool flag_do_clustering = true;
+    static double cluster_tolerance = 0.02;
+    static int min_cluster_size = 100, max_cluster_size = 10000;
+
+    // read params from ros
+    static int cnt_called_times = 0;
+    if (cnt_called_times++ == 0)
+    {
+        ros::NodeHandle nh("~");
 
         // -- filtByPassThrough
         if (!nh.getParam("flag_do_range_filt", flag_do_range_filt))
@@ -216,12 +258,27 @@ void update_cloud_rotated()
         chessboard_x = T_baxter_to_chess[3];
         chessboard_y = T_baxter_to_chess[7];
         chessboard_z = T_baxter_to_chess[11];
+
+        // Segment plane
+        if (!nh.getParam("plane_distance_threshold", plane_distance_threshold))
+            assert(0);
+        if (!nh.getParam("plane_max_iterations", plane_max_iterations))
+            assert(0);
+        if (!nh.getParam("num_planes", num_planes))
+            assert(0);
+
+        // Clustering
+        if (!nh.getParam("flag_do_clustering", flag_do_clustering))
+            assert(0);
+        if (!nh.getParam("cluster_tolerance", cluster_tolerance))
+            assert(0);
+        if (!nh.getParam("min_cluster_size", min_cluster_size))
+            assert(0);
+        if (!nh.getParam("max_cluster_size", max_cluster_size))
+            assert(0);
     }
 
-    // -- filtByVoxelGrid
-    cloud_src = my_pcl::filtByVoxelGrid(cloud_src, x_grid_size, y_grid_size, z_grid_size);
-
-    // -- filtByPassThrough
+    // -- filtByPassThrough (by range)
     if (flag_do_range_filt)
     {
         cloud_src = my_pcl::filtByPassThrough(
@@ -232,56 +289,6 @@ void update_cloud_rotated()
 
         cloud_src = my_pcl::filtByPassThrough(
             cloud_src, "z", chessboard_z + z_range_up, chessboard_z - z_range_low);
-    }
-
-    // -- filtByStatisticalOutlierRemoval
-    float mean_k = 50, std_dev = 1.0;
-    cloud_src = my_pcl::filtByStatisticalOutlierRemoval(cloud_src, mean_k, std_dev);
-
-    // -- rotate cloud
-    pcl::copyPointCloud(*cloud_src, *cloud_rotated);
-    for (PointXYZRGB &p : cloud_rotated->points)
-        my_basics::preTranslatePoint(camera_pose, p.x, p.y, p.z);
-    // Or use this:
-    //      my_pcl::rotateCloud(cloud_src, cloud_rotated, camera_pose);
-}
-
-// -----------------------------------------------------
-// -----------------------------------------------------
-void update_cloud_segmented()
-{
-    // Func: Remove plane(table), do clustering, choose the largest one
-
-    // plane segmentation
-    static float plane_distance_threshold = 0.01;
-    static int plane_max_iterations = 100;
-    static int num_planes = 1;
-    static float ratio_of_rest_points = -1; // disabled
-
-    // divide cloud into clusters
-    static bool flag_do_clustering = true;
-    static double cluster_tolerance = 0.02;
-    static int min_cluster_size = 100, max_cluster_size = 10000;
-
-    // read params from ros
-    static int cnt_called_times = 0;
-    if (cnt_called_times++ == 0)
-    {
-        ros::NodeHandle nh("~");
-        if (!nh.getParam("plane_distance_threshold", plane_distance_threshold))
-            assert(0);
-        if (!nh.getParam("plane_max_iterations", plane_max_iterations))
-            assert(0);
-        if (!nh.getParam("num_planes", num_planes))
-            assert(0);
-        if (!nh.getParam("flag_do_clustering", flag_do_clustering))
-            assert(0);
-        if (!nh.getParam("cluster_tolerance", cluster_tolerance))
-            assert(0);
-        if (!nh.getParam("min_cluster_size", min_cluster_size))
-            assert(0);
-        if (!nh.getParam("max_cluster_size", max_cluster_size))
-            assert(0);
     }
 
     // -- Remove planes
