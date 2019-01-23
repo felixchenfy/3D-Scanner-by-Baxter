@@ -18,6 +18,9 @@ from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dTo
 from lib_cloud_registration import drawTwoClouds, registerClouds, copyOpen3dCloud
 
 
+VIEW_RES_BY_OPEN3D=False
+VIEW_RES_BY_RVIZ=~VIEW_RES_BY_OPEN3D
+
 # ---------------------------- Main ----------------------------
 if __name__ == "__main__":
     rospy.init_node("node3")
@@ -40,10 +43,11 @@ if __name__ == "__main__":
     rospy.Subscriber(topic_n2_to_n3, PointCloud2, callback)
 
     # -- Set viewer
-    vis_cloud = open3d.PointCloud()
-    vis = open3d.Visualizer()
-    vis.create_window()
-    vis.add_geometry(vis_cloud)
+    if VIEW_RES_BY_OPEN3D:
+        vis_cloud = open3d.PointCloud()
+        vis = open3d.Visualizer()
+        vis.create_window()
+        vis.add_geometry(vis_cloud)
 
     # -- Set up point cloud registeration
     # DEBUG
@@ -71,9 +75,10 @@ if __name__ == "__main__":
                     src=new_cloud_piece, target=final_cloud, radius_base=0.002)
 
             # Update point cloud
-            copyOpen3dCloud(src=final_cloud, dst=vis_cloud)
-            vis.add_geometry(vis_cloud)
-            vis.update_geometry()
+            if VIEW_RES_BY_OPEN3D:
+                copyOpen3dCloud(src=final_cloud, dst=vis_cloud)
+                vis.add_geometry(vis_cloud)
+                vis.update_geometry()
 
             # Save to file for every update
             open3d.write_point_cloud(file_folder+file_name_cloud_final, final_cloud)

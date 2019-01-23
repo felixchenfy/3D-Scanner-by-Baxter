@@ -88,8 +88,8 @@ def getCloudSize(open3d_cloud):
 # -- Main
 if __name__ == "__main__":
     rospy.init_node('node1')
-    DEBUG_MODE_FOR_BAXTER = rospy.get_param("DEBUG_MODE_FOR_BAXTER")
-    DEBUG_MODE_FOR_RGBDCAM = rospy.get_param("DEBUG_MODE_FOR_RGBDCAM")
+    DEBUG_MODE_FOR_BAXTER = rospy.get_param("~DEBUG_MODE_FOR_BAXTER")
+    DEBUG_MODE_FOR_RGBDCAM = rospy.get_param("~DEBUG_MODE_FOR_RGBDCAM")
 
     file_folder = rospy.get_param("file_folder")
     file_name_pose = rospy.get_param("file_name_pose")

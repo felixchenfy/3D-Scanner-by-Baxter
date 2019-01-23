@@ -111,7 +111,7 @@ if __name__ == "__main__":
     import sys, os
 
     # -- Settings
-    filename_="../data/segmented_0"
+    filename_="../data_debug/from_real/segmented_0"
     num_files=6
     target = open3d.PointCloud()
     
