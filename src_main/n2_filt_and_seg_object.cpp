@@ -29,7 +29,7 @@ using namespace pcl;
 // -- Vars
 
 // Filenames for writing tofile
-string file_folder, file_name_cloud_rotated, file_name_cloud_segmented; // filenames for writing cloud to file
+string file_folder, file_name_cloud_src, file_name_cloud_rotated, file_name_cloud_segmented; // filenames for writing cloud to file
 int file_name_index_width;
 
 // PCL viewer setting
@@ -41,8 +41,8 @@ bool flag_receive_from_node1 = false;
 bool flag_receive_kinect_cloud = false;
 
 // Data contents
-float camera_pose[4][4];
-// geometry_msgs::Pose camera_pose;
+float T_baxter_to_depthcam[4][4];
+// geometry_msgs::Pose T_baxter_to_depthcam;
 PointCloud<PointXYZRGB>::Ptr cloud_src(new PointCloud<PointXYZRGB>);
 PointCloud<PointXYZRGB>::Ptr cloud_rotated(new PointCloud<PointXYZRGB>);   // this pubs to rviz
 PointCloud<PointXYZRGB>::Ptr cloud_segmented(new PointCloud<PointXYZRGB>); // this pubs to node3
@@ -56,7 +56,7 @@ void callbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message)
     const vector<float> &trans_mat_16x1 = pose_message->TransformationMatrix;
     for (int cnt = 0, i = 0; i < 4; i++)
         for (int j = 0; j < 4; j++)
-            camera_pose[i][j] = trans_mat_16x1[cnt++];
+            T_baxter_to_depthcam[i][j] = trans_mat_16x1[cnt++];
 }
 void callbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud)
 {
@@ -99,6 +99,8 @@ void main_loop(boost::shared_ptr<visualization::PCLVisualizer> viewer,
 
             // Save to file
             string suffix = my_basics::int2str(cnt_cloud, file_name_index_width) + ".pcd";
+            string f0 = file_folder + file_name_cloud_src + suffix;
+            my_pcl::write_point_cloud(f0, cloud_src);
             string f1 = file_folder + file_name_cloud_rotated + suffix;
             my_pcl::write_point_cloud(f1, cloud_rotated);
             string f2 = file_folder + file_name_cloud_segmented + suffix;
@@ -136,6 +138,8 @@ int main(int argc, char **argv)
     // Settings: file names for saving point cloud
     if (!nh.getParam("file_folder", file_folder))
         assert(0);
+    if (!nh.getParam("file_name_cloud_src", file_name_cloud_src))
+        assert(0);
     if (!nh.getParam("file_name_cloud_rotated", file_name_cloud_rotated))
         assert(0);
     if (!nh.getParam("file_name_cloud_segmented", file_name_cloud_segmented))
@@ -150,10 +154,14 @@ int main(int argc, char **argv)
     ros::Publisher pub_to_rviz = nh.advertise<sensor_msgs::PointCloud2>(topic_n2_to_rviz, 1);
 
     // Init viewer
+    double viwer_axis_unit_length;
+    ros::NodeHandle nhp("~");
+    if (!nhp.getParam("viwer_axis_unit_length", viwer_axis_unit_length))
+        assert(0);
     boost::shared_ptr<visualization::PCLVisualizer> viewer =
         my_pcl::initPointCloudRGBViewer(cloud_segmented,
                                         PCL_VIEWER_NAME, PCL_VIEWER_CLOUD_NAME,
-                                        1.0); // unit length of the shown coordinate frame
+                                        viwer_axis_unit_length);
 
     // Loop, subscribe ros_cloud, and view
     main_loop(viewer, pub_to_node3, pub_to_rviz);
@@ -193,18 +201,17 @@ void update_cloud_rotated()
     }
 
     // -- filtByVoxelGrid
-    cloud_src = my_pcl::filtByVoxelGrid(cloud_src, x_grid_size, y_grid_size, z_grid_size);
+    pcl::copyPointCloud(*cloud_src, *cloud_rotated);
+    cloud_rotated = my_pcl::filtByVoxelGrid(cloud_rotated, x_grid_size, y_grid_size, z_grid_size);
 
     // -- filtByStatisticalOutlierRemoval
     float mean_k = 50, std_dev = 1.0;
-    cloud_src = my_pcl::filtByStatisticalOutlierRemoval(cloud_src, mean_k, std_dev);
+    cloud_rotated = my_pcl::filtByStatisticalOutlierRemoval(cloud_rotated, mean_k, std_dev);
 
-    // -- rotate cloud
-    pcl::copyPointCloud(*cloud_src, *cloud_rotated);
+    // -- rotate cloud to Baxter's frame
     for (PointXYZRGB &p : cloud_rotated->points)
-        my_basics::preTranslatePoint(camera_pose, p.x, p.y, p.z);
-    // Or use this:
-    //      my_pcl::rotateCloud(cloud_src, cloud_rotated, camera_pose);
+        my_basics::preTranslatePoint(T_baxter_to_depthcam, p.x, p.y, p.z);
+
 }
 
 // -----------------------------------------------------
@@ -217,7 +224,7 @@ void update_cloud_segmented()
     static bool flag_do_range_filt;
     static float x_range_radius, y_range_radius, z_range_low, z_range_up;
     static float chessboard_x = 0.0, chessboard_y = 0.0, chessboard_z = 0.0; // Should read from txt
-    static float T_baxter_to_chess[16] = {0};
+    static float T_baxter_to_chess[4][4] = {0};
 
     // plane segmentation
     static float plane_distance_threshold = 0.01;
@@ -235,6 +242,7 @@ void update_cloud_segmented()
     if (cnt_called_times++ == 0)
     {
         ros::NodeHandle nh("~");
+        ros::NodeHandle nhg("");
 
         // -- filtByPassThrough
         if (!nh.getParam("flag_do_range_filt", flag_do_range_filt))
@@ -250,14 +258,18 @@ void update_cloud_segmented()
 
         // Read chessboard's pose
         string file_folder_config, file_name_T_baxter_to_chess;
-        if (!nh.getParam("file_folder_config", file_folder_config))
+        if (!nhg.getParam("file_folder_config", file_folder_config))
             assert(0);
-        if (!nh.getParam("file_name_T_baxter_to_chess", file_name_T_baxter_to_chess))
+        if (!nhg.getParam("file_name_T_baxter_to_chess", file_name_T_baxter_to_chess))
             assert(0);
-        read_T_from_file(T_baxter_to_chess, file_folder_config + file_name_T_baxter_to_chess);
-        chessboard_x = T_baxter_to_chess[3];
-        chessboard_y = T_baxter_to_chess[7];
-        chessboard_z = T_baxter_to_chess[11];
+        float tmpT[16] = {0};
+        read_T_from_file(tmpT, file_folder_config + file_name_T_baxter_to_chess);
+        for (int cnt = 0, i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                T_baxter_to_chess[i][j] = tmpT[cnt++];
+        chessboard_x = T_baxter_to_chess[0][3];
+        chessboard_y = T_baxter_to_chess[1][3];
+        chessboard_z = T_baxter_to_chess[2][3];
 
         // Segment plane
         if (!nh.getParam("plane_distance_threshold", plane_distance_threshold))
@@ -279,20 +291,26 @@ void update_cloud_segmented()
     }
 
     // -- filtByPassThrough (by range)
+    // PointCloud<PointXYZRGB>::Ptr tmp_cloud(new PointCloud<PointXYZRGB>); 
+    copyPointCloud(*cloud_rotated, *cloud_segmented);
     if (flag_do_range_filt)
     {
-        cloud_src = my_pcl::filtByPassThrough(
-            cloud_src, "x", chessboard_x + x_range_radius, chessboard_x - x_range_radius);
+        // cout<<"Debug: before range filter"<<endl;
+        // my_pcl::printCloudSize(cloud_segmented);
+        cloud_segmented = my_pcl::filtByPassThrough(
+            cloud_segmented, "x", chessboard_x + x_range_radius, chessboard_x - x_range_radius);
 
-        cloud_src = my_pcl::filtByPassThrough(
-            cloud_src, "y", chessboard_y + y_range_radius, chessboard_y - y_range_radius);
+        cloud_segmented = my_pcl::filtByPassThrough(
+            cloud_segmented, "y", chessboard_y + y_range_radius, chessboard_y - y_range_radius);
 
-        cloud_src = my_pcl::filtByPassThrough(
-            cloud_src, "z", chessboard_z + z_range_up, chessboard_z - z_range_low);
+        cloud_segmented = my_pcl::filtByPassThrough(
+            cloud_segmented, "z", chessboard_z + z_range_up, chessboard_z + z_range_low);
+        // cout<<"Debug: after range filter"<<endl;
+        // my_pcl::printCloudSize(cloud_segmented);
+
     }
 
     // -- Remove planes
-    copyPointCloud(*cloud_rotated, *cloud_segmented);
     int num_removed_planes = my_pcl::removePlanes(
         cloud_segmented,
         plane_distance_threshold, plane_max_iterations,
@@ -309,6 +327,10 @@ void update_cloud_segmented()
             my_pcl::extractSubCloudsByIndices(cloud_segmented, clusters_indices);
         cloud_segmented = cloud_clusters[0];
     }
+
+    // -- rotate cloud to Chessboard's frame, for better viewing in PCL viewer
+    for (PointXYZRGB &p : cloud_segmented->points)
+        my_basics::preTranslatePoint(T_baxter_to_chess, p.x, p.y, p.z);
 }
 
 // -----------------------------------------------------
@@ -325,7 +347,7 @@ void print_cloud_processing_result(int cnt_cloud)
     for (int i = 0; i < 4; i++)
     {
         for (int j = 0; j < 4; j++)
-            cout << camera_pose[i][j] << " ";
+            cout << T_baxter_to_depthcam[i][j] << " ";
         cout << endl;
     }
     cout << endl;

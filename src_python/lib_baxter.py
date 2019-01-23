@@ -89,8 +89,8 @@ class MyBaxter(object):
             rospy.sleep(time_cost)
         else:
             # joint orders: [s0,s1,e0,e1,w0,w1,w2]
-            # current_angles = self.getJointAngles()
-            current_angles = [self.limb_interface.joint_angle(joint) for joint in self.limb_interface.joint_names()]
+            current_angles = self.getJointAngles()
+            # current_angles = [self.limb_interface.joint_angle(joint) for joint in self.limb_interface.joint_names()]
 
             self.traj.clear()
             self.traj.add_point(current_angles, 0.0)
@@ -219,7 +219,7 @@ if __name__ == "__main__":
     # enableBaxter()
 
     # ====================================================================
-    if 1:
+    if 0:
         limb_name = ['left', 'right'][0]
         my_baxter = MyBaxter(limb_name,turn_on_traj_action_server=False)
         rospy.sleep(1.0) # sleep before query
@@ -243,26 +243,29 @@ if __name__ == "__main__":
                 rospy.sleep(3.0)
 
     # -- Test moving baxter to poses
-    if 0:
+    if 1:
         limb_name = ['left', 'right'][0]
         my_baxter = MyBaxter(limb_name, turn_on_traj_action_server=True)
         rospy.sleep(1.0) # sleep before query
 
-        goal_angle1 =[-0.11, -0.62, -1.15, 1.32,  0.80, 1.27,  2.39]
-        goal_angle2 =[x * 0.75 for x in goal_angle1]
-        goal_angle3 =[x * 1.25 for x in goal_angle1]
+        # goal_angle1 =[-0.11, -0.62, -1.15, 1.32,  0.80, 1.27,  2.39]
+        # goal_angle2 =[x * 0.75 for x in goal_angle1]
+        # goal_angle3 =[x * 1.25 for x in goal_angle1]
+
+        goal_angle1 = [-0.5108156204223633, -0.19289807975292206, 0.12540292739868164, 1.3487526178359985, -3.0583741664886475, -1.1094516515731812, -3.0349810123443604]
+
 
         rospy.loginfo("Start moving to goal 1 ...")
-        my_baxter.moveToJointAngles(goal_angle1, 7.0)
+        my_baxter.moveToJointAngles(goal_angle1, 5.0)
         rospy.loginfo("Reached goal 1\n")
 
-        rospy.loginfo("Start moving to goal 2 ...")
-        my_baxter.moveToJointAngles(goal_angle2, 2.0)
-        rospy.loginfo("Reached goal 2\n")
+        # rospy.loginfo("Start moving to goal 2 ...")
+        # my_baxter.moveToJointAngles(goal_angle2, 5.0)
+        # rospy.loginfo("Reached goal 2\n")
         
-        rospy.loginfo("Start moving to goal 3 ...")
-        my_baxter.moveToJointAngles(goal_angle3, 3.0)
-        rospy.loginfo("Reached goal 3\n")
+        # rospy.loginfo("Start moving to goal 3 ...")
+        # my_baxter.moveToJointAngles(goal_angle3, 5.0)
+        # rospy.loginfo("Reached goal 3\n")
     # ====================================================================
     print("Test of lib_baxter completes")
     rospy.spin()

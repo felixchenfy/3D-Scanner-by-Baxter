@@ -167,7 +167,7 @@ if __name__ == "__main__":
                 np.savetxt(file_name1, T_baxter_to_chess, delimiter=" ")
             else:
                 print "No chessboard in the color_cam's image"
-        if(c=='b' or c=='c'): # Return T_arm_to_depth
+        if(c=='b' or c=='d'): # Return T_arm_to_depth
             if T_baxter_to_chess is None:
                 print("Please press a to compute T_baxter_to_chess first!")
             elif Rs[1] is not None:

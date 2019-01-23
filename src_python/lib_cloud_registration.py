@@ -8,8 +8,12 @@ def drawTwoClouds(source, target, transformation):
     source_temp.transform(transformation)
     draw_geometries([source_temp, target])
 
+def copyOpen3dCloud(src, dst):
+    dst.points = src.points
+    dst.colors = src.colors
 
-def combineTwoClouds(cloud1, cloud2, radius_downsample=0.005):
+
+def combineTwoClouds(cloud1, cloud2, radius_downsample=0.002):
     cloud1_points = np.asarray(cloud1.points)
     cloud2_points = np.asarray(cloud2.points)
     cloud1_colors = np.asarray(cloud1.colors)
@@ -26,7 +30,7 @@ def combineTwoClouds(cloud1, cloud2, radius_downsample=0.005):
     return result
 
 
-def registerClouds(src, target, radius_base=0.01):
+def registerClouds(src, target, radius_base=0.002):
     # -- Use colored ICP to register src onto dst, and return the combined cloud
     # This function is mainly copied from here.
     # http://www.open3d.org/docs/tutorial/Advanced/colored_pointcloud_registration.html
@@ -91,7 +95,10 @@ def registerClouds(src, target, radius_base=0.01):
     src_tmp.transform(result_icp.transformation)
 
     # Combine the two
+    print "src:",src_tmp
+    print "target:",target
     result_cloud = combineTwoClouds(src_tmp, target, radius_base)
+    print "result_cloud: ", result_cloud
     return result_cloud, result_icp.transformation
 
 
@@ -103,23 +110,32 @@ if __name__ == "__main__":
     import time
     import sys, os
 
-    # -- Load data
-    src = read_point_cloud("../data_debug/ColoredICP_1.pcd")
-    target = read_point_cloud("../data_debug/ColoredICP_2.pcd")
-
-    # -- Draw initial alignment
-    if 0:
-        current_transformation = np.identity(4)
-        draw_registration_result_original_color(
-            src, target, current_transformation)
-
-    # -- Register clouds
-    result_cloud, transformation = registerClouds(src, target)
+    # -- Settings
+    filename_="../data/segmented_0"
+    num_files=6
+    target = open3d.PointCloud()
     
-    # -- Print and plot
-    # print(src)
-    # print(target)
-    print(result_cloud)
-    print(transformation)
-    time.sleep(0.3)
-    draw_geometries([result_cloud])
+    for ith_file in range(1, num_files+1):
+        print "==================== {}th file ======================".format(ith_file)
+        filename = filename_+str(ith_file)+".pcd"
+        src = read_point_cloud(filename)
+        if ith_file==1:
+            copyOpen3dCloud(src, target)
+            continue
+        
+        # -- Draw initial alignment
+        if 0:
+            current_transformation = np.identity(4)
+            draw_registration_result_original_color(
+                src, target, current_transformation)
+    
+        # -- Register clouds
+        if 1: # Register by color ICP
+            target, transformation = registerClouds(src, target)
+        else: # By simply combine all together
+            target = combineTwoClouds(src, target)
+        
+        # -- Print and plot
+        print(target)
+        time.sleep(0.3)
+        draw_geometries([target])

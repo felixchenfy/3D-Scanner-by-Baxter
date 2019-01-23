@@ -15,12 +15,7 @@ from sensor_msgs.msg import PointCloud2
 # Include my lib
 sys.path.append(PYTHON_FILE_PATH + "../src_python")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos, convertCloudFromRosToOpen3d
-from lib_cloud_registration import drawTwoClouds, registerClouds
-
-# ---------------------------- functions ----------------------------
-def copyOpen3dCloud(src, dst):
-    dst.points = src.points
-    dst.colors = src.colors
+from lib_cloud_registration import drawTwoClouds, registerClouds, copyOpen3dCloud
 
 
 # ---------------------------- Main ----------------------------
@@ -30,6 +25,10 @@ if __name__ == "__main__":
     # -- Params settings
     topic_n2_to_n3 = rospy.get_param("topic_n2_to_n3")
     num_goalposes = rospy.get_param("num_goalposes")  # DEBUG, NOT USED NOW
+
+    # Output cloud file
+    file_folder = rospy.get_param("file_folder")
+    file_name_cloud_final = rospy.get_param("file_name_cloud_final")
 
     # -- Set subscriber
     global received_ros_clouds # store received clouds in a deque
@@ -69,12 +68,15 @@ if __name__ == "__main__":
                 copyOpen3dCloud(src=new_cloud_piece, dst=final_cloud)
             else:
                 final_cloud, transformation = registerClouds(
-                    src=new_cloud_piece, target=final_cloud, radius_base=0.01)
+                    src=new_cloud_piece, target=final_cloud, radius_base=0.002)
 
             # Update point cloud
             copyOpen3dCloud(src=final_cloud, dst=vis_cloud)
             vis.add_geometry(vis_cloud)
             vis.update_geometry()
+
+            # Save to file for every update
+            open3d.write_point_cloud(file_folder+file_name_cloud_final, final_cloud)
 
 
         # Update viewer
@@ -86,9 +88,6 @@ if __name__ == "__main__":
 
     # -- Save final cloud to file
     rospy.loginfo("!!!!! Node 3 ready to stop ...")
-    file_folder = rospy.get_param("file_folder")
-    file_name_cloud_final = rospy.get_param("file_name_cloud_final")
-    open3d.write_point_cloud(file_folder+file_name_cloud_final, final_cloud)
     
     # -- Node stops
     vis.destroy_window()
