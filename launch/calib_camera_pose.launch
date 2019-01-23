@@ -1,27 +1,62 @@
 <launch>
 
     <!-- Though display in opencv, I als pub the result image to topic.  -->
-    <arg name="debug_topic_to_pub_image_result"  default="my/image_chessboard_pose" doc=""/>
-    <param name="debug_topic_to_pub_image_result" value="$(arg debug_topic_to_pub_image_result)" />
+    <arg name="topic_to_pub_calib_result_image"  default="my/image_chessboard_pose" doc=""/>
 
 
     <node name="calib_camera_pose" type="calib_camera_pose.py" pkg="scan3d_by_baxter" output = "screen">
-        <!-- <param name="topic_baxter_left_hand_camera" value="cameras/left_hand_camera/image" />     
-        <param name="topic_rgbd_camera" value="XXX RGBD CAMERA'S COLOR TOPIC XXX" />      -->
+        <param name="DEBUG_MODE" value="false" />     
+        
+        <!-- Input image topics -->
+        <param name="topic_baxter_left_hand_camera" value="/cameras/left_hand_camera/image" />     
+        <param name="topic_rgbd_camera" value="/camera/rgb/image_rect_color" />     
+        <!-- WARNING: Baxter's camera info is for its 1280x800 size image. If image resized, info is not changed! S**t!
+            So either manually reset the camera size, or manually input the camera info.
+            Here I choose to use the command below to set its camera size:
+        rosrun baxter_tools camera_control.py -o left_hand_camera -r 1280x800 -->
+
+        <!-- Chessboard params -->
+        <!-- <param name="chessboard_square_size" value="0.03425"  /> -->
+        <!-- <param name="chessboard_checker_rows" value="4"  /> -->
+        <!-- <param name="chessboard_checker_cols" value="6"  /> -->
+        <param name="chessboard_square_size" value="0.02455555"  />
+        <param name="chessboard_checker_rows" value="6"  />
+        <param name="chessboard_checker_cols" value="8"  />
+
+        <!-- Baxter: which frame is rgb-d camera connected to -->
         <param name="the_frame_depth_camera_connected_to" value="/left_lower_forearm" />
 
-
+        <!-- Output file to store calibration result (T) -->
         <param name="file_folder" value="$(find scan3d_by_baxter)/config/" /> 
         <param name="file_name_T_baxter_to_chess" value="T_baxter_to_chess.txt"  />
         <param name="file_name_T_arm_to_depth" value="T_arm_to_depth.txt"  />
+
+        <!-- Output to rqt_image_viewer -->
+        <param name="topic_to_pub_calib_result_image" value="$(arg topic_to_pub_calib_result_image)" />
+
     </node>
 
 
     <!-- Display result in rqt_image_view -->
     <!-- <node name="rqt_image_view" type="rqt_image_view" pkg="rqt_image_view"
-        output = "screen" args="image:=/$(arg debug_topic_to_pub_image_result)">
+        output = "screen" args="image:=/$(arg topic_to_pub_calib_result_image)">
     </node> -->
 
 
 </launch>
 
+<!-- A typical calibration result is shown here:
+
+Get/Save T_baxter_to_chess:
+[[ 0.9950652   0.07175472 -0.0685311   0.42526041]
+ [ 0.06799306 -0.99612797 -0.05573167  0.14072247]
+ [-0.07226475  0.05079701 -0.99609109 -0.87945118]
+ [ 0.          0.          0.          1.        ]]
+Get/Save T_arm_to_depth:
+[[ 0.98484448 -0.16254042 -0.06051409  0.011358  ]
+ [ 0.16413439  0.98618497  0.0223407  -0.13841626]
+ [ 0.05604682 -0.03193455  0.9979173  -0.13285034]
+ [ 0.          0.          0.          1.        ]]
+
+
+ -->

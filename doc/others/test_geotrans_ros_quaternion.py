@@ -51,3 +51,25 @@ print "\n\nxyz-euler:", ea_xyz
 print "quaternion_xyzw from the euler:", quaternion_xyzw
 quat=Quaternion(quaternion_xyzw[0],quaternion_xyzw[1],quaternion_xyzw[2],quaternion_xyzw[3])
 print quaternion_to_matrix(quat)
+
+print "Extra test1:"
+def list_to_quat(l):
+    quat=Quaternion(l[0],l[1],l[2],l[3])
+    return quat
+quat = list_to_quat(
+    [-0.7806487738947058, 0.6246318499639127, 0.009172542080295257, 0.018395877232085456]
+)
+print quaternion_to_matrix(quat)
+
+print "Extra test2:"
+quat = list_to_quat(
+    [-0.7806487738947058, -0.6246318499639127, -0.009172542080295257, 0.018395877232085456]
+)
+print quaternion_to_matrix(quat)
+
+print "Extra test3:"
+quat = list_to_quat(
+    [0.7806537138701537, -0.6246224733741084, -0.00940960124324048, 0.018384890023907856]
+)
+print quaternion_to_matrix(quat)
+

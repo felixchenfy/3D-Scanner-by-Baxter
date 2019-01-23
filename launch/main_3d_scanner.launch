@@ -6,7 +6,7 @@
    <!--================================== Parameters ======================================== -->
 
     <!-- Number of poses the Baxter will move to for taking picture -->
-    <param name="num_goalposes" type="int" value="2" /> 
+    <param name="num_goalposes" type="int" value="5" /> 
 
     <!-- The topic for receiving PointCloud2 from RgbdCam -->
     <param name="topic_name_rgbd_cloud" value="/camera/depth_registered/points" /> 
@@ -38,13 +38,13 @@
    <!--================================== Debug Settings ======================================== -->
 
     <arg name="run_node1"  default="true" doc="DEBUG: whether run node 1"/>
-    <arg name="run_node2"  default="true" doc="DEBUG: whether run node 2"/>
+    <arg name="run_node2"  default="false" doc="DEBUG: whether run node 2"/>
     <arg name="run_node3"  default="false" doc="DEBUG: whether run node 3"/>
 
-    <!-- DEBUG_MODE: If true, simulate Kinect point cloud by reading from file -->
-    <param name="DEBUG_MODE_FOR_BAXTER" value="true" type="bool" />
-
     <!-- DEBUG_MODE: If true, no need to connect to real Baxter or Gazebo. Publish fake poses.  -->
+    <param name="DEBUG_MODE_FOR_BAXTER" value="false" type="bool" />
+
+    <!-- DEBUG_MODE: If true, simulate Kinect point cloud by reading from file -->
     <param name="DEBUG_MODE_FOR_RGBDCAM" value="true" type="bool" />
     <param name="topic_name_rgbd_cloud" value="/if_DEBUG_MODE_is_false_Please_comment_this_line_out" /> 
 

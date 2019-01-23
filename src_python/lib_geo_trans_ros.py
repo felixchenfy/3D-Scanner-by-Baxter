@@ -1,6 +1,6 @@
 import numpy as np
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
-from tf.transformations import euler_matrix, euler_from_matrix, quaternion_from_matrix
+from tf.transformations import euler_matrix, euler_from_matrix, quaternion_from_matrix, quaternion_matrix
 from geometry_msgs.msg import Pose, Point, Quaternion
 import cv2
 
@@ -38,12 +38,19 @@ def pose2T(pos, quaternion):
     T = form_T(R, pos)
     return T
 
+def list_to_quat(l):
+    quat=Quaternion(l[0],l[1],l[2],l[3])
+    return quat
+
 def quaternion_to_R(quat_xyzw):
-    if type(quat_xyzw) != list or type(quat_xyzw) != np.ndarray:
+    if type(quat_xyzw) != list and type(quat_xyzw) != np.ndarray:
         quat_xyzw=[quat_xyzw.x, quat_xyzw.y, quat_xyzw.z, quat_xyzw.w]
-    euler_xyz = euler_from_quaternion(quat_xyzw)
-    R = euler_matrix(euler_xyz[0], euler_xyz[1],
-                     euler_xyz[2], 'rxyz')[0:3, 0:3]
+    if 0:
+        euler_xyz = euler_from_quaternion(quat_xyzw, 'rxyz')
+        R = euler_matrix(euler_xyz[0], euler_xyz[1],
+                        euler_xyz[2], 'rxyz')[0:3, 0:3]
+    else:
+        R = quaternion_matrix(quat_xyzw)[:3,:3]
     return R
 
 def Rp_to_pose(R, p):

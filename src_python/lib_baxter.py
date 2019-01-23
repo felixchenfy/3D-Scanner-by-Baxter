@@ -21,9 +21,13 @@ from trajectory_msgs.msg import (
     JointTrajectoryPoint,
 )
 
+from lib_geo_trans_ros import *
+
+
 # This class define functions for reading states and moving the Baxter robot
 class MyBaxter(object):
-    def __init__(self, limb_name):
+    def __init__(self, limb_name,
+            turn_on_traj_action_server=True):
         self.limb_name = limb_name
         self.limb_kinematics = baxter_kinematics(limb_name)
         self.limb = baxter_interface.Limb(limb_name)
@@ -32,8 +36,9 @@ class MyBaxter(object):
         self.tf_listener = tf.TransformListener()
 
         # trajectory action client
-        self.traj = Trajectory(self.limb_name)
-        rospy.on_shutdown(self.traj.stop)
+        if turn_on_traj_action_server:
+            self.traj = Trajectory(self.limb_name)
+            rospy.on_shutdown(self.traj.stop)
 
         if 0: # optional
             self.enableRobot()
@@ -60,9 +65,15 @@ class MyBaxter(object):
             return position, quaternion
 
     def getFramePose(self, frame_name):
-        pos_list, quaternion_list = self.tf_listener.lookupTransform(
-            '/base', '/left_hand_camera', rospy.Time(0))
-        return pos_list, quaternion_list
+        A='/base'
+        B=frame_name
+        # print A, " -> ", B
+        p_A_to_B, q_A_to_B = self.tf_listener.lookupTransform(
+            A, B, rospy.Time(0))
+        T_A_to_B = form_T( quaternion_matrix(q_A_to_B)[:3,:3],p_A_to_B)        
+        # print "pos:", p_A_to_B
+        # print "quaternion:", q_A_to_B
+        return T_A_to_B
 
     def getCameraPose(self):
         return self.getFramePose('/'+self.limb_name+'_hand_camera')
@@ -206,37 +217,52 @@ if __name__ == "__main__":
 
     # -- Setting Baxter
     # enableBaxter()
-    limb_name = ['left', 'right'][0]
-    my_baxter = MyBaxter(limb_name)
 
     # ====================================================================
-    print("\n\n-------------------- TESTING --------------------")
-    # -- test reading poses
-    pose = my_baxter.getGripperPose()
-    print("print end-effector pose:")
-    print(pose)
-    
-    angles = my_baxter.getJointAngles()
-    print("print joint angles:")
-    print(angles)
+    if 1:
+        limb_name = ['left', 'right'][0]
+        my_baxter = MyBaxter(limb_name,turn_on_traj_action_server=False)
+        rospy.sleep(1.0) # sleep before query
 
-    # # -- test moving baxter to poses
-    goal_angle1 =[-0.11, -0.62, -1.15, 1.32,  0.80, 1.27,  2.39]
-    goal_angle2 =[x * 0.75 for x in goal_angle1]
-    goal_angle3 =[x * 1.25 for x in goal_angle1]
+        print("\n\n-------------------- TESTING --------------------")
+        # -- test reading poses
+        pose = my_baxter.getGripperPose()
+        print("print end-effector pose:")
+        print(pose)
+        
+        angles = my_baxter.getJointAngles()
+        print("print joint angles:")
+        print(angles)
 
-    rospy.loginfo("Start moving to goal 1 ...")
-    my_baxter.moveToJointAngles(goal_angle1, 7.0)
-    rospy.loginfo("Reached goal 1\n")
+        # -- Test read pose from tf
+        if 1: 
+            from lib_geo_trans_ros import pose2T
+            while not rospy.is_shutdown():
+                T_baxter_to_color = my_baxter.getCameraPose()
+                print "T_baxter_to_color:\n", T_baxter_to_color
+                rospy.sleep(3.0)
 
-    rospy.loginfo("Start moving to goal 2 ...")
-    my_baxter.moveToJointAngles(goal_angle2, 2.0)
-    rospy.loginfo("Reached goal 2\n")
-    
-    rospy.loginfo("Start moving to goal 3 ...")
-    my_baxter.moveToJointAngles(goal_angle3, 3.0)
-    rospy.loginfo("Reached goal 3\n")
+    # -- Test moving baxter to poses
+    if 0:
+        limb_name = ['left', 'right'][0]
+        my_baxter = MyBaxter(limb_name, turn_on_traj_action_server=True)
+        rospy.sleep(1.0) # sleep before query
 
+        goal_angle1 =[-0.11, -0.62, -1.15, 1.32,  0.80, 1.27,  2.39]
+        goal_angle2 =[x * 0.75 for x in goal_angle1]
+        goal_angle3 =[x * 1.25 for x in goal_angle1]
+
+        rospy.loginfo("Start moving to goal 1 ...")
+        my_baxter.moveToJointAngles(goal_angle1, 7.0)
+        rospy.loginfo("Reached goal 1\n")
+
+        rospy.loginfo("Start moving to goal 2 ...")
+        my_baxter.moveToJointAngles(goal_angle2, 2.0)
+        rospy.loginfo("Reached goal 2\n")
+        
+        rospy.loginfo("Start moving to goal 3 ...")
+        my_baxter.moveToJointAngles(goal_angle3, 3.0)
+        rospy.loginfo("Reached goal 3\n")
     # ====================================================================
     print("Test of lib_baxter completes")
     rospy.spin()

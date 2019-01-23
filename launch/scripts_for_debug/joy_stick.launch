@@ -1,0 +1,7 @@
+<launch>
+
+    <!-- Keyboard input. Please commented this out if running trajectory action server -->
+  <node name="joint_position_keyboard" pkg="baxter_examples" type="joint_position_keyboard.py"/>
+
+
+</launch>

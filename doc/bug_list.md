@@ -50,6 +50,31 @@ in short: use this:ros::NodeHandle nh("~");
 Not ros::ROS_INFO
 Besides, ROS_INFO(str) where str should be a char* instead of string !!!
 
+* Conversion between quaternion and euler
+Whenever use euler related function, must pay attention to the option.
+The default is not 'rxyz'. However, 'rxyz' is the one I'm familiar with.
+
+* tf transform
+
+p_A_to_B, q_A_to_B = self.tf_listener.lookupTransform(
+    A, B, rospy.Time(0))
+Besides, it might returns error if the node has just been initialized.
+rospy.sleep(1) for one second and then call this function.
+
+# ============================================================
+# Bugs related to Hardware
+
+
+* Calibration
+I'm using two camera for calibration. However, the chessboard frame in two camera's might be in different orientation.  
+That is saying chessboard is a bad thing!
+I need to pay attention to the video when calibrating it.
+(In future version, I can draw some red color to chessboard to make sure only a single coordinate.)
+
+* Asus depth camera constantly cannot be connected
+Shake the wire of the Asus camera and try again. The problem is not on my USB side!
+
+
 # ============================================================
 # Open3D
 

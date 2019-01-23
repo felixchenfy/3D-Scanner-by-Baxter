@@ -1,0 +1,18 @@
+
+<launch>
+
+    <!-- enable robot -->
+  <node name="enable_robot" pkg="baxter_tools" type="enable_robot.py" output="screen" args="-e"/>
+
+    <!-- trajectory action server -->
+  <node name="joint_trajectory_action_server" pkg="baxter_interface" type="joint_trajectory_action_server.py" args="-m position"/>
+
+    <!-- My service -->
+  <node name="my_baxter_services_provider" pkg="scan3d_by_baxter"
+    type="my_baxter_services_provider.py" output="screen" />
+ 
+  <!-- joy stick -->
+  <node name="joint_position_keyboard" pkg="baxter_examples" type="joint_position_keyboard.py"/>
+
+
+</launch>
