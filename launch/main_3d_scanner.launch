@@ -3,7 +3,7 @@
     <!-- This launches the 3 main nodes for "Baxter 3D Object Scanner"-->
 
 
-   <!--================================== Parameters ======================================== -->
+   <!--=============================== Parameters ======================================== -->
 
     <!-- Number of poses the Baxter will move to for taking picture -->
     <param name="num_goalposes" type="int" value="6" /> 
@@ -36,22 +36,34 @@
     <param name="topic_n2_to_rviz" value="my/cloud_rotated" /> 
     <param name="topic_n2_to_n3" value="my/cloud_segmented" /> 
 
-   <!--================================== Debug Settings ======================================== -->
 
-    <arg name="run_node1"  default="true" doc="DEBUG: whether run node 1">
-    <!-- <arg name="run_node1_sim"  default="true" doc="Run a fake node 1. All data are read from file. No need for Baxter or Kinect. "> -->
-    <arg name="run_node2"  default="true" doc="DEBUG: whether run node 2"/>
-    <arg name="run_node3"  default="true" doc="DEBUG: whether run node 3"/>
-
-   <!--================================== Nodes: setup ============================================== -->
+   <!--=============================== Nodes: setup ============================================== -->
    
     <!-- enable robot -->
     <!-- <node name="enable_robot" pkg="baxter_tools" type="enable_robot.py" output="screen" args="-e"/> -->
 
-    <!-- trajectory action server -->
-    <node name="joint_trajectory_action_server" pkg="baxter_interface" type="joint_trajectory_action_server.py" args="-m position"/>
+ 
+   <!--=============================== Debug Settings ======================================== -->
 
-   <!--=============================== Nodes: my main 3 nodes =========================================== -->
+    <arg name="run_node1"  default="false" doc="DEBUG: whether run node 1"/>
+    <arg name="run_node2"  default="true" doc="DEBUG: whether run node 2"/>
+    <arg name="run_node3"  default="true" doc="DEBUG: whether run node 3"/>
+
+    <arg name="run_node1_fake"  default="true"
+        doc="Run a fake node 1. All data are read from file. No need for Baxter or Kinect."/>
+
+   
+   <!--=============================== Run setup nodes =========================================== -->
+    <group if="$(arg run_node1)">
+
+       <!-- trajectory action server -->
+        <node name="joint_trajectory_action_server" pkg="baxter_interface"
+            type="joint_trajectory_action_server.py" args="-m position"
+        />
+    
+    </group>
+
+   <!--=============================== Nodes: Main 3 =========================================== -->
 
    <!-- node 1: main node for controlling work flow -->
     <node if="$(arg run_node1)" 
@@ -65,6 +77,12 @@
         <!-- <param name="topic_name_rgbd_cloud" value="/if_DEBUG_MODE_is_false_Please_comment_this_line_out" />  -->
     
     </node>
+
+    <node if="$(arg run_node1_fake)" 
+        name="n1_fake" pkg="scan3d_by_baxter" type="n1_fake.py" output = "screen">
+    </node>
+
+
 
    <!-- node 2: read cloud from kinect, filter, remove plane, do clustering, pub -->
     <node if="$(arg run_node2)" 
@@ -115,4 +133,3 @@
        args="-d $(find scan3d_by_baxter)/config/rviz_baxter_and_clouds.rviz" /> 
 
 </launch>
-

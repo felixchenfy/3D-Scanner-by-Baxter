@@ -64,7 +64,7 @@ class MyBaxter(object):
         else:
             return position, quaternion
 
-    def getFramePose(self, frame_name):
+    def getFramePose(self, frame_name): # return 4x4 transformation matrix
         A='/base'
         B=frame_name
         # print A, " -> ", B
@@ -75,7 +75,7 @@ class MyBaxter(object):
         # print "quaternion:", q_A_to_B
         return T_A_to_B
 
-    def getCameraPose(self):
+    def getCameraPose(self): # return 4x4 transformation matrix
         return self.getFramePose('/'+self.limb_name+'_hand_camera')
 
     def moveToJointAngles(self, goal_angles, time_cost=3.0):

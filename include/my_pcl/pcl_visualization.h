@@ -22,10 +22,11 @@ initPointCloudRGBViewer(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud,
                         );
 
 // set the initial viewing angle (Copied from pcl website)
-void  setViewerPose (pcl::visualization::PCLVisualizer& viewer, const Eigen::Affine3f& viewer_pose);
+void setViewerPose(boost::shared_ptr<visualization::PCLVisualizer> viewer,
+    const Eigen::Affine3f& viewer_pose);
 
 // set the initial viewing angle (Overload by using pos and euler angles)
-void  setViewerPose (pcl::visualization::PCLVisualizer& viewer,
+void setViewerPose(boost::shared_ptr<visualization::PCLVisualizer> viewer,
     double x, double y, double z, double ea_x, double ea_y, double ea_z);
 
 

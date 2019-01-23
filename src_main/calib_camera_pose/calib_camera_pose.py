@@ -77,11 +77,13 @@ if __name__ == "__main__":
         CAMERA_FOR_DEBUG = "usb_cam/image_raw"
         topic_cam_color = CAMERA_FOR_DEBUG
         topic_cam_depth = CAMERA_FOR_DEBUG
+        SLEEP_TIME = 1000
     else:
         topic_cam_color = rospy.get_param("~topic_baxter_left_hand_camera")
         topic_cam_depth = rospy.get_param("~topic_rgbd_camera")
         my_baxter = MyBaxter("left", turn_on_traj_action_server=False)
         THE_FRAME_DEPTHCAM_CONNECTED_TO = rospy.get_param("~the_frame_depth_camera_connected_to")
+        SLEEP_TIME = 2000
 
     # -- Set a publisher for visualization chessboard in image
     topic_to_pub_calib_result_image = rospy.get_param("~topic_to_pub_calib_result_image")
@@ -149,7 +151,7 @@ if __name__ == "__main__":
 
         print("\n"+s1+"\n"+s2+"\n"+s3+"\n"+s4)
         # c = waitKeyPress(time_out=1.0) # Why can't I use this in ROS???
-        key = cv2.waitKey(2000)
+        key = cv2.waitKey(SLEEP_TIME)
         c = chr(key)
         print "--- User pressed: ", key, ", ", c, "\n"
 

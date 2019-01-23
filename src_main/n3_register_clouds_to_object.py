@@ -85,8 +85,9 @@ if __name__ == "__main__":
 
 
         # Update viewer
-        vis.poll_events()
-        vis.update_renderer()
+        if VIEW_RES_BY_OPEN3D:
+            vis.poll_events()
+            vis.update_renderer()
 
         # Sleep
         rate.sleep()

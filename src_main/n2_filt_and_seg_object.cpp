@@ -163,6 +163,10 @@ int main(int argc, char **argv)
                                         PCL_VIEWER_NAME, PCL_VIEWER_CLOUD_NAME,
                                         viwer_axis_unit_length);
 
+    double rot_scale = 1.0;
+    double x = -0.5, y = 0.0, z = -0.2, rx = 0.0 * rot_scale, ry = 3.14/2 * rot_scale, rz = 0.0 * rot_scale;
+    my_pcl::setViewerPose(viewer, x, y, z, rx, ry, rz);
+
     // Loop, subscribe ros_cloud, and view
     main_loop(viewer, pub_to_node3, pub_to_rviz);
 
@@ -197,7 +201,6 @@ void update_cloud_rotated()
             assert(0);
         if (!nh.getParam("z_grid_size", z_grid_size))
             assert(0);
-
     }
 
     // -- filtByVoxelGrid
@@ -211,7 +214,6 @@ void update_cloud_rotated()
     // -- rotate cloud to Baxter's frame
     for (PointXYZRGB &p : cloud_rotated->points)
         my_basics::preTranslatePoint(T_baxter_to_depthcam, p.x, p.y, p.z);
-
 }
 
 // -----------------------------------------------------
@@ -291,7 +293,7 @@ void update_cloud_segmented()
     }
 
     // -- filtByPassThrough (by range)
-    // PointCloud<PointXYZRGB>::Ptr tmp_cloud(new PointCloud<PointXYZRGB>); 
+    // PointCloud<PointXYZRGB>::Ptr tmp_cloud(new PointCloud<PointXYZRGB>);
     copyPointCloud(*cloud_rotated, *cloud_segmented);
     if (flag_do_range_filt)
     {
@@ -307,7 +309,6 @@ void update_cloud_segmented()
             cloud_segmented, "z", chessboard_z + z_range_up, chessboard_z + z_range_low);
         // cout<<"Debug: after range filter"<<endl;
         // my_pcl::printCloudSize(cloud_segmented);
-
     }
 
     // -- Remove planes

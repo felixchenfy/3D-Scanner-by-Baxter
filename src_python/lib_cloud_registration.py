@@ -3,6 +3,10 @@ import copy
 from open3d import *
 
 
+
+def getCloudSize(open3d_cloud):
+    return np.asarray(open3d_cloud.points).shape[0]
+    
 def drawTwoClouds(source, target, transformation):
     source_temp = copy.deepcopy(source)
     source_temp.transform(transformation)
