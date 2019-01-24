@@ -16,7 +16,7 @@ from sensor_msgs.msg import PointCloud2
 sys.path.append(PYTHON_FILE_PATH + "../src_python")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos, convertCloudFromRosToOpen3d
 from lib_cloud_registration import drawTwoClouds, registerClouds, copyOpen3dCloud
-from lib_geo_trans_ros import rotx, roty, rotz
+from lib_geo_trans import rotx, roty, rotz
 
 VIEW_RES_BY_OPEN3D=True # This is difficult to set orientation. And has some bug.
 VIEW_RES_BY_RVIZ=~VIEW_RES_BY_OPEN3D
@@ -79,7 +79,7 @@ class SubscriberOfCloud(object):
         return self.cloud_buff.popleft()
 
     def rotateCloudForBetterViewing(self, cloud):
-        T=rotx(np.pi)
+        T=rotx(np.pi, matrix_len=4)
         cloud.transform(T)
 
 # ---------------------------- Main ----------------------------
@@ -112,7 +112,8 @@ if __name__ == "__main__":
                 copyOpen3dCloud(src=new_cloud_piece, dst=final_cloud)
             else:
                 final_cloud, transformation = registerClouds(
-                    src=new_cloud_piece, target=final_cloud, radius_base=0.002)
+                    src=new_cloud_piece, target=final_cloud, 
+                    radius_regi=0.010, radius_merge=0.005)
 
             # Update point cloud
             viewer.updateCloud(final_cloud)

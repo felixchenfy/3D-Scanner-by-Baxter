@@ -12,6 +12,23 @@ import cv2
 from lib_geo_trans import *
 
 # ---------------------------------- Main functions
+
+
+# Generate a unique chessboard frame, by:
+#   1. Let chessboard z axis pointing to the camera
+#   2. I manually draw a black dot near the center of board.
+#       I will rotate the frame so that this dot's pos is (d_row=0.5, d_col=-0.5)
+def helperMakeUniqueChessboardFrame(img, R, p):
+    
+    # -- 1. Make chessboard z axis pointing towards the camera
+    vec_cam_to_chess = np.array(p).squeeze(axis=1)
+    vec_chess_z = form_T(R, p).dot(np.array([[0],[0],[1],[0]])).squeeze(axis=1)[0:3]-np.array(p)
+    if vec_cam_to_chess.dot(vec_chess_z)>0:
+        R=R*rotx(np.pi)
+
+    # -- 2. A manually drawn dot at required pos.
+    return R,p
+
 def getChessboardPose(img,
         camera_intrinsics,
         distortion_coeffs,
@@ -73,10 +90,17 @@ def getChessboardPose(img,
                 objpoints, imgpoints, camera_intrinsics, distortion_coeffs)
         R, _ = cv2.Rodrigues(R_vec)
         
+        # Generate a unique chessboard frame, by:
+        #   1. Let chessboard z axis pointing to the camera
+        #   2. I manually draw a black dot near the center of board.
+        #       I will rotate the frame so that this dot's pos is (d_row=0.5, d_col=-0.5)
+        R, p = helperMakeUniqueChessboardFrame(R, p)
 
         return flag_find_chessboard, R, p, imgpoints
 
-        
+
+# ------------------------------------ Drawing Functions ------------------------------------
+
 def drawChessboardToImage(img_display, imgpoints, CHECKER_ROWS, CHECKER_COLS):
     flag_find_chessboard = True
     img_display = cv2.drawChessboardCorners(

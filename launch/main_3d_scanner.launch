@@ -111,11 +111,11 @@
             <param name="y_range_up" type="double" value="0.0" /> -->
             <param name="z_range_low" type="double" value="-0.5" />     
             <param name="z_range_up" type="double" value="0.5" />     
-            <param name="x_range_radius" type="double" value="0.15" />     
-            <param name="y_range_radius" type="double" value="0.15" />     
+            <param name="x_range_radius" type="double" value="0.2" />     
+            <param name="y_range_radius" type="double" value="0.2" />     
 
             <!-- segment plane -->
-            <param name="num_planes" type="int" value="1" />     
+            <param name="num_planes" type="int" value="0" />     
             <param name="plane_distance_threshold" type="double" value="0.01" />     
             <param name="plane_max_iterations" type="int" value="100" />     
 

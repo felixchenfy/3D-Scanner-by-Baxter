@@ -5,35 +5,21 @@ from tf.transformations import euler_matrix, euler_from_matrix, quaternion_from_
 from geometry_msgs.msg import Pose, Point, Quaternion
 import cv2
 
-def form_T(R, p):
-    T = np.identity(4)
-    T[0:3, 0:3] = R
-    try:
-        T[0:3, 3:4] = p[0:3, 0:1]
-    except:
-        T[0, 3] = p[0]
-        T[1, 3] = p[1]
-        T[2, 3] = p[2]
-    return T
+from lib_geo_trans import *
 
 
-def get_Rp_from_T(T):
-    R = T[0:3, 0:3]
-    p = T[0:3, 3:4]
-    return (R, p)
+if 0: # Functions below has already been defined in lib_geo_trans
+    def rotx(angle, matrix_len=4):
+        xaxis=(1, 0, 0)
+        return rotation_matrix(angle, xaxis)
 
-
-def rotx(angle):
-    xaxis=(1, 0, 0)
-    return rotation_matrix(angle, xaxis)
-
-def roty(angle):
-    yaxis=(0, 1, 0)
-    return rotation_matrix(angle, yaxis)
-    
-def rotz(angle):
-    zaxis=(0, 0, 1)
-    return rotation_matrix(angle, zaxis)
+    def roty(angle, matrix_len=4):
+        yaxis=(0, 1, 0)
+        return rotation_matrix(angle, yaxis)
+        
+    def rotz(angle, matrix_len=4):
+        zaxis=(0, 0, 1)
+        return rotation_matrix(angle, zaxis)
 
 # a bit wrap for geometry_msgs.msg.Pose
 def toRosPose(pos, quaternion):

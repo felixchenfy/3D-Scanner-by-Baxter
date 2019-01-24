@@ -35,7 +35,7 @@ def combineTwoClouds(cloud1, cloud2, radius_downsample=0.002):
     return result
 
 
-def registerClouds(src, target, radius_base=0.002):
+def registerClouds(src, target, radius_regi=0.005, radius_merge=0.002):
     # -- Use colored ICP to register src onto dst, and return the combined cloud
     # This function is mainly copied from here.
     # http://www.open3d.org/docs/tutorial/Advanced/colored_pointcloud_registration.html
@@ -45,16 +45,16 @@ def registerClouds(src, target, radius_base=0.002):
     COLORED_ICP_DRAW = False    
 
     # -- Params
-    ICP_distance_threshold = radius_base*4
-    voxel_radiuses = [radius_base*8, radius_base*2, radius_base]
-    max_iters = [50, 30, 14]
+    ICP_distance_threshold = radius_regi*8
+    voxel_radiuses = [radius_regi*8, radius_regi*2, radius_regi]
+    max_iters = [50, 25, 10]
 
     # -- Vars
     current_transformation = np.identity(4)
 
     # -- Point to plane ICP
     if ICP:
-        radius = radius_base
+        radius = radius_regi
         src_down = voxel_down_sample(src, radius)
         target_down = voxel_down_sample(target, radius)
         estimate_normals(src, KDTreeSearchParamHybrid(
@@ -128,7 +128,7 @@ def registerClouds(src, target, radius_base=0.002):
     print("-- Colored ICP completes.\n\n")
     print "src:",src_tmp
     print "target:",target
-    result_cloud = combineTwoClouds(src_tmp, target, radius_base)
+    result_cloud = combineTwoClouds(src_tmp, target, radius_merge)
     print "result_cloud: ", result_cloud
     return result_cloud, result_trans.transformation
 
