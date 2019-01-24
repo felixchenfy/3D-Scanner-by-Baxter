@@ -35,6 +35,7 @@
     <param name="topic_n1_to_n2" value="my/robot_end_effector_pose" /> 
     <param name="topic_n2_to_rviz" value="my/cloud_rotated" /> 
     <param name="topic_n2_to_n3" value="my/cloud_segmented" /> 
+    <param name="topic_n3_to_rviz" value="my/cloud_final" /> 
 
 
    <!--=============================== Nodes: setup ============================================== -->
@@ -89,8 +90,13 @@
         name="node2"
         type="n2_filt_and_seg_object" 
         pkg="scan3d_by_baxter" output = "screen">
+
             <!-- visualzation -->
             <param name="viwer_axis_unit_length" type="double" value="0.1" />     
+            <param name="viwer_x_dis" type="double" value="-0.4" />     
+            <param name="viwer_y_dis" type="double" value="0.1" />     
+            <param name="viwer_z_dis" type="double" value="-0.2" />     
+            <param name="viwer_rot_y" type="double" value="1.37" />     
 
             <!-- filtering -->
             <param name="x_grid_size" type="double" value="0.002" />     
@@ -129,7 +135,10 @@
 
    <!--================================== rviz ============================================== -->
 
-    <node type="rviz" name="rviz" pkg="rviz"
+    <node type="rviz" name="rviz1" pkg="rviz"
        args="-d $(find scan3d_by_baxter)/config/rviz_baxter_and_clouds.rviz" /> 
+
+    <node type="rviz" name="rviz2" pkg="rviz"
+       args="-d $(find scan3d_by_baxter)/config/rviz_final_cloud.rviz" /> 
 
 </launch>

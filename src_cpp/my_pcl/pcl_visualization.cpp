@@ -29,7 +29,7 @@ initPointCloudRGBViewer(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr cloud,
     viewer->addCoordinateSystem(coord_unit, "world frame");
 
     // Other properties
-    viewer->setBackgroundColor(0, 0, 0);
+    viewer->setBackgroundColor(255, 255, 255);
     viewer->initCameraParameters();
 
     // -- Set viewer angle

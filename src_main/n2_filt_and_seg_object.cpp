@@ -153,7 +153,7 @@ int main(int argc, char **argv)
     ros::Publisher pub_to_node3 = nh.advertise<sensor_msgs::PointCloud2>(topic_n2_to_n3, 1);
     ros::Publisher pub_to_rviz = nh.advertise<sensor_msgs::PointCloud2>(topic_n2_to_rviz, 1);
 
-    // Init viewer
+    // -- Init viewer
     double viwer_axis_unit_length;
     ros::NodeHandle nhp("~");
     if (!nhp.getParam("viwer_axis_unit_length", viwer_axis_unit_length))
@@ -162,12 +162,18 @@ int main(int argc, char **argv)
         my_pcl::initPointCloudRGBViewer(cloud_segmented,
                                         PCL_VIEWER_NAME, PCL_VIEWER_CLOUD_NAME,
                                         viwer_axis_unit_length);
-
+    // Set viewer angle
     double rot_scale = 1.0;
-    double x = -0.5, y = 0.0, z = -0.2, rx = 0.0 * rot_scale, ry = 3.14/2 * rot_scale, rz = 0.0 * rot_scale;
+    double viwer_x_dis, viwer_y_dis, viwer_z_dis, viwer_rot_y;
+    if (!nhp.getParam("viwer_x_dis", viwer_x_dis))assert(0);
+    if (!nhp.getParam("viwer_y_dis", viwer_y_dis))assert(0);
+    if (!nhp.getParam("viwer_z_dis", viwer_z_dis))assert(0);
+    if (!nhp.getParam("viwer_rot_y", viwer_rot_y))assert(0);
+    double x = viwer_x_dis, y = viwer_y_dis, z = viwer_z_dis;
+    double rx = 0.0 * rot_scale, ry = viwer_rot_y * rot_scale, rz = 0.0 * rot_scale;
     my_pcl::setViewerPose(viewer, x, y, z, rx, ry, rz);
 
-    // Loop, subscribe ros_cloud, and view
+    // -- Loop, subscribe ros_cloud, and view
     main_loop(viewer, pub_to_node3, pub_to_rviz);
 
     // Return

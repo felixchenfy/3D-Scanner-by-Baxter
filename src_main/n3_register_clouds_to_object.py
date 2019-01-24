@@ -16,58 +16,98 @@ from sensor_msgs.msg import PointCloud2
 sys.path.append(PYTHON_FILE_PATH + "../src_python")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos, convertCloudFromRosToOpen3d
 from lib_cloud_registration import drawTwoClouds, registerClouds, copyOpen3dCloud
+from lib_geo_trans_ros import rotx, roty, rotz
 
-
-VIEW_RES_BY_OPEN3D=False
+VIEW_RES_BY_OPEN3D=True # This is difficult to set orientation. And has some bug.
 VIEW_RES_BY_RVIZ=~VIEW_RES_BY_OPEN3D
+
+# ---------------------------- Two viewers (choose one) ----------------------------
+class Open3DViewer(object):
+    def __init__(self):
+        self.vis_cloud = open3d.PointCloud()
+        self.viewer = open3d.Visualizer()
+        self.viewer.create_window()
+        self.viewer.add_geometry(self.vis_cloud)
+
+    def updateCloud(self, new_cloud):
+        self.vis_cloud.points = copy.deepcopy(new_cloud.points)
+        self.vis_cloud.colors = copy.deepcopy(new_cloud.colors)
+        self.viewer.add_geometry(self.vis_cloud)
+        self.viewer.update_geometry()
+
+    def updateView(self):
+        self.viewer.poll_events()
+        self.viewer.update_renderer()
+
+class RvizViewer(object):
+    def __init__(self):
+        topic_n3_to_rviz=rospy.get_param("topic_n3_to_rviz")
+        self.pub = rospy.Publisher(topic_n3_to_rviz, PointCloud2, queue_size=10)
+
+    def updateCloud(self, new_cloud):
+        self.pub.publish(convertCloudFromOpen3dToRos(new_cloud))
+
+    def updateView(self):
+        None
+
+def chooseViewer():
+    if 0: 
+        # This is 1) more difficult to set viewer angle. 
+        # 2) cannot set window size. 
+        # 3) Slower to view, and slower to quit.
+        # Thus, Better not use this.
+        return Open3DViewer() # open3d
+    else:
+        return RvizViewer() # rviz
+
+# ---------------------------- One subscriber ----------------------------
+class SubscriberOfCloud(object):
+    def __init__(self):
+        topic_n2_to_n3 = rospy.get_param("topic_n2_to_n3")
+        rospy.Subscriber(topic_n2_to_n3, PointCloud2, self.sub_callback)
+        self.cloud_buff = deque()
+
+    def sub_callback(self, ros_cloud):
+        open3d_cloud = convertCloudFromRosToOpen3d(ros_cloud)
+        self.rotateCloudForBetterViewing(open3d_cloud)
+        self.cloud_buff.append(open3d_cloud)
+    
+    def hasNewCloud(self):
+        return len(self.cloud_buff)>0
+
+    def popCloud(self):
+        return self.cloud_buff.popleft()
+
+    def rotateCloudForBetterViewing(self, cloud):
+        T=rotx(np.pi)
+        cloud.transform(T)
 
 # ---------------------------- Main ----------------------------
 if __name__ == "__main__":
     rospy.init_node("node3")
 
-    # -- Params settings
-    topic_n2_to_n3 = rospy.get_param("topic_n2_to_n3")
-    num_goalposes = rospy.get_param("num_goalposes")  # DEBUG, NOT USED NOW
-
-    # Output cloud file
-    file_folder = rospy.get_param("file_folder")
+    # -- Output cloud file
+    file_folder = rospy.get_param("file_folder") 
     file_name_cloud_final = rospy.get_param("file_name_cloud_final")
 
-    # -- Set subscriber
-    global received_ros_clouds # store received clouds in a deque
-    received_ros_clouds = deque()
-
-    def callback(ros_cloud):
-        global received_ros_clouds
-        received_ros_clouds.append(ros_cloud)
-    rospy.Subscriber(topic_n2_to_n3, PointCloud2, callback)
-
-    # -- Set viewer
-    if VIEW_RES_BY_OPEN3D:
-        vis_cloud = open3d.PointCloud()
-        vis = open3d.Visualizer()
-        vis.create_window()
-        vis.add_geometry(vis_cloud)
-
-    # -- Set up point cloud registeration
-    # DEBUG
-    final_cloud = open3d.PointCloud()
+    # -- Subscribe to cloud + Visualize it
+    cloud_subscriber = SubscriberOfCloud() # set subscriber
+    viewer = chooseViewer() # set viewer
 
     # -- Loop
     rate = rospy.Rate(100)
+    final_cloud = open3d.PointCloud()
     cnt = 0
     while not rospy.is_shutdown():
-        if len(received_ros_clouds)>0:
-            received_ros_cloud = received_ros_clouds.popleft()
+        if cloud_subscriber.hasNewCloud():
+            
             cnt += 1
             rospy.loginfo("=========================================")
-            rospy.loginfo(
-                "Node 3: Received the {}th segmented cloud.".format(cnt))
+            rospy.loginfo("Node 3: Received the {}th segmented cloud.".format(cnt))
 
-            # Convert file format
-            new_cloud_piece = convertCloudFromRosToOpen3d(received_ros_cloud)
 
             # Register Point Cloud
+            new_cloud_piece = cloud_subscriber.popCloud()
             if cnt==1:
                 copyOpen3dCloud(src=new_cloud_piece, dst=final_cloud)
             else:
@@ -75,19 +115,14 @@ if __name__ == "__main__":
                     src=new_cloud_piece, target=final_cloud, radius_base=0.002)
 
             # Update point cloud
-            if VIEW_RES_BY_OPEN3D:
-                copyOpen3dCloud(src=final_cloud, dst=vis_cloud)
-                vis.add_geometry(vis_cloud)
-                vis.update_geometry()
-
+            viewer.updateCloud(final_cloud)
+                
             # Save to file for every update
             open3d.write_point_cloud(file_folder+file_name_cloud_final, final_cloud)
 
 
         # Update viewer
-        if VIEW_RES_BY_OPEN3D:
-            vis.poll_events()
-            vis.update_renderer()
+        viewer.updateView()
 
         # Sleep
         rate.sleep()
@@ -96,5 +131,5 @@ if __name__ == "__main__":
     rospy.loginfo("!!!!! Node 3 ready to stop ...")
     
     # -- Node stops
-    vis.destroy_window()
+    viewer.destroy_window()
     rospy.loginfo("!!!!! Node 3 stops.")

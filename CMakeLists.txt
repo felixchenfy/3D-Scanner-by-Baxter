@@ -14,8 +14,8 @@ set( CMAKE_BUILD_TYPE "Debug" )
 set( CMAKE_CXX_FLAGS "-std=c++11 -O3" )
 
 # Method 1: (Need to call "project(xxx)" before this line)
-set( EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin ) 
-set( LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib )
+# set( EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin ) 
+# set( LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib )
 
 # Method 2:
 # set( EXECUTABLE_OUTPUT_PATH ${CMAKE_SOURCE_DIR}/bin )

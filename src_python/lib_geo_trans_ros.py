@@ -1,4 +1,5 @@
 import numpy as np
+from tf.transformations import rotation_matrix
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
 from tf.transformations import euler_matrix, euler_from_matrix, quaternion_from_matrix, quaternion_matrix
 from geometry_msgs.msg import Pose, Point, Quaternion
@@ -20,6 +21,19 @@ def get_Rp_from_T(T):
     R = T[0:3, 0:3]
     p = T[0:3, 3:4]
     return (R, p)
+
+
+def rotx(angle):
+    xaxis=(1, 0, 0)
+    return rotation_matrix(angle, xaxis)
+
+def roty(angle):
+    yaxis=(0, 1, 0)
+    return rotation_matrix(angle, yaxis)
+    
+def rotz(angle):
+    zaxis=(0, 0, 1)
+    return rotation_matrix(angle, zaxis)
 
 # a bit wrap for geometry_msgs.msg.Pose
 def toRosPose(pos, quaternion):
