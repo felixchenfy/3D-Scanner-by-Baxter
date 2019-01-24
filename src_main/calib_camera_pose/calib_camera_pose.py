@@ -100,12 +100,14 @@ if __name__ == "__main__":
     cameras=[(topic_cam_color, K1, D1), (topic_cam_depth, K2, D2)]
 
     # Chessboard
-    # SQUARE_SIZE = 0.0158
-    # CHECKER_ROWS = 7
-    # CHECKER_COLS = 9
-    SQUARE_SIZE = rospy.get_param("~chessboard_square_size")
-    CHECKER_ROWS = rospy.get_param("~chessboard_checker_rows")
-    CHECKER_COLS = rospy.get_param("~chessboard_checker_cols")
+    if DEBUG_MODE: # Use my usb cam to debug
+        SQUARE_SIZE = 0.0158
+        CHECKER_ROWS = 7
+        CHECKER_COLS = 9
+    else:
+        SQUARE_SIZE = rospy.get_param("~chessboard_square_size")
+        CHECKER_ROWS = rospy.get_param("~chessboard_checker_rows")
+        CHECKER_COLS = rospy.get_param("~chessboard_checker_cols")
 
     # -- Main Loop: locate rgb-d camera pose, wait for user's keypress to save it file
     while not rospy.is_shutdown():
@@ -119,10 +121,18 @@ if __name__ == "__main__":
             I = sub_image(image_topic)
             # rospy.loginfo("Subscribed a image from " + image_topic)
             res, R, p, imgpoints = getChessboardPose(I, K, D, SQUARE_SIZE , CHECKER_ROWS, CHECKER_COLS)
-            
-            # Draw to image
+                
             img_display=I.copy()
             if res==True:
+            
+                # Generate a unique chessboard frame, by:
+                #   1. Let chessboard z axis pointing to the camera
+                #   2. I manually draw a black dot near the center of board.
+                #       I will rotate the frame so that this dot's pos is (d_row=0.5, d_col=-0.5)
+                R, p = helperMakeUniqueChessboardFrame(I, R, p, SQUARE_SIZE, 
+                    K, D, img_display)
+            
+                # Draw to image            
                 drawChessboardToImage(img_display, imgpoints, CHECKER_ROWS, CHECKER_COLS)
                 drawPosTextToImage(img_display, p)
                 drawCoordinateToImage(img_display, R, p, K, D)

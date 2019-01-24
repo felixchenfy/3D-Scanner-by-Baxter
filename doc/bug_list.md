@@ -84,6 +84,17 @@ When I use vis.add_geometry(cloud), and then cloud=createARandomTestCloud(),
 Result: this bug is Partially solved, by manullay copying fields of a pointcloud to another.
 
 # ============================================================
+# OpenCV
+
+* Python's image is BGR
+Thus, when converting from RGB-space to HSV-space, use cv2.COLOR_BRG2HSV
+img_hsv=cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
+
+* Pixel coordinate u,v (cooresponding to x,y)
+Use this to access: img[v][u]
+
+
+# ============================================================
 # Others
 
 * error: undefined reference to (Stupid bug)

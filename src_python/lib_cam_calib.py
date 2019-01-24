@@ -13,20 +13,62 @@ from lib_geo_trans import *
 
 # ---------------------------------- Main functions
 
+def isInRange(x, low, up):
+    return x>=low and x<=up
+
+def checkHSVColorType(color_value, color_type='r'):
+    h, s, v=color_value[0], color_value[1], color_value[2]
+    if color_type=='r':
+        if (isInRange(h,0,20) or isInRange(h, 160, 180)) and isInRange(s,80,255) and isInRange(v,100,255):
+            return True
+
+    return False
 
 # Generate a unique chessboard frame, by:
 #   1. Let chessboard z axis pointing to the camera
 #   2. I manually draw a black dot near the center of board.
 #       I will rotate the frame so that this dot's pos is (d_row=0.5, d_col=-0.5)
-def helperMakeUniqueChessboardFrame(img, R, p):
-    
+def helperMakeUniqueChessboardFrame(img, R, p, 
+    SQUARE_SIZE, camera_intrinsics, distortion_coeffs,
+    img_display):
+
+    # img_hsv=cv2.cvtColor(img,cv2.COLOR_RGB2HSV)
+    img_hsv=cv2.cvtColor(img,cv2.COLOR_BGR2HSV)
+    T=form_T(R,p)
+
     # -- 1. Make chessboard z axis pointing towards the camera
     vec_cam_to_chess = np.array(p).squeeze(axis=1)
-    vec_chess_z = form_T(R, p).dot(np.array([[0],[0],[1],[0]])).squeeze(axis=1)[0:3]-np.array(p)
-    if vec_cam_to_chess.dot(vec_chess_z)>0:
-        R=R*rotx(np.pi)
+    vec_chess_z = T.dot(np.array([[0],[0],[1],[0]])).squeeze(axis=1)[0:3]-np.array(p)
+    if np.sum(vec_cam_to_chess*vec_chess_z)>0:
+        T=T.dot(rotx(np.pi, matrix_len=4))
 
     # -- 2. A manually drawn dot at required pos.
+    def compute_mean_gray(pdot_chess_frame):
+        pdot_pixel=world2pixel(pdot_chess_frame, T, camera_intrinsics, distortion_coeffs)
+        RADIUS=0
+        u,v=int(pdot_pixel[0]), int(pdot_pixel[1])
+        cnt_red=0
+        for i in range(-RADIUS,+RADIUS+1):
+            for j in range(-RADIUS,+RADIUS+1):
+                r,c=v+i,u+j
+                # print img_hsv[r][c]
+                if checkHSVColorType(img_hsv[r][c],'r'):
+                    cnt_red+=1
+                # for k in range(3):
+                #     img_display[r][c][k]=255
+        return cnt_red
+    # print "side 1:",
+    pdot_chess1=[0.5*SQUARE_SIZE, -0.5*SQUARE_SIZE, 0]
+    cnt_red1=compute_mean_gray(pdot_chess1)
+    # print "side 2:",
+    pdot_chess2=[-0.5*SQUARE_SIZE, +0.5*SQUARE_SIZE, 0]
+    cnt_red2=compute_mean_gray(pdot_chess2)
+    # print cnt_red1, cnt_red2
+    if cnt_red1>cnt_red2:
+        T=T.dot(rotz(np.pi,matrix_len=4))
+
+    # -- Return
+    R, p = get_Rp_from_T(T)
     return R,p
 
 def getChessboardPose(img,
@@ -90,12 +132,6 @@ def getChessboardPose(img,
                 objpoints, imgpoints, camera_intrinsics, distortion_coeffs)
         R, _ = cv2.Rodrigues(R_vec)
         
-        # Generate a unique chessboard frame, by:
-        #   1. Let chessboard z axis pointing to the camera
-        #   2. I manually draw a black dot near the center of board.
-        #       I will rotate the frame so that this dot's pos is (d_row=0.5, d_col=-0.5)
-        R, p = helperMakeUniqueChessboardFrame(R, p)
-
         return flag_find_chessboard, R, p, imgpoints
 
 

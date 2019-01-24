@@ -5,7 +5,7 @@
 
 
     <node name="calib_camera_pose" type="calib_camera_pose.py" pkg="scan3d_by_baxter" output = "screen">
-        <param name="DEBUG_MODE" value="false" />     
+        <param name="DEBUG_MODE" value="true" />     
         
         <!-- Input image topics -->
         <param name="topic_baxter_left_hand_camera" value="/cameras/left_hand_camera/image" />     
