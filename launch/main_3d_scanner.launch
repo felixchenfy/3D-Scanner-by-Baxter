@@ -138,7 +138,11 @@
     <node type="rviz" name="rviz1" pkg="rviz"
        args="-d $(find scan3d_by_baxter)/config/rviz_baxter_and_clouds.rviz" /> 
 
+
     <node type="rviz" name="rviz2" pkg="rviz"
+       args="-d $(find scan3d_by_baxter)/config/rviz_segmented_cloud.rviz" /> 
+
+    <node type="rviz" name="rviz3" pkg="rviz"
        args="-d $(find scan3d_by_baxter)/config/rviz_final_cloud.rviz" /> 
 
 </launch>

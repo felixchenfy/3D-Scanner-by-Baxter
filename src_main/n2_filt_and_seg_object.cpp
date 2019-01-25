@@ -32,10 +32,6 @@ using namespace pcl;
 string file_folder, file_name_cloud_src, file_name_cloud_rotated, file_name_cloud_segmented; // filenames for writing cloud to file
 int file_name_index_width;
 
-// PCL viewer setting
-const string PCL_VIEWER_NAME = "node2: point cloud after segmentation";
-const string PCL_VIEWER_CLOUD_NAME = "cloud_segmented";
-
 // Vars for workflow control
 bool flag_receive_from_node1 = false;
 bool flag_receive_kinect_cloud = false;
@@ -79,11 +75,10 @@ void pubPclCloudToTopic(ros::Publisher &pub, PointCloud<PointXYZRGB>::Ptr pcl_cl
 void update_cloud_rotated();
 void update_cloud_segmented();
 void print_cloud_processing_result(int cnt_cloud);
-void main_loop(boost::shared_ptr<visualization::PCLVisualizer> viewer,
-               ros::Publisher &pub_to_node3, ros::Publisher &pub_to_rviz)
+void main_loop(ros::Publisher &pub_to_node3, ros::Publisher &pub_to_rviz)
 {
     int cnt_cloud = 0;
-    while (ros::ok() && !viewer->wasStopped())
+    while (ros::ok())
     {
         if (flag_receive_kinect_cloud)
         {
@@ -106,13 +101,11 @@ void main_loop(boost::shared_ptr<visualization::PCLVisualizer> viewer,
             string f2 = file_folder + file_name_cloud_segmented + suffix;
             my_pcl::write_point_cloud(f2, cloud_segmented);
 
-            // Update
-            viewer->updatePointCloud( // Update viewer
-                cloud_segmented, PCL_VIEWER_CLOUD_NAME);
+            // print
             print_cloud_processing_result(cnt_cloud); // Print info
         }
-        viewer->spinOnce(10);
         ros::spinOnce(); // In python, sub is running in different thread. In C++, same thread. So need this.
+        ros::Duration(0.01).sleep();
     }
 }
 
@@ -153,28 +146,8 @@ int main(int argc, char **argv)
     ros::Publisher pub_to_node3 = nh.advertise<sensor_msgs::PointCloud2>(topic_n2_to_n3, 1);
     ros::Publisher pub_to_rviz = nh.advertise<sensor_msgs::PointCloud2>(topic_n2_to_rviz, 1);
 
-    // -- Init viewer
-    double viwer_axis_unit_length;
-    ros::NodeHandle nhp("~");
-    if (!nhp.getParam("viwer_axis_unit_length", viwer_axis_unit_length))
-        assert(0);
-    boost::shared_ptr<visualization::PCLVisualizer> viewer =
-        my_pcl::initPointCloudRGBViewer(cloud_segmented,
-                                        PCL_VIEWER_NAME, PCL_VIEWER_CLOUD_NAME,
-                                        viwer_axis_unit_length);
-    // Set viewer angle
-    double rot_scale = 1.0;
-    double viwer_x_dis, viwer_y_dis, viwer_z_dis, viwer_rot_y;
-    if (!nhp.getParam("viwer_x_dis", viwer_x_dis))assert(0);
-    if (!nhp.getParam("viwer_y_dis", viwer_y_dis))assert(0);
-    if (!nhp.getParam("viwer_z_dis", viwer_z_dis))assert(0);
-    if (!nhp.getParam("viwer_rot_y", viwer_rot_y))assert(0);
-    double x = viwer_x_dis, y = viwer_y_dis, z = viwer_z_dis;
-    double rx = 0.0 * rot_scale, ry = viwer_rot_y * rot_scale, rz = 0.0 * rot_scale;
-    my_pcl::setViewerPose(viewer, x, y, z, rx, ry, rz);
-
     // -- Loop, subscribe ros_cloud, and view
-    main_loop(viewer, pub_to_node3, pub_to_rviz);
+    main_loop(pub_to_node3, pub_to_rviz);
 
     // Return
     ROS_INFO("Node2 stops");
