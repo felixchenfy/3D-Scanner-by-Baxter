@@ -26,11 +26,13 @@ Main function:
 using namespace std;
 using namespace pcl;
 
-// -- Vars
+// -- Params
 
-// Filenames for writing tofile
+// Filenames for writing to file
 string file_folder, file_name_cloud_src, file_name_cloud_rotated, file_name_cloud_segmented; // filenames for writing cloud to file
 int file_name_index_width;
+
+// -- Vars
 
 // Vars for workflow control
 bool flag_receive_from_node1 = false;
@@ -38,43 +40,22 @@ bool flag_receive_kinect_cloud = false;
 
 // Data contents
 float T_baxter_to_depthcam[4][4];
-// geometry_msgs::Pose T_baxter_to_depthcam;
 PointCloud<PointXYZRGB>::Ptr cloud_src(new PointCloud<PointXYZRGB>);
 PointCloud<PointXYZRGB>::Ptr cloud_rotated(new PointCloud<PointXYZRGB>);   // this pubs to rviz
 PointCloud<PointXYZRGB>::Ptr cloud_segmented(new PointCloud<PointXYZRGB>); // this pubs to node3
 
-// -- Functions
-
+// -- Input/Output and Sub/Publisher
 void read_T_from_file(float T_16x1[16], string filename);
-void callbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message)
-{
-    flag_receive_from_node1 = true;
-    const vector<float> &trans_mat_16x1 = pose_message->TransformationMatrix;
-    for (int cnt = 0, i = 0; i < 4; i++)
-        for (int j = 0; j < 4; j++)
-            T_baxter_to_depthcam[i][j] = trans_mat_16x1[cnt++];
-}
-void callbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud)
-{
-    if (flag_receive_from_node1)
-    {
-        flag_receive_from_node1 = false;
-        flag_receive_kinect_cloud = true;
-        fromROSMsg(ros_cloud, *cloud_src);
-    }
-}
-void pubPclCloudToTopic(ros::Publisher &pub, PointCloud<PointXYZRGB>::Ptr pcl_cloud)
-{
-    sensor_msgs::PointCloud2 ros_cloud_to_pub;
-    pcl::toROSMsg(*pcl_cloud, ros_cloud_to_pub);
-    ros_cloud_to_pub.header.frame_id = "base";
-    pub.publish(ros_cloud_to_pub);
-}
+void callbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message);
+void callbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud);
+void pubPclCloudToTopic(ros::Publisher &pub, PointCloud<PointXYZRGB>::Ptr pcl_cloud);
+
+// -- Main processing functions
+void process_to_get_cloud_rotated();
+void process_to_get_cloud_segmented();
+void print_cloud_processing_result(int cnt_cloud);
 
 // -- Main Loop:
-void update_cloud_rotated();
-void update_cloud_segmented();
-void print_cloud_processing_result(int cnt_cloud);
 void main_loop(ros::Publisher &pub_to_node3, ros::Publisher &pub_to_rviz)
 {
     int cnt_cloud = 0;
@@ -86,18 +67,21 @@ void main_loop(ros::Publisher &pub_to_node3, ros::Publisher &pub_to_rviz)
             cnt_cloud++;
 
             // Process cloud
-            update_cloud_rotated();
+            process_to_get_cloud_rotated();
             pubPclCloudToTopic(pub_to_rviz, cloud_rotated);
 
-            update_cloud_segmented();
+            process_to_get_cloud_segmented();
             pubPclCloudToTopic(pub_to_node3, cloud_segmented);
 
             // Save to file
             string suffix = my_basics::int2str(cnt_cloud, file_name_index_width) + ".pcd";
+
             string f0 = file_folder + file_name_cloud_src + suffix;
             my_pcl::write_point_cloud(f0, cloud_src);
+
             string f1 = file_folder + file_name_cloud_rotated + suffix;
             my_pcl::write_point_cloud(f1, cloud_rotated);
+
             string f2 = file_folder + file_name_cloud_segmented + suffix;
             my_pcl::write_point_cloud(f2, cloud_segmented);
 
@@ -160,7 +144,7 @@ int main(int argc, char **argv)
 
 // -----------------------------------------------------
 // -----------------------------------------------------
-void update_cloud_rotated()
+void process_to_get_cloud_rotated()
 {
     // Func: Filtering, rotate cloud to Baxter robot frame
 
@@ -197,7 +181,7 @@ void update_cloud_rotated()
 
 // -----------------------------------------------------
 // -----------------------------------------------------
-void update_cloud_segmented()
+void process_to_get_cloud_segmented()
 {
     // Func: Range filtering，　Remove plane(table), do clustering, choose the largest one
 
@@ -354,4 +338,29 @@ void read_T_from_file(float T_16x1[16], string filename)
         T_16x1[cnt++] = val;
     fin.close();
     return;
+}
+
+void callbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message)
+{
+    flag_receive_from_node1 = true;
+    const vector<float> &trans_mat_16x1 = pose_message->TransformationMatrix;
+    for (int cnt = 0, i = 0; i < 4; i++)
+        for (int j = 0; j < 4; j++)
+            T_baxter_to_depthcam[i][j] = trans_mat_16x1[cnt++];
+}
+void callbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud)
+{
+    if (flag_receive_from_node1)
+    {
+        flag_receive_from_node1 = false;
+        flag_receive_kinect_cloud = true;
+        fromROSMsg(ros_cloud, *cloud_src);
+    }
+}
+void pubPclCloudToTopic(ros::Publisher &pub, PointCloud<PointXYZRGB>::Ptr pcl_cloud)
+{
+    sensor_msgs::PointCloud2 ros_cloud_to_pub;
+    pcl::toROSMsg(*pcl_cloud, ros_cloud_to_pub);
+    ros_cloud_to_pub.header.frame_id = "base";
+    pub.publish(ros_cloud_to_pub);
 }

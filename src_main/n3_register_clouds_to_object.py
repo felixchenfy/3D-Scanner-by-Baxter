@@ -38,23 +38,26 @@ class Open3DViewer(object):
     def updateView(self):
         self.viewer.poll_events()
         self.viewer.update_renderer()
+        print "NOTICE: OPEN3D VIEWER HAS BEEN UPDATED!!!"
+    
+    def destroy_window(self):
+        self.viewer.destroy_window()
 
 class RvizViewer(object):
     def __init__(self):
         topic_n3_to_rviz=rospy.get_param("topic_n3_to_rviz")
         self.pub = rospy.Publisher(topic_n3_to_rviz, PointCloud2, queue_size=10)
+        self.updateView = lambda: None
+        self.destroy_window = lambda: None
 
     def updateCloud(self, new_cloud):
         self.pub.publish(convertCloudFromOpen3dToRos(new_cloud))
-
-    def updateView(self):
-        None
 
 def chooseViewer():
     if 0: 
         # This is 1) more difficult to set viewer angle. 
         # 2) cannot set window size. 
-        # 3) Slower to view, and slower to quit.
+        # 3) Much Much Slower to display. Big latency. I don't know why.
         # Thus, Better not use this.
         return Open3DViewer() # open3d
     else:
