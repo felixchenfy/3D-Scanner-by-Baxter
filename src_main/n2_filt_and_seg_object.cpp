@@ -29,7 +29,7 @@ using namespace pcl;
 // -- Params
 
 // Filenames for writing to file
-string file_folder, file_name_cloud_src, file_name_cloud_rotated, file_name_cloud_segmented; // filenames for writing cloud to file
+string file_folder, file_name_cloud_src, file_name_cloud_segmented; // filenames for writing cloud to file
 int file_name_index_width;
 
 // -- Vars
@@ -79,9 +79,6 @@ void main_loop(ros::Publisher &pub_to_node3, ros::Publisher &pub_to_rviz)
             string f0 = file_folder + file_name_cloud_src + suffix;
             my_pcl::write_point_cloud(f0, cloud_src);
 
-            string f1 = file_folder + file_name_cloud_rotated + suffix;
-            my_pcl::write_point_cloud(f1, cloud_rotated);
-
             string f2 = file_folder + file_name_cloud_segmented + suffix;
             my_pcl::write_point_cloud(f2, cloud_segmented);
 
@@ -116,8 +113,6 @@ int main(int argc, char **argv)
     if (!nh.getParam("file_folder", file_folder))
         assert(0);
     if (!nh.getParam("file_name_cloud_src", file_name_cloud_src))
-        assert(0);
-    if (!nh.getParam("file_name_cloud_rotated", file_name_cloud_rotated))
         assert(0);
     if (!nh.getParam("file_name_cloud_segmented", file_name_cloud_segmented))
         assert(0);

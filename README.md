@@ -22,25 +22,26 @@ This project can be useful if you are interested in: 3D Scanning, ROS (Python, c
   - [2.3. Node2: Filter cloud](#23-node2-filter-cloud)
   - [2.4. Node3: Register clouds](#24-node3-register-clouds)
   - [2.5. Fake node1 for debug](#25-fake-node1-for-debug)
-- [3. Done and Need to be Done](#3-done-and-need-to-be-done)
-- [4. Algorithms](#4-algorithms)
-  - [4.1. Calibrate poses of chessboard and depth_camera](#41-calibrate-poses-of-chessboard-and-depthcamera)
-  - [4.2. Filter point cloud](#42-filter-point-cloud)
-  - [4.3. Registration](#43-registration)
-- [5. File Structure](#5-file-structure)
-- [6. Reference](#6-reference)
-- [7. Dependencies and Installation](#7-dependencies-and-installation)
+- [3. Algorithms](#3-algorithms)
+  - [3.1. Calibrate poses of chessboard and depth_camera](#31-calibrate-poses-of-chessboard-and-depthcamera)
+  - [3.2. Filter point cloud](#32-filter-point-cloud)
+  - [3.3. Registration](#33-registration)
+- [4. File Structure](#4-file-structure)
+- [5. Dependencies and Installation](#5-dependencies-and-installation)
+- [6. Problems to Solve](#6-problems-to-solve)
+- [7. Reference](#7-reference)
 
 <!-- /TOC -->
 
 # 1. Procedures of 3D Scanning 
 
 1. Place a depth camera on Baxter's lower forearm for collecting 3d point cloud.
-2. Before scanning, place a chessboard on the ground. Caliberate its pose and depth_camera's pose in the Baxter Robot's coordinate frame.
-3. Place a flat board on the ground, and place the object on the board. I've drawn some colored patterns (English words, circles, cross, etc.) on the board to assist the registration of point cloud.
-4. Move Baxter's limb to several positions, and take depth pictures of the object from different view angles.
-5. Filter the point cloud, and register them into a single 3D model.
-6. (TODO) Rotate the board and object for 180°, and do a second scan to get a more complete point cloud. It's due to the problem that Baxter's limb can only move around the object for about 200°, not 360°.
+2. Place a depth camera on Baxter's lower forearm for collecting 3d point cloud.
+3. Before scanning, place a chessboard on the ground. Caliberate its pose and depth_camera's pose in the Baxter Robot's coordinate frame.
+4. Place a flat board on the ground, and place the object on the board. I've drawn some colored patterns (English words, circles, cross, etc.) on the board to assist the registration of point cloud.
+5. Move Baxter's limb to several positions, and take depth pictures of the object from different view angles.
+6. Filter the point cloud, and register them into a single 3D model.
+7. (TODO) Rotate the board and object for 180°, and do a second scan to get a more complete point cloud. It's due to the problem that Baxter's limb can only move around the object for about 200°, not 360°.
 
 # 2. Workflow of the Program
 
@@ -58,27 +59,43 @@ Details of calibration is described in the "Algorithm" section.
 The workflow of the main 3 nodes are described below.
 
 ## 2.2. Node1: Move Baxter
+file: [src_main/n1_move_baxter.py](src_main/n1_move_baxter.py)
+
+The node controls Baxter to move to several positions in order to take pictures of object from different views.  After Baxter reaches the next goal pose, publish a message of depth_camera's pose to node 2.
+
+Input: (a) [config/T_arm_to_depth.txt](config/T_arm_to_depth.txt); (b) Hard-coded Baxter poses.
+
+Publish: Message to node 2.
 
 ## 2.3. Node2: Filter cloud
 
+file: [src_main/n2_filt_and_seg_object.cpp](src_main/n2_filt_and_seg_object.cpp)
+
+The node subscribes the (a) original point cloud, (b) rotated it to the Baxter's frame, (c) filter and segment the cloud to remove points that are noises or far away from the object. The result is then published to node 3.
+
+Subscribe: (a) Message from node 1. (b) Point cloud from depth camera.
+
+Publish: (b) Rotated cloud to rviz. (c) Segmented cloud to node 3.
+
+Meanwhile, it also saves the (a) orignal cloud and (c) segmented cloud to the [data/](data/) folder. 
+
 ## 2.4. Node3: Register clouds
+file: [src_main/n3_register_clouds_to_object.cpp](src_main/n3_register_clouds_to_object.cpp)
+
+This node subsribes from node2 of the segmented cloud containing the object. Then it does a registration to obtain the complete 3D model of the object. Finally, the result is saved to file.
+
+Subscribe: Segmented cloud from node2.
+
+Publish: Registration result to rviz.
 
 ## 2.5. Fake node1 for debug
+file: [src_main/n1_fake_data_publisher.cpp](src_main/n1_fake_data_publisher.cpp)
 
+This is a replacement for "n1_move_baxter.py" and is used for debug. It reads the Baxter poses and point cloud from file, and publishes them to node 2. Thus, I can test previously saved data, and debug without connecting to any hardware.
 
-# 3. Done and Need to be Done
+# 3. Algorithms
 
-I think I've completed most of the programs.  
-What I need to do:   
-* Figure out someway to place depth camera onto Baxter's arm. May be using tape at first, and change to 3d printed connector later?
-* Record several feasible positions of Baxter Limb for taking pictures. I've examined it, it should be feasible.
-* Test my program on real robot. Fix all bugs. And done!
-* Complete this README.
-* Scan some objects' 3d models for the next section of my project.
-
-# 4. Algorithms
-
-## 4.1. Calibrate poses of chessboard and depth_camera
+## 3.1. Calibrate poses of chessboard and depth_camera
 
 **Locate chessboard**:  
 
@@ -102,7 +119,7 @@ With some geometry computation, I can know where the depth_camera and chessboard
 **Procedures of calibration:**  
 Face the depth_camera and Baxter left hand camera towards the chessboard. The program reads the '/camera_info' topic, detect and locate the chessboard, and draw out the detected frame. If the detection is good, I'll press a key 'd' and obtain the calibration result, which will be saved to [/config](config) folder.
 
-## 4.2. Filter point cloud
+## 3.2. Filter point cloud
 
 After acquiring the point cloud, I do following processes (by using PCL's library): 
 * Filter by voxel grid and outlier removal.
@@ -111,11 +128,11 @@ After acquiring the point cloud, I do following processes (by using PCL's librar
 * Segment out large plane (optional).
 * Do a clustering and choose the largest object (optional).
 
-## 4.3. Registration
+## 3.3. Registration
 * Register pieces of clouds together using ICP and colored-ICP (directly using Open3D's library function).
 
 
-# 5. File Structure
+# 4. File Structure
 
 [launch/](launch)  
 Launch files, including scripts for starting **my 3D scanner** and **debug and test files**. All my ROS nodes have at least one corresponding launch file stored here.
@@ -141,25 +158,13 @@ Main scripts for this 3D scan project.
 [test/](test): Testing cpp functions.
 
 [test_ros/](test_ros): Testing ROS scripts, including:
-* Read point cloud file and publish to ROS topic by PCL/open3D.
-* Subscribe ROS point cloud and display by PCL/open3D.
+* Read point cloud file and publish to ROS topic by both PCL/open3D.
+* Subscribe ROS point cloud and display by both PCL/open3D.
 
 
 
-# 6. Reference
 
-* A 3d scanner project from last cohort:  
- https://github.com/zjudmd1015/Mini-3D-Scanner.  
-It's a really good example for me to get started. Algorithms I used for point cloud processing are almost the same as this.
-
-* PCL and Open3D.  
-My codes for the algorithms are basically copied piece by piece from their official tutorial examples.
-
-* https://github.com/karaage0703/open3d_ros  
-I referenced this page for point_cloud datatype  between open3d and ros. It's not so useful, and actually I rewrote the related functions.
-
-
-# 7. Dependencies and Installation
+# 5. Dependencies and Installation
 Below are the dependencies. Some I give the installing commands I used. Others please refer to their official website.  
 In short: Eigen, PCL, Open3D, OpenCV(Python) and other ROS packages.
 
@@ -196,3 +201,27 @@ This is really nice tutorial for install OpenCV 4.0: [link](https://www.pyimages
    $ sudo apt-get install doxygen # a denpendency of octomap  
    $ sudo apt install octovis # for octomap visualization  
    clone from https://github.com/OctoMap/octomap, and then "make install" it.  
+
+# 6. Problems to Solve
+The current implementation has following problems:
+1. Bottom of the object cannot be scanned.
+2. Baxter can only move around the object for about 200 degrees.
+
+To do:
+1. Try solving the above problems.
+2. Deal with the case when a person manually flip the object in order to scan the object parts that cannot be seen in current view. Maybe It requires tracking, and more advanced registration algorithm.
+3. Replace Baxter trajectory from hard-coding to a more intellgent motion planner. For example, automatically facing the object and moving to directions that can see the unscaned parts of object.
+4. Use a better depth camera with larger minimum scanning range and higher accuracy.
+
+# 7. Reference
+
+* A 3d scanner project from last cohort:  
+ https://github.com/zjudmd1015/Mini-3D-Scanner.  
+It's a really good example for me to get started. Algorithms I used for point cloud processing are almost the same as this.
+
+* PCL and Open3D.  
+My codes for the algorithms are basically copied piece by piece from their official tutorial examples.
+
+* https://github.com/karaage0703/open3d_ros  
+I referenced this page for point_cloud datatype  between open3d and ros. It's not so useful, and actually I rewrote the related functions.
+

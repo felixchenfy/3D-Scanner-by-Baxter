@@ -20,7 +20,6 @@
     <!-- File names for saving results -->
     <param name="file_folder" value="$(find scan3d_by_baxter)/data/" /> 
     <param name="file_name_cloud_src" value="src_" /> 
-    <param name="file_name_cloud_rotated" value="transed_" /> 
     <param name="file_name_cloud_segmented" value="segmented_" /> 
     <param name="file_name_cloud_final" value="final.pcd" /> 
     <param name="file_name_pose" value="camera_pose" /> 
