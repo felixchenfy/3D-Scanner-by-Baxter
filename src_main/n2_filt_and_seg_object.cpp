@@ -45,6 +45,20 @@ PointCloud<PointXYZRGB>::Ptr cloud_rotated(new PointCloud<PointXYZRGB>);   // th
 PointCloud<PointXYZRGB>::Ptr cloud_segmented(new PointCloud<PointXYZRGB>); // this pubs to node3
 
 // -- Input/Output and Sub/Publisher
+template <typename T>
+T getParam(const string key)
+{
+    static ros::NodeHandle nh;
+    static T val;
+    bool res = nh.getParam(key, val);
+    if (!res)
+    {
+        cout << "my Error in reading ROS param: " << key << endl;
+        assert(0);
+    }
+    return val;
+}
+
 void read_T_from_file(float T_16x1[16], string filename);
 void callbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message);
 void callbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud);
@@ -100,14 +114,10 @@ int main(int argc, char **argv)
 
     // Settings: topic names
     string topic_n1_to_n2, topic_n2_to_n3, topic_name_rgbd_cloud, topic_n2_to_rviz;
-    if (!nh.getParam("topic_n1_to_n2", topic_n1_to_n2))
-        assert(0);
-    if (!nh.getParam("topic_n2_to_n3", topic_n2_to_n3))
-        assert(0);
-    if (!nh.getParam("topic_name_rgbd_cloud", topic_name_rgbd_cloud))
-        assert(0);
-    if (!nh.getParam("topic_n2_to_rviz", topic_n2_to_rviz))
-        assert(0);
+    topic_n1_to_n2 = getParam<string>("topic_n1_to_n2");
+    topic_n2_to_n3 = getParam<string>("topic_n2_to_n3");
+    topic_name_rgbd_cloud = getParam<string>("topic_name_rgbd_cloud");
+    topic_n2_to_rviz = getParam<string>("topic_n2_to_rviz");
 
     // Settings: file names for saving point cloud
     if (!nh.getParam("file_folder", file_folder))
