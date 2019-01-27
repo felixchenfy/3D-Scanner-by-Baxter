@@ -26,13 +26,42 @@ Main function:
 using namespace std;
 using namespace pcl;
 
-// -- Params
+// ------------------------------------- ROS Params -------------------------------------
+
+// Topic names
+string topic_n1_to_n2, topic_n2_to_n3, topic_name_rgbd_cloud, topic_n2_to_rviz;
 
 // Filenames for writing to file
-string file_folder, file_name_cloud_src, file_name_cloud_segmented; // filenames for writing cloud to file
+string file_folder, file_name_cloud_src, file_name_cloud_segmented;
 int file_name_index_width;
 
-// -- Vars
+// Filename for reading chessboard's pose
+string file_folder_config, file_name_T_baxter_to_chess;
+
+// Filter: voxel filtering (filtByVoxelGrid)
+float x_grid_size, y_grid_size, z_grid_size;
+
+// Fitler: isolated points (filtByStatisticalOutlierRemoval)
+float mean_k = 50, std_dev = 1.0;
+
+// Filter: range filtering
+bool flag_do_range_filt;
+float x_range_radius, y_range_radius, z_range_low, z_range_up;
+float chessboard_x, chessboard_y, chessboard_z;
+float T_baxter_to_chess[4][4] = {0};
+
+// Filter: plane segmentation
+float plane_distance_threshold;
+int plane_max_iterations;
+int num_planes;
+float ratio_of_rest_points = -1; // disabled
+
+// Filter: divide cloud into clusters
+bool flag_do_clustering;
+double cluster_tolerance;
+int min_cluster_size, max_cluster_size;
+
+// ------------------------------------- Vars -------------------------------------
 
 // Vars for workflow control
 bool flag_receive_from_node1 = false;
@@ -44,24 +73,22 @@ PointCloud<PointXYZRGB>::Ptr cloud_src(new PointCloud<PointXYZRGB>);
 PointCloud<PointXYZRGB>::Ptr cloud_rotated(new PointCloud<PointXYZRGB>);   // this pubs to rviz
 PointCloud<PointXYZRGB>::Ptr cloud_segmented(new PointCloud<PointXYZRGB>); // this pubs to node3
 
-// -- Input/Output and Sub/Publisher
-template <typename T>
-T getParam(const string key)
-{
-    static ros::NodeHandle nh;
-    static T val;
-    bool res = nh.getParam(key, val);
-    if (!res)
-    {
-        cout << "my Error in reading ROS param: " << key << endl;
-        assert(0);
+// ------------------------------------- Functions -------------------------------------
+// -- Read params from ROS parameter server
+void initAllROSParams();
+#define NH_GET_PARAM(param_name, returned_val)                          \
+    if (!nh.getParam(param_name, returned_val))                             \
+    {                                                                \
+        cout << "Error in reading ROS param named: " << param_name << endl; \
+        assert(0);                                                   \
     }
-    return val;
-}
+
+
+// -- Input/Output and Sub/Publisher
 
 void read_T_from_file(float T_16x1[16], string filename);
-void callbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message);
-void callbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud);
+void subCallbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message);
+void subCallbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud);
 void pubPclCloudToTopic(ros::Publisher &pub, PointCloud<PointXYZRGB>::Ptr pcl_cloud);
 
 // -- Main processing functions
@@ -104,34 +131,18 @@ void main_loop(ros::Publisher &pub_to_node3, ros::Publisher &pub_to_rviz)
     }
 }
 
-// -- Main (Only for setting up variables. The main loop is at above.)
+// -- Main: set up variables, subscribers, and publishers.
 int main(int argc, char **argv)
 {
     // Init node
     string node_name = "node2";
     ros::init(argc, argv, node_name);
     ros::NodeHandle nh;
-
-    // Settings: topic names
-    string topic_n1_to_n2, topic_n2_to_n3, topic_name_rgbd_cloud, topic_n2_to_rviz;
-    topic_n1_to_n2 = getParam<string>("topic_n1_to_n2");
-    topic_n2_to_n3 = getParam<string>("topic_n2_to_n3");
-    topic_name_rgbd_cloud = getParam<string>("topic_name_rgbd_cloud");
-    topic_n2_to_rviz = getParam<string>("topic_n2_to_rviz");
-
-    // Settings: file names for saving point cloud
-    if (!nh.getParam("file_folder", file_folder))
-        assert(0);
-    if (!nh.getParam("file_name_cloud_src", file_name_cloud_src))
-        assert(0);
-    if (!nh.getParam("file_name_cloud_segmented", file_name_cloud_segmented))
-        assert(0);
-    if (!nh.getParam("file_name_index_width", file_name_index_width))
-        assert(0);
+    initAllROSParams();
 
     // Subscriber and Publisher
-    ros::Subscriber sub_from_node1 = nh.subscribe(topic_n1_to_n2, 1, callbackFromNode1); // 1 is queue size
-    ros::Subscriber sub_from_kinect = nh.subscribe(topic_name_rgbd_cloud, 1, callbackFromKinect);
+    ros::Subscriber sub_from_node1 = nh.subscribe(topic_n1_to_n2, 1, subCallbackFromNode1); // 1 is queue size
+    ros::Subscriber sub_from_kinect = nh.subscribe(topic_name_rgbd_cloud, 1, subCallbackFromKinect);
     ros::Publisher pub_to_node3 = nh.advertise<sensor_msgs::PointCloud2>(topic_n2_to_n3, 1);
     ros::Publisher pub_to_rviz = nh.advertise<sensor_msgs::PointCloud2>(topic_n2_to_rviz, 1);
 
@@ -151,32 +162,13 @@ int main(int argc, char **argv)
 // -----------------------------------------------------
 void process_to_get_cloud_rotated()
 {
-    // Func: Filtering, rotate cloud to Baxter robot frame
-
-    // voxel filtering
-    static float x_grid_size = 0.005, y_grid_size = 0.005, z_grid_size = 0.005;
-
-    // read params from ros for filtering settings
-    static int cnt_called_times = 0;
-    if (cnt_called_times++ == 0)
-    {
-        ros::NodeHandle nh("~");
-
-        // -- filtByVoxelGrid
-        if (!nh.getParam("x_grid_size", x_grid_size))
-            assert(0);
-        if (!nh.getParam("y_grid_size", y_grid_size))
-            assert(0);
-        if (!nh.getParam("z_grid_size", z_grid_size))
-            assert(0);
-    }
+    // Func: Filtering; Rotate cloud to Baxter robot frame
 
     // -- filtByVoxelGrid
     pcl::copyPointCloud(*cloud_src, *cloud_rotated);
     cloud_rotated = my_pcl::filtByVoxelGrid(cloud_rotated, x_grid_size, y_grid_size, z_grid_size);
 
     // -- filtByStatisticalOutlierRemoval
-    float mean_k = 50, std_dev = 1.0;
     cloud_rotated = my_pcl::filtByStatisticalOutlierRemoval(cloud_rotated, mean_k, std_dev);
 
     // -- rotate cloud to Baxter's frame
@@ -188,80 +180,10 @@ void process_to_get_cloud_rotated()
 // -----------------------------------------------------
 void process_to_get_cloud_segmented()
 {
-    // Func: Range filtering，　Remove plane(table), do clustering, choose the largest one
-
-    // Range filtering
-    static bool flag_do_range_filt;
-    static float x_range_radius, y_range_radius, z_range_low, z_range_up;
-    static float chessboard_x = 0.0, chessboard_y = 0.0, chessboard_z = 0.0; // Should read from txt
-    static float T_baxter_to_chess[4][4] = {0};
-
-    // plane segmentation
-    static float plane_distance_threshold = 0.01;
-    static int plane_max_iterations = 100;
-    static int num_planes = 1;
-    static float ratio_of_rest_points = -1; // disabled
-
-    // divide cloud into clusters
-    static bool flag_do_clustering = true;
-    static double cluster_tolerance = 0.02;
-    static int min_cluster_size = 100, max_cluster_size = 10000;
-
-    // read params from ros
-    static int cnt_called_times = 0;
-    if (cnt_called_times++ == 0)
-    {
-        ros::NodeHandle nh("~");
-        ros::NodeHandle nhg("");
-
-        // -- filtByPassThrough
-        if (!nh.getParam("flag_do_range_filt", flag_do_range_filt))
-            assert(0);
-        if (!nh.getParam("x_range_radius", x_range_radius))
-            assert(0);
-        if (!nh.getParam("y_range_radius", y_range_radius))
-            assert(0);
-        if (!nh.getParam("z_range_low", z_range_low))
-            assert(0);
-        if (!nh.getParam("z_range_up", z_range_up))
-            assert(0);
-
-        // Read chessboard's pose
-        string file_folder_config, file_name_T_baxter_to_chess;
-        if (!nhg.getParam("file_folder_config", file_folder_config))
-            assert(0);
-        if (!nhg.getParam("file_name_T_baxter_to_chess", file_name_T_baxter_to_chess))
-            assert(0);
-        float tmpT[16] = {0};
-        read_T_from_file(tmpT, file_folder_config + file_name_T_baxter_to_chess);
-        for (int cnt = 0, i = 0; i < 4; i++)
-            for (int j = 0; j < 4; j++)
-                T_baxter_to_chess[i][j] = tmpT[cnt++];
-        chessboard_x = T_baxter_to_chess[0][3];
-        chessboard_y = T_baxter_to_chess[1][3];
-        chessboard_z = T_baxter_to_chess[2][3];
-
-        // Segment plane
-        if (!nh.getParam("plane_distance_threshold", plane_distance_threshold))
-            assert(0);
-        if (!nh.getParam("plane_max_iterations", plane_max_iterations))
-            assert(0);
-        if (!nh.getParam("num_planes", num_planes))
-            assert(0);
-
-        // Clustering
-        if (!nh.getParam("flag_do_clustering", flag_do_clustering))
-            assert(0);
-        if (!nh.getParam("cluster_tolerance", cluster_tolerance))
-            assert(0);
-        if (!nh.getParam("min_cluster_size", min_cluster_size))
-            assert(0);
-        if (!nh.getParam("max_cluster_size", max_cluster_size))
-            assert(0);
-    }
+    // Func:    Range filtering，
+    //          Optional: Remove plane (table); Do clustering; Choose the largest one
 
     // -- filtByPassThrough (by range)
-    // PointCloud<PointXYZRGB>::Ptr tmp_cloud(new PointCloud<PointXYZRGB>);
     copyPointCloud(*cloud_rotated, *cloud_segmented);
     if (flag_do_range_filt)
     {
@@ -332,6 +254,8 @@ void print_cloud_processing_result(int cnt_cloud)
     printf("------------------------------------------\n\n");
 }
 
+// -----------------------------------------------------
+// -----------------------------------------------------
 void read_T_from_file(float T_16x1[16], string filename)
 {
     ifstream fin;
@@ -345,7 +269,7 @@ void read_T_from_file(float T_16x1[16], string filename)
     return;
 }
 
-void callbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message)
+void subCallbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message)
 {
     flag_receive_from_node1 = true;
     const vector<float> &trans_mat_16x1 = pose_message->TransformationMatrix;
@@ -353,7 +277,7 @@ void callbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message)
         for (int j = 0; j < 4; j++)
             T_baxter_to_depthcam[i][j] = trans_mat_16x1[cnt++];
 }
-void callbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud)
+void subCallbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud)
 {
     if (flag_receive_from_node1)
     {
@@ -368,4 +292,68 @@ void pubPclCloudToTopic(ros::Publisher &pub, PointCloud<PointXYZRGB>::Ptr pcl_cl
     pcl::toROSMsg(*pcl_cloud, ros_cloud_to_pub);
     ros_cloud_to_pub.header.frame_id = "base";
     pub.publish(ros_cloud_to_pub);
+}
+
+
+void initAllROSParams()
+{
+    {
+        ros::NodeHandle nh;
+
+        // Topic names
+        NH_GET_PARAM("topic_n1_to_n2",topic_n1_to_n2)
+        NH_GET_PARAM("topic_n2_to_n3",topic_n2_to_n3)
+        NH_GET_PARAM("topic_name_rgbd_cloud",topic_name_rgbd_cloud)
+        NH_GET_PARAM("topic_n2_to_rviz",topic_n2_to_rviz)
+
+        // File names for saving point cloud
+        NH_GET_PARAM("file_folder",file_folder)
+        NH_GET_PARAM("file_name_cloud_src",file_name_cloud_src)
+        NH_GET_PARAM("file_name_cloud_segmented",file_name_cloud_segmented)
+        NH_GET_PARAM("file_name_index_width",file_name_index_width)
+
+
+        // Filename for reading chessboard's pose
+        NH_GET_PARAM("file_folder_config",file_folder_config)
+        NH_GET_PARAM("file_name_T_baxter_to_chess",file_name_T_baxter_to_chess)
+  
+        float tmpT[16] = {0};
+        read_T_from_file(tmpT, file_folder_config + file_name_T_baxter_to_chess);
+        for (int cnt = 0, i = 0; i < 4; i++)
+            for (int j = 0; j < 4; j++)
+                T_baxter_to_chess[i][j] = tmpT[cnt++];
+        chessboard_x = T_baxter_to_chess[0][3];
+        chessboard_y = T_baxter_to_chess[1][3];
+        chessboard_z = T_baxter_to_chess[2][3];
+
+    }
+
+    // ---------------------------- Filters ----------------------------
+    {
+        ros::NodeHandle nh("~");
+
+        // -- filtByPassThrough
+        NH_GET_PARAM("flag_do_range_filt",flag_do_range_filt)
+        NH_GET_PARAM("x_range_radius",x_range_radius)
+        NH_GET_PARAM("y_range_radius",y_range_radius)
+        NH_GET_PARAM("z_range_low",z_range_low)
+        NH_GET_PARAM("z_range_up",z_range_up)
+
+        // -- filtByVoxelGrid
+        NH_GET_PARAM("x_grid_size",x_grid_size)
+        NH_GET_PARAM("y_grid_size",y_grid_size)
+        NH_GET_PARAM("z_grid_size",z_grid_size)
+
+        // -- Segment plane
+        NH_GET_PARAM("plane_distance_threshold",plane_distance_threshold)
+        NH_GET_PARAM("plane_max_iterations",plane_max_iterations)
+        NH_GET_PARAM("num_planes",num_planes)
+
+        // -- Clustering
+        NH_GET_PARAM("flag_do_clustering",flag_do_clustering)
+        NH_GET_PARAM("cluster_tolerance",cluster_tolerance)
+        NH_GET_PARAM("min_cluster_size",min_cluster_size)
+        NH_GET_PARAM("max_cluster_size",max_cluster_size)
+    }
+
 }
