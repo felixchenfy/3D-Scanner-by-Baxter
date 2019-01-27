@@ -68,7 +68,7 @@
 
    <!-- node 1: main node for controlling work flow -->
     <node if="$(arg run_node1)" 
-        name="node1" type="n1_work_flow_control.py"  pkg="scan3d_by_baxter" output = "screen">
+        name="node1" type="n1_move_baxter.py"  pkg="scan3d_by_baxter" output = "screen">
         
         <!-- DEBUG_MODE: If true, no need to connect to real Baxter or Gazebo. Publish fake poses.  -->
         <param name="DEBUG_MODE_FOR_BAXTER" value="false" type="bool" />
@@ -80,7 +80,7 @@
     </node>
 
     <node if="$(arg run_node1_fake)" 
-        name="n1_fake" pkg="scan3d_by_baxter" type="n1_fake.py" output = "screen">
+        name="n1_fake_data_publisher" pkg="scan3d_by_baxter" type="n1_fake_data_publisher.py" output = "screen">
     </node>
 
 
