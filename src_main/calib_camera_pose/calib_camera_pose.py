@@ -83,7 +83,7 @@ if __name__ == "__main__":
         topic_cam_depth = rospy.get_param("~topic_rgbd_camera")
         my_baxter = MyBaxter("left", turn_on_traj_action_server=False)
         THE_FRAME_DEPTHCAM_CONNECTED_TO = rospy.get_param("~the_frame_depth_camera_connected_to")
-        SLEEP_TIME = 2000
+        SLEEP_TIME = 1000
 
     # -- Set a publisher for visualization chessboard in image
     topic_to_pub_calib_result_image = rospy.get_param("~topic_to_pub_calib_result_image")
@@ -121,7 +121,8 @@ if __name__ == "__main__":
             I = sub_image(image_topic)
             # rospy.loginfo("Subscribed a image from " + image_topic)
             res, R, p, imgpoints = getChessboardPose(I, K, D, SQUARE_SIZE , CHECKER_ROWS, CHECKER_COLS)
-                
+            print ("left " if i==0 else "right")+": chessboard "+("found" if res else "not found")
+
             img_display=I.copy()
             if res==True:
             
