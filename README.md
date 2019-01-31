@@ -35,13 +35,12 @@ This project can be useful if you are interested in: 3D Scanning, ROS (Python, c
 
 # 1. Procedures of 3D Scanning 
 
-1. Place a depth camera on Baxter's lower forearm for collecting 3d point cloud.
-2. Place a depth camera on Baxter's lower forearm for collecting 3d point cloud.
-3. Before scanning, place a chessboard on the ground. Caliberate its pose and depth_camera's pose in the Baxter Robot's coordinate frame.
-4. Place a flat board on the ground, and place the object on the board. I've drawn some colored patterns (English words, circles, cross, etc.) on the board to assist the registration of point cloud.
-5. Move Baxter's limb to several positions, and take depth pictures of the object from different view angles.
-6. Filter the point cloud, and register them into a single 3D model.
-7. (TODO) Rotate the board and object for 180°, and do a second scan to get a more complete point cloud. It's due to the problem that Baxter's limb can only move around the object for about 200°, not 360°.
+1. Place a depth camera on Baxter's lower forearm to collect 3d point clouds.
+2. Before scanning, place a chessboard on the ground. Caliberate its pose and depth_camera's pose in the Baxter Robot's coordinate frame.
+3. Place a flat board on the ground, and place the object on the board. I've drawn some colored patterns (English words, circles, cross, etc.) on the board to assist the registration of point cloud.
+4. Move Baxter's limb to several positions, and take depth pictures of the object from different view angles.
+5. Filter the point cloud, and register them into a single 3D model.
+6. (TODO) Rotate the board and object for 180°, and do a second scan to get a more complete point cloud. It's due to the problem that Baxter's limb can only move around the object for about 200°, not 360°.
 
 # 2. Workflow of the Program
 
@@ -80,7 +79,7 @@ Publish: (b) Rotated cloud to rviz. (c) Segmented cloud to node 3.
 Meanwhile, it also saves the (a) orignal cloud and (c) segmented cloud to the [data/](data/) folder. 
 
 ## 2.4. Node3: Register clouds
-file: [src_main/n3_register_clouds_to_object.cpp](src_main/n3_register_clouds_to_object.cpp)
+file: [src_main/n3_register_clouds_to_object.py](src_main/n3_register_clouds_to_object.py)
 
 This node subsribes from node2 of the segmented cloud containing the object. Then it does a registration to obtain the complete 3D model of the object. Finally, the result is saved to file.
 
@@ -114,10 +113,12 @@ Poses of Baxter's frames can be read from '/tf' topic (forward kinematics).
 * For Baxter left hand camera, it already has a frame in the tf tree. 
 * For the Depth camera, I placed it on the tf frame of '/left_lower_forearm'.  
 
-With some geometry computation, I can know where the depth_camera and chessboard is in Baxter frame.
+With some geometrical computation, I can know where the depth_camera and chessboard is in Baxter frame.
 
 **Procedures of calibration:**  
-Face the depth_camera and Baxter left hand camera towards the chessboard. The program reads the '/camera_info' topic, detect and locate the chessboard, and draw out the detected frame. If the detection is good, I'll press a key 'd' and obtain the calibration result, which will be saved to [/config](config) folder.
+Face the depth_camera and Baxter left hand camera towards the chessboard. The program reads the '/camera_info' topic, detect and locate the chessboard, and draw out the detected coordinate and xyz-axis. If the detection is good, I'll press a key 'd' and obtain the calibration result, which is then saved to [/config](config) folder.
+
+Main functions are defined in [lib_cam_calib.py](src_python/lib_cam_calib.py) and [lib_geo_trans.py](src_python/lib_geo_trans.py).
 
 ## 3.2. Filter point cloud
 
@@ -125,12 +126,18 @@ After acquiring the point cloud, I do following processes (by using PCL's librar
 * Filter by voxel grid and outlier removal.
 * Rotate cloud to the Baxter's frame.
 * Range filtering. Retrain only points that are near the chessboard.
-* Segment out large plane (optional).
+* Segment out planes (optional).
 * Do a clustering and choose the largest object (optional).
 
-## 3.3. Registration
-* Register pieces of clouds together using ICP and colored-ICP (directly using Open3D's library function).
+Functions are declared in [pcl_filters.h](include/my_pcl/pcl_filters.h) and [pcl_advanced.h](include/my_pcl/pcl_advanced.h).
 
+## 3.3. Registration
+
+Register pieces of clouds together using ICP and colored-ICP (directly using Open3D's library function).
+
+TODO: Add more detials
+
+Functions are defined in [lib_cloud_registration.py](src_python/lib_cloud_registration.py).
 
 # 4. File Structure
 
@@ -165,7 +172,7 @@ Main scripts for this 3D scan project.
 
 
 # 5. Dependencies and Installation
-Below are the dependencies. Some I give the installing commands I used. Others please refer to their official website.  
+Below are the dependencies. Some I give the installing instructions. Others please refer to their official website.  
 In short: Eigen, PCL, Open3D, OpenCV(Python) and other ROS packages.
 
 -  Eigen 3  
@@ -174,15 +181,17 @@ $ sudo apt-get install libeigen3-dev
 (Eigen only has header files. No ".so" or ".a".)
 
 -  pcl 1.7  
-sudo add-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl  
-sudo apt-get update  
-sudo apt-get install libpcl-all  
+   > $ sudo add-apt-repository ppa:v-launchpad-jochen-sprickerhof-de/pcl  
+   > $ sudo apt-get update  
+   > $ sudo apt-get install libpcl-all  
 
 -  pcl_ros  
 http://wiki.ros.org/pcl_ros  
-$ sudo apt-get install ros-melodic-pcl-ros    
-$ sudo apt-get install ros-melodic-pcl-conversions    
-(It seems that the above two has already been installed on my ubuntu.)  
+   > $ sudo apt-get install ros-melodic-pcl-ros  
+   > $ sudo apt-get install   
+   > $ ros-melodic-pcl-conversions    
+
+   (The above two might already been installed.)  
 
 -  Open3D  
 Two official installation tutorials: [this](http://www.open3d.org/docs/getting_started.html) and [this](http://www.open3d.org/docs/compilation.html).
@@ -198,9 +207,10 @@ This is really nice tutorial for install OpenCV 4.0: [link](https://www.pyimages
 
 -  Some other libs that might be usefll  
    * octomap  
-   $ sudo apt-get install doxygen # a denpendency of octomap  
-   $ sudo apt install octovis # for octomap visualization  
-   clone from https://github.com/OctoMap/octomap, and then "make install" it.  
+     > $ sudo apt-get install doxygen # a denpendency of octomap  
+     > $ sudo apt install octovis # for octomap visualization  
+     
+     After install above dependencies, clone from https://github.com/OctoMap/octomap, and then "make install" it.  
 
 # 6. Problems to Solve
 The current implementation has following problems:
@@ -215,7 +225,7 @@ To do:
 
 # 7. Reference
 
-* A 3d scanner project from last cohort:  
+* A 3d scanner project from last NWU MSR cohort:  
  https://github.com/zjudmd1015/Mini-3D-Scanner.  
 It's a really good example for me to get started. Algorithms I used for point cloud processing are almost the same as this.
 
@@ -223,5 +233,5 @@ It's a really good example for me to get started. Algorithms I used for point cl
 My codes for the algorithms are basically copied piece by piece from their official tutorial examples.
 
 * https://github.com/karaage0703/open3d_ros  
-I referenced this page for point_cloud datatype  between open3d and ros. It's not so useful, and actually I rewrote the related functions.
+I referenced this github repo for point_cloud datatype  between open3d and ros. It's useful for me to understand the ROS PointCloud2 datatype, but its code and documentation does have some limitations. Acutually I rewrote the related functions. See this [Github Repo](https://github.com/felixchenfy/open3d_ros_pointcloud_conversion).
 

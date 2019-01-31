@@ -68,7 +68,7 @@ def distortPoint(x, y, distortion_coeffs):
     r4 = r2*r2
     r6 = r4*r2
     d = distortion_coeffs
-    k1, k2, k3, p1, p2 = d[0], d[1], d[2], d[3], d[4]
+    k1, k2, p1, p2, k3 = d[0], d[1], d[2], d[3], d[4]
     x_distort = x * (1 + k1 * r2 + k2 * r4 + k3 * r6) + \
         2*p1*x*y + p2*(r2 + 2*x*x)
     y_distort = y * (1 + k1 * r2 + k2 * r4 + k3 * r6) + \
