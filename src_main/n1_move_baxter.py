@@ -87,7 +87,7 @@ def getCloudSize(open3d_cloud):
 
 # -- Main
 if __name__ == "__main__":
-    rospy.init_node('node1')
+    rospy.init_node('Node 1')
     DEBUG_MODE_FOR_BAXTER = rospy.get_param("~DEBUG_MODE_FOR_BAXTER")
     DEBUG_MODE_FOR_RGBDCAM = rospy.get_param("~DEBUG_MODE_FOR_RGBDCAM")
 
@@ -139,7 +139,7 @@ if __name__ == "__main__":
     # -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0
     for i in range(num_goalposes):
         goalposes_joint_angles.append(
-            addListVal(base_angles, 0, i*0.58)
+            addListVal(base_angles, 0, i*0.58/2)
         )
     assert len(goalposes_joint_angles)>=num_goalposes
 
@@ -158,19 +158,19 @@ if __name__ == "__main__":
             filename = debug_file_name+str(ith_goalpose)+".pcd"
             filename_whole = debug_file_folder+filename
             open3d_cloud = open3d.read_point_cloud(filename_whole)
-            rospy.loginfo("node1: sim: load cloud file: " + filename +
+            rospy.loginfo("Node 1: sim: load cloud file: " + filename +
                           ", points = " + str(getCloudSize(open3d_cloud)))
             ros_cloud = convertCloudFromOpen3dToRos(open3d_cloud)
-            rospy.loginfo("node1: sim: publishing cloud "+str(ith_goalpose))
+            rospy.loginfo("Node 1: sim: publishing cloud "+str(ith_goalpose))
             pub_sim_cloud.publish(ros_cloud)
 
     # Move Baxter to initial position
     rospy.sleep(1)
     rospy.loginfo("]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]")
     init_joint_angles = goalposes_joint_angles[0]
-    rospy.loginfo("node1: Initialization. Move Baxter to init pose: "+str(init_joint_angles))
+    rospy.loginfo("Node 1: Initialization. Move Baxter to init pose: "+str(init_joint_angles))
     moveBaxterToJointAngles(init_joint_angles, time_cost=3.0)
-    rospy.loginfo("node1: Baxter reached the initial pose!\n\n")
+    rospy.loginfo("Node 1: Baxter reached the initial pose!\n\n")
     rospy.loginfo("[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[")
 
     # Move Baxter to all goal positions
@@ -182,15 +182,15 @@ if __name__ == "__main__":
 
         # Move robot to the next pose for taking picture
         rospy.loginfo("--------------------------------")
-        rospy.loginfo("node1: {}th pos".format(ith_goalpose))
-        rospy.loginfo("node1: Baxter is moving to pos: "+str(joint_angles))
+        rospy.loginfo("Node 1: {}th pos".format(ith_goalpose))
+        rospy.loginfo("Node 1: Baxter is moving to pos: "+str(joint_angles))
         moveBaxterToJointAngles(joint_angles, 4.0)
-        rospy.loginfo("node1: Baxter reached the pose!")
+        rospy.loginfo("Node 1: Baxter reached the pose!")
 
         # Publish the signal to node2
-        rospy.loginfo("node1: Wait until stable for 1 more second")
+        rospy.loginfo("Node 1: Wait until stable for 1 more second")
         rospy.sleep(1.0)
-        rospy.loginfo("node1: publish "+str(ith_goalpose) +
+        rospy.loginfo("Node 1: publish "+str(ith_goalpose) +
                       "th camera pose to node2")
         pose = readKinectCameraPose()
         publishPose(pose)

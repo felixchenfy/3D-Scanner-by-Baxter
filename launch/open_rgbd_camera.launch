@@ -15,10 +15,4 @@
         <arg name="depth_registration" default="true" />
     </include>
 
-    <!-- <node type="rviz" name="rviz_depth_image" pkg="rviz"
-       args="-d $(find scan3d_by_baxter)/config/rviz_depth_image.rviz" 
-    />  -->
-    <node type="rviz" name="rviz_depth_image" pkg="rviz"
-       args="-d $(find scan3d_by_baxter)/config/rviz_depth_image_2.rviz" 
-    /> 
 </launch>

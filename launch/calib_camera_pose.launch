@@ -23,10 +23,8 @@
         <!-- <param name="chessboard_checker_rows" value="4"  /> -->
         <!-- <param name="chessboard_checker_cols" value="6"  /> -->
         <param name="chessboard_square_size" value="0.02455555"  />
-        <param name="chessboard_checker_rows" value="6"  />
-        <param name="chessboard_checker_cols" value="8"  />
-        <!-- <param name="chessboard_checker_rows" value="4"  />
-        <param name="chessboard_checker_cols" value="6"  /> -->
+        <param name="chessboard_checker_rows" value="7"  />
+        <param name="chessboard_checker_cols" value="9"  />
 
         <!-- Baxter: which frame is rgb-d camera connected to -->
         <param name="the_frame_depth_camera_connected_to" value="/left_lower_forearm" />
@@ -47,6 +45,10 @@
         output = "screen" args="image:=/$(arg topic_to_pub_calib_result_image)">
     </node> -->
 
+    <!-- Show image from depth_camera in rviz -->
+    <node type="rviz" name="rviz_depth_image" pkg="rviz"
+       args="-d $(find scan3d_by_baxter)/config/rviz_depth_image_2.rviz" 
+    /> 
 
 </launch>
 

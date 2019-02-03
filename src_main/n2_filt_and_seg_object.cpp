@@ -48,7 +48,7 @@ float mean_k = 50, std_dev = 1.0;
 bool flag_do_range_filt;
 float x_range_radius, y_range_radius, z_range_low, z_range_up;
 float chessboard_x, chessboard_y, chessboard_z;
-float T_baxter_to_chess[4][4] = {0};
+float T_baxter_to_chess[4][4] = {0}, T_chess_to_baxter[4][4] = {0};
 
 // Filter: plane segmentation
 float plane_distance_threshold;
@@ -109,9 +109,13 @@ void main_loop(ros::Publisher &pub_to_node3, ros::Publisher &pub_to_rviz)
 
             // Process cloud
             process_to_get_cloud_rotated();
-            pubPclCloudToTopic(pub_to_rviz, cloud_rotated);
-
             process_to_get_cloud_segmented();
+
+            // print
+            print_cloud_processing_result(cnt_cloud); // Print info
+
+            // Publish
+            pubPclCloudToTopic(pub_to_rviz, cloud_rotated);
             pubPclCloudToTopic(pub_to_node3, cloud_segmented);
 
             // Save to file
@@ -123,8 +127,6 @@ void main_loop(ros::Publisher &pub_to_node3, ros::Publisher &pub_to_rviz)
             string f2 = file_folder + file_name_cloud_segmented + suffix;
             my_pcl::write_point_cloud(f2, cloud_segmented);
 
-            // print
-            print_cloud_processing_result(cnt_cloud); // Print info
         }
         ros::spinOnce(); // In python, sub is running in different thread. In C++, same thread. So need this.
         ros::Duration(0.01).sleep();
@@ -221,7 +223,7 @@ void process_to_get_cloud_segmented()
 
     // -- rotate cloud to Chessboard's frame, for better viewing in PCL viewer
     for (PointXYZRGB &p : cloud_segmented->points)
-        my_basics::preTranslatePoint(T_baxter_to_chess, p.x, p.y, p.z);
+        my_basics::preTranslatePoint(T_chess_to_baxter, p.x, p.y, p.z);
 }
 
 // -----------------------------------------------------
@@ -231,17 +233,17 @@ void print_cloud_processing_result(int cnt_cloud)
 
     cout << endl;
     printf("------------------------------------------\n");
-    printf("-------- Processing %dth cloud -----------\n", cnt_cloud);
+    printf("Node 2: Processing %dth cloud ------------\n", cnt_cloud);
     ROS_INFO("Subscribed a point cloud from ros topic.");
 
-    cout << "camera pos:" << endl;
-    for (int i = 0; i < 4; i++)
-    {
-        for (int j = 0; j < 4; j++)
-            cout << T_baxter_to_depthcam[i][j] << " ";
-        cout << endl;
-    }
-    cout << endl;
+    // cout << "camera pos:" << endl;
+    // for (int i = 0; i < 4; i++)
+    // {
+    //     for (int j = 0; j < 4; j++)
+    //         cout << T_baxter_to_depthcam[i][j] << " ";
+    //     cout << endl;
+    // }
+    // cout << endl;
 
     cout << "cloud_src: ";
     my_pcl::printCloudSize(cloud_src);
@@ -325,7 +327,7 @@ void initAllROSParams()
         chessboard_x = T_baxter_to_chess[0][3];
         chessboard_y = T_baxter_to_chess[1][3];
         chessboard_z = T_baxter_to_chess[2][3];
-
+        my_basics::inv(T_baxter_to_chess, T_chess_to_baxter); // inv(src, dst)
     }
 
     // ---------------------------- Filters ----------------------------

@@ -119,6 +119,12 @@ if __name__ == "__main__":
         for i in range(2):
             image_topic, K, D = cameras[i][0],cameras[i][1],cameras[i][2]
             I = sub_image(image_topic)
+
+            if 0: # whether save to file
+                filename_to_save_img = PYTHON_FILE_PATH+"/../../data_debug/img_for_calib_"+str(i)+".png"
+                print "filename_to_save_img: "+filename_to_save_img
+                cv2.imwrite(filename_to_save_img, I)
+
             # rospy.loginfo("Subscribed a image from " + image_topic)
             res, R, p, imgpoints = getChessboardPose(I, K, D, SQUARE_SIZE , CHECKER_ROWS, CHECKER_COLS)
             print ("left " if i==0 else "right")+": chessboard "+("found" if res else "not found")

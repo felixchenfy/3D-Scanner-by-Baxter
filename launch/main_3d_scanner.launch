@@ -6,15 +6,13 @@
    <!--=============================== Parameters ======================================== -->
 
     <!-- Number of poses the Baxter will move to for taking picture -->
-    <param name="num_goalposes" type="int" value="6" /> 
+    <param name="num_goalposes" type="int" value="11" /> 
 
     <!-- The topic for receiving PointCloud2 from RgbdCam -->
     <param name="topic_name_rgbd_cloud" value="/camera/depth_registered/points" /> 
 
-    <!-- File names for readign point cloud and debug -->
+    <!-- File names for reading point cloud and debug -->
     <param name="debug_file_folder" value="$(find scan3d_by_baxter)/data_debug/" /> 
-    <!-- <param name="debug_file_name" value="cloud_cluster_"  />
-    <param name="debug_file_name" value="milk_and_2bottles_"  /> -->
     <param name="debug_file_name" value="ColoredICP_"  />
 
     <!-- File names for saving results -->
@@ -45,14 +43,14 @@
  
    <!--=============================== Debug Settings ======================================== -->
 
-    <arg name="run_node1"  default="true" doc="DEBUG: whether run node 1"/>
+    <!-- <arg name="run_node1"  default="true" doc="DEBUG: whether run node 1"/> -->
+    <arg name="run_node1"  default="false" doc="DEBUG: whether run node 1"/>
     <arg name="run_node2"  default="true" doc="DEBUG: whether run node 2"/>
     <arg name="run_node3"  default="true" doc="DEBUG: whether run node 3"/>
 
-    <arg name="run_node1_fake"  default="false"
-        doc="Run a fake node 1. All data are read from file. No need for Baxter or Kinect."/>
+    <!-- Run a fake node 1. All data are read from file. No need for Baxter or Kinect. --> -->
+    <arg name="run_node1_fake"  default="true"/> <!-- This should be false, if run_node1==true  -->
 
-   
    <!--=============================== Run setup nodes =========================================== -->
     <group if="$(arg run_node1)">
 
@@ -88,19 +86,12 @@
     <node if="$(arg run_node2)" 
         name="node2"
         type="n2_filt_and_seg_object" 
-        pkg="scan3d_by_baxter" output = "screen">
-
-            <!-- visualzation -->
-            <param name="viwer_axis_unit_length" type="double" value="0.1" />     
-            <param name="viwer_x_dis" type="double" value="-0.4" />     
-            <param name="viwer_y_dis" type="double" value="0.1" />     
-            <param name="viwer_z_dis" type="double" value="-0.2" />     
-            <param name="viwer_rot_y" type="double" value="1.37" />     
+        pkg="scan3d_by_baxter" output = "screen">  
 
             <!-- filtering -->
-            <param name="x_grid_size" type="double" value="0.002" />     
-            <param name="y_grid_size" type="double" value="0.002" />     
-            <param name="z_grid_size" type="double" value="0.002" />   
+            <param name="x_grid_size" type="double" value="0.001" />     
+            <param name="y_grid_size" type="double" value="0.001" />     
+            <param name="z_grid_size" type="double" value="0.001" />   
 
             <!-- filtering by range. Centered at the chessboard -->
             <param name="flag_do_range_filt" type="bool" value="true" />     
@@ -108,13 +99,13 @@
             <param name="x_range_up" type="double" value="0.0" />     
             <param name="y_range_low" type="double" value="0.0" />     
             <param name="y_range_up" type="double" value="0.0" /> -->
-            <param name="z_range_low" type="double" value="-0.5" />     
+            <param name="z_range_low" type="double" value="-0.1" />     
             <param name="z_range_up" type="double" value="0.5" />     
-            <param name="x_range_radius" type="double" value="0.2" />     
-            <param name="y_range_radius" type="double" value="0.2" />     
+            <param name="x_range_radius" type="double" value="0.15" />     
+            <param name="y_range_radius" type="double" value="0.15" />     
 
             <!-- segment plane -->
-            <param name="num_planes" type="int" value="0" />     
+            <param name="num_planes" type="int" value="1" />     
             <param name="plane_distance_threshold" type="double" value="0.01" />     
             <param name="plane_max_iterations" type="int" value="100" />     
 
@@ -126,10 +117,9 @@
     </node>
 
    <!-- node 3: register clouds -->
-    <node if="$(arg run_node3)" 
-        name="node3"
-        type="n3_register_clouds_to_object.py" 
-        pkg="scan3d_by_baxter" output = "screen">
+    <node if="$(arg run_node3)" name="node3" type="n3_register_clouds_to_object.py"  pkg="scan3d_by_baxter" output = "screen">
+        <param name="radius_registration" type="double" value="0.005" />     
+        <param name="radius_merge" type="double" value="0.002" />   
     </node>
 
    <!--================================== rviz ============================================== -->
@@ -137,11 +127,14 @@
     <node type="rviz" name="rviz1" pkg="rviz"
        args="-d $(find scan3d_by_baxter)/config/rviz_baxter_and_clouds.rviz" /> 
 
-
     <node type="rviz" name="rviz2" pkg="rviz"
        args="-d $(find scan3d_by_baxter)/config/rviz_segmented_cloud.rviz" /> 
 
     <node type="rviz" name="rviz3" pkg="rviz"
-       args="-d $(find scan3d_by_baxter)/config/rviz_final_cloud.rviz" /> 
-
+       args="-d $(find scan3d_by_baxter)/config/rviz_final_cloud.rviz" />
+       
+    <node type="rviz" name="rviz_depth_image" pkg="rviz"
+       args="-d $(find scan3d_by_baxter)/config/rviz_depth_image.rviz" 
+    /> 
+   
 </launch>

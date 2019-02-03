@@ -26,7 +26,7 @@ from scan3d_by_baxter.msg import T4x4
 
 # -------------------------------------------------------------
 # ------------------ Variables 
-FILE_FOLDER = PYTHON_FILE_PATH+"../data_debug/from_real/"
+FILE_FOLDER = PYTHON_FILE_PATH+"../data/without_board/"
 ith_goalpose = 0
 
 # -------------------------------------------------------------
@@ -91,11 +91,11 @@ class ClassPubPointClous(object):
     def pub_cloud(self):
         filename = self.getFileName()
         open3d_cloud = open3d.read_point_cloud(filename)
-        print "node1: sim: load cloud file:\n  " + filename
+        print "Node 1: sim: load cloud file:\n  " + filename
         print "  points = " + str(getCloudSize(open3d_cloud))
         
         ros_cloud = convertCloudFromOpen3dToRos(open3d_cloud)
-        print("node1: sim: publishing cloud "+str(ith_goalpose))
+        print("Node 1: sim: publishing cloud "+str(ith_goalpose))
         self.pub.publish(ros_cloud)
 
 
@@ -110,14 +110,14 @@ if __name__ == "__main__":
     pub_clouds = ClassPubPointClous()
 
     # Move Baxter to all goal positions
-    num_goalposes = 6
+    num_goalposes = 11
     while ith_goalpose < num_goalposes and not rospy.is_shutdown():
         ith_goalpose += 1
         print "\n----------------------------------------"
-        print ith_goalpose,"th pose:"
+        print "Node 1: Moving to ", ith_goalpose,"th pose:"
         pub_poses.pub_pose()
         pub_clouds.pub_cloud()
-        rospy.sleep(3)
+        rospy.sleep(1)
         if ith_goalpose == num_goalposes:
             pub_poses.closeFile()
             pub_poses.openFile()
