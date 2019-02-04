@@ -1,8 +1,8 @@
 '''
 Run this script to change point cloud file types. Examples:
 
-$ python src_py/convert_point_cloud_file_type.py data/ColoredICP_1.ply data/ColoredICP_1.pcd
-$ python src_py/convert_point_cloud_file_type.py data/ColoredICP_2.ply data/ColoredICP_2.pcd
+$ python src_py/convert_point_cloud_file_type.py data/data/ColoredICP_1.ply data/data/ColoredICP_1.pcd
+$ python src_py/convert_point_cloud_file_type.py data/data/ColoredICP_2.ply data/data/ColoredICP_2.pcd
 
 '''
 

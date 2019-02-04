@@ -3,8 +3,8 @@ Test functions in "my_pcl/pcl_io.h", "my_pcl/pcl_commons.h", "my_pcl/pcl_visuali
     read, write, display, and change color to the cloud->points.
 
 Example of usage:
-$ bin/pcl_test_read_write_display data/gray_milk.pcd
-$ bin/pcl_test_read_write_display data/color_milk_and_2bottles.pcd
+$ bin/pcl_test_read_write_display data/data/gray_milk.pcd
+$ bin/pcl_test_read_write_display data/data/color_milk_and_2bottles.pcd
 
 */
 

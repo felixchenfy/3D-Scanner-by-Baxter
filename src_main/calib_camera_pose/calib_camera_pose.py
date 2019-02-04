@@ -121,7 +121,7 @@ if __name__ == "__main__":
             I = sub_image(image_topic)
 
             if 0: # whether save to file
-                filename_to_save_img = PYTHON_FILE_PATH+"/../../data_debug/img_for_calib_"+str(i)+".png"
+                filename_to_save_img = PYTHON_FILE_PATH+"/../../data/data_debug/img_for_calib_"+str(i)+".png"
                 print "filename_to_save_img: "+filename_to_save_img
                 cv2.imwrite(filename_to_save_img, I)
 

@@ -17,6 +17,7 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler, eul
 # -- My lib
 sys.path.append(PYTHON_FILE_PATH + "../src_python")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos
+from lib_geo_trans import transXYZ
 
 # -- Message types
 # from std_msgs.msg import Int32  # used for indexing the ith robot pose
@@ -26,7 +27,7 @@ from scan3d_by_baxter.msg import T4x4
 
 # -------------------------------------------------------------
 # ------------------ Variables 
-FILE_FOLDER = PYTHON_FILE_PATH+"../data/without_board/"
+FILE_FOLDER = PYTHON_FILE_PATH+"../data/data/driller_floor/"
 ith_goalpose = 0
 
 # -------------------------------------------------------------
@@ -67,6 +68,9 @@ class ClassPubDepthCamPose(object):
 
     def pub_pose(self):
         T = self.readNextPose()
+        # ------ DEBUG ------
+        # T = T.dot(transXYZ(x=0, y=0, z=0.1))
+        # ------
         # Trans to 1x16 array
         pose_1x16 = []
         for i in range(4):

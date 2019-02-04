@@ -12,11 +12,11 @@
     <param name="topic_name_rgbd_cloud" value="/camera/depth_registered/points" /> 
 
     <!-- File names for reading point cloud and debug -->
-    <param name="debug_file_folder" value="$(find scan3d_by_baxter)/data_debug/" /> 
+    <param name="debug_file_folder" value="$(find scan3d_by_baxter)/data/data_debug/" /> 
     <param name="debug_file_name" value="ColoredICP_"  />
 
     <!-- File names for saving results -->
-    <param name="file_folder" value="$(find scan3d_by_baxter)/data/" /> 
+    <param name="file_folder" value="$(find scan3d_by_baxter)/data/data/" /> 
     <param name="file_name_cloud_src" value="src_" /> 
     <param name="file_name_cloud_segmented" value="segmented_" /> 
     <param name="file_name_cloud_final" value="final.pcd" /> 
@@ -125,16 +125,15 @@
    <!--================================== rviz ============================================== -->
 
     <node type="rviz" name="rviz1" pkg="rviz"
-       args="-d $(find scan3d_by_baxter)/config/rviz_baxter_and_clouds.rviz" /> 
+       args="-d $(find scan3d_by_baxter)/config/rviz_baxter_and_clouds.rviz" respawn="true"/> 
 
     <node type="rviz" name="rviz2" pkg="rviz"
-       args="-d $(find scan3d_by_baxter)/config/rviz_segmented_cloud.rviz" /> 
+       args="-d $(find scan3d_by_baxter)/config/rviz_segmented_cloud.rviz" respawn="true"/> 
 
     <node type="rviz" name="rviz3" pkg="rviz"
-       args="-d $(find scan3d_by_baxter)/config/rviz_final_cloud.rviz" />
+       args="-d $(find scan3d_by_baxter)/config/rviz_final_cloud.rviz" respawn="true"/>
        
     <node type="rviz" name="rviz_depth_image" pkg="rviz"
-       args="-d $(find scan3d_by_baxter)/config/rviz_depth_image.rviz" 
-    /> 
+       args="-d $(find scan3d_by_baxter)/config/rviz_depth_image.rviz" respawn="true"/> 
    
 </launch>

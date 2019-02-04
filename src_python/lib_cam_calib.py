@@ -97,7 +97,7 @@ def getChessboardPose(img,
     # -- Find the chess board corners in gray image
     gray = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY)
     if 0: # DEBUG: save image to file and print out info
-        filename_to_save_img = "/home/feiyu/baxterws/src/scan3d_by_baxter/src_main/calib_camera_pose//../../data_debug/img_for_calib.png"
+        filename_to_save_img = "/home/feiyu/baxterws/src/scan3d_by_baxter/src_main/calib_camera_pose//../../data/data_debug/img_for_calib.png"
         cv2.imwrite(filename_to_save_img, gray)
         print "Save gray image to file. Other info: ", CHECKER_ROWS, CHECKER_COLS
     flag_find_chessboard, corners = cv2.findChessboardCorners(
@@ -195,7 +195,7 @@ def showImg(I):
 # ------------------------------------ Test ------------------------------------
 if __name__=="__main__":
     if 1:
-        I = cv2.imread("../data_debug/img1.png")
+        I = cv2.imread("../data/data_debug/img1.png")
         SQUARE_SIZE = 0.0158
         CHECKER_ROWS = 7
         CHECKER_COLS = 9
@@ -203,7 +203,7 @@ if __name__=="__main__":
         distortion_coeffs = np.array([-0.166673, 0.380839, -0.004246, 0.002507, 0.000000])
         camera_intrinsics = camera_intrinsics.reshape((3,3))
     else:
-        # I = cv2.imread("../data_debug/img_with_chessboard.png")
+        # I = cv2.imread("../data/data_debug/img_with_chessboard.png")
         # SQUARE_SIZE = 0.0158
         # CHECKER_ROWS = 6
         # CHECKER_COLS = 8

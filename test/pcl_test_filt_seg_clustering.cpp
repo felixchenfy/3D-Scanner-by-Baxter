@@ -3,14 +3,14 @@ Test functions in "my_pcl/pcl_filters.h" and "my_pcl/pcl_advanced.h":
     filter, segment plane, divide cloud into clusters
 
 Example of usage:
-$ bin/pcl_test_filt_seg_clustering data_others/color_milk_and_2bottles.pcd
+$ bin/pcl_test_filt_seg_clustering data/data_others/color_milk_and_2bottles.pcd
 
 This script will generate several point cloud files (cloud_cluster_i.pcd), each is a separated object. 
 Use pcl_viewer to view them:
 $ pcl_viewer cloud_cluster_0.pcd cloud_cluster_1.pcd cloud_cluster_2.pcd cloud_cluster_3.pcd cloud_cluster_4.pcd 
 (Or copy from the printed message of this script.)
 
-// $ rosrun scan3d_by_baxter pcl_test_filt_seg_clustering /home/feiyu/baxterws/src/scan3d_by_baxter/data_others/color_milk_and_2bottles.pcd
+// $ rosrun scan3d_by_baxter pcl_test_filt_seg_clustering /home/feiyu/baxterws/src/scan3d_by_baxter/data/data_others/color_milk_and_2bottles.pcd
 
 */
 

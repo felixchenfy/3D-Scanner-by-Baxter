@@ -15,7 +15,7 @@ from sensor_msgs.msg import PointCloud2
 # Include my lib
 sys.path.append(PYTHON_FILE_PATH + "../src_python")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos, convertCloudFromRosToOpen3d
-from lib_cloud_registration import CloudRegister, resizeCloudXYZ
+from lib_cloud_registration import CloudRegister, resizeCloudXYZ, mergeClouds, createXYZAxis
 
 from lib_geo_trans import rotx, roty, rotz
 
@@ -50,10 +50,12 @@ class RvizViewer(object):
         self.pub = rospy.Publisher(topic_n3_to_rviz, PointCloud2, queue_size=10)
         self.updateView = lambda: None
         self.destroy_window = lambda: None
+        self.cloud_XYZaxis = createXYZAxis(coord_axis_length=0.1, num_points_in_axis=50)
 
     def updateCloud(self, new_cloud):
-        cloud_to_pub = resizeCloudXYZ(new_cloud, 5.0) # Resize cloud, so rviz has better view
-        self.pub.publish(convertCloudFromOpen3dToRos(cloud_to_pub))
+        new_cloud = mergeClouds(new_cloud, self.cloud_XYZaxis)
+        new_cloud = resizeCloudXYZ(new_cloud, 5.0) # Resize cloud, so rviz has better view
+        self.pub.publish(convertCloudFromOpen3dToRos(new_cloud))
 
 def chooseViewer():
     if 0: 
@@ -109,7 +111,7 @@ if __name__ == "__main__":
     cloud_register = CloudRegister(
         voxel_size_regi=0.005, global_regi_ratio=2.0, 
         voxel_size_output=0.001,
-        USE_ICP=False, USE_COLORED_ICP=False)
+        USE_GLOBAL_REGI=False, USE_ICP=False, USE_COLORED_ICP=True)
 
 
     while not rospy.is_shutdown():

@@ -89,15 +89,13 @@ def createXYZAxis(coord_axis_length=1.0, num_points_in_axis=10):
             data_xyz[cnt_row, axis]=offset+coord_axis_length*cnt_points/num_points_in_axis
             data_rgb[cnt_row,:]=color
             cnt_row+=1
-    return data_xyz, data_rgb
+    cloud_XYZaxis = formNewCloud(data_xyz, data_rgb)
+    return cloud_XYZaxis
 
 
 def drawCloudWithCoord(cloud, coord_axis_length=0.1, num_points_in_axis=150):
-    cloud_points, cloud_colors = getCloudContents(cloud)
-    data_xyz, data_rgb = createXYZAxis(coord_axis_length, num_points_in_axis)
-    cloud_points = np.vstack((cloud_points, data_xyz))
-    cloud_colors = np.vstack((cloud_colors, data_rgb))
-    cloud_with_axis = formNewCloud(cloud_points, cloud_colors)
+    cloud_XYZaxis = createXYZAxis(coord_axis_length, num_points_in_axis)
+    cloud_with_axis = mergeClouds(cloud, cloud_XYZaxis)
     draw_geometries([cloud_with_axis])
 
 # -------------- Filters ----------------
@@ -273,13 +271,14 @@ def registerClouds_Local(src, target, voxel_size=0.01, current_T=None,
 
 class CloudRegister(object):
     def __init__(self, voxel_size_regi=0.005, global_regi_ratio=2.0, voxel_size_output=0.005, 
-        USE_ICP=True, USE_COLORED_ICP=False):
+        USE_GLOBAL_REGI=True, USE_ICP=True, USE_COLORED_ICP=False):
 
         # copy params
         self.voxel_size_regi=voxel_size_regi # for registration
         self.global_regi_ratio=global_regi_ratio 
         self.voxel_size_output=voxel_size_output # for downsampling the res_cloud and output
-        self.USE_ICP = USE_ICP;
+        self.USE_GLOBAL_REGI = USE_GLOBAL_REGI
+        self.USE_ICP = USE_ICP
         self.USE_COLORED_ICP = USE_COLORED_ICP
         
         # init vars
@@ -296,15 +295,18 @@ class CloudRegister(object):
             self.res_cloud=copy.deepcopy(self.new_cloud)
         else:
             # compute transformation matrix to rotate new_cloud to the res_cloud frame
+            T=np.identity(4)
 
             # Global regi
-            T, src_down, dst_down = registerClouds_Global(
-                self.new_cloud, self.res_cloud, self.voxel_size_regi * self.global_regi_ratio,
-                FAST_REGI=True)
+            if self.USE_GLOBAL_REGI:
+                T, src_down, dst_down = registerClouds_Global(
+                    self.new_cloud, self.res_cloud, self.voxel_size_regi * self.global_regi_ratio,
+                    FAST_REGI=True)
             
             # Local regi
-            T = registerClouds_Local(self.new_cloud, self.res_cloud, self.voxel_size_regi, 
-                T, ICP=self.USE_ICP, COLORED_ICP=self.USE_COLORED_ICP)
+            if self.USE_ICP or self.USE_COLORED_ICP:
+                T = registerClouds_Local(self.new_cloud, self.res_cloud, self.voxel_size_regi, 
+                    T, ICP=self.USE_ICP, COLORED_ICP=self.USE_COLORED_ICP)
 
             # Merge
             self.res_cloud = mergeClouds(
@@ -331,9 +333,9 @@ class CloudRegister(object):
 def test_registration():
   
     # -- Settings
-    filename_=PYTHON_FILE_PATH+"../data/with_board/segmented_"
-    # filename_=PYTHON_FILE_PATH+"../data/without_board/segmented_0"
-    # filename_=PYTHON_FILE_PATH+"../data/segmented_0"
+    filename_=PYTHON_FILE_PATH+"../data/data/driller/segmented_"
+    # filename_=PYTHON_FILE_PATH+"../data/data/driller_floor/segmented_0"
+    # filename_=PYTHON_FILE_PATH+"../data/data/segmented_0"
     cloud_register = CloudRegister(
         voxel_size_regi=0.005, global_regi_ratio=2.0, 
         voxel_size_output=0.005,
@@ -364,13 +366,13 @@ def test_registration():
 
 
 if __name__ == "__main__":
-    test_registration()
+    # test_registration()
 
-    # if 1:
-    #     res_cloud = open3d.PointCloud()
-    #     for i in range(1, 1+11):
-    #         print i
-    #         cloud_disp = read_point_cloud(PYTHON_FILE_PATH+"../data/segmented_"+"{:02d}".format(i)+".pcd")
-    #          # drawCloudWithCoord(cloud_disp)
-    #         res_cloud = mergeClouds(res_cloud, cloud_disp)
-    #     drawCloudWithCoord(res_cloud)
+    if 1:
+        res_cloud = open3d.PointCloud()
+        for i in range(1, 1+11):
+            print i
+            cloud_disp = read_point_cloud(PYTHON_FILE_PATH+"../data/data/driller/segmented_"+"{:02d}".format(i)+".pcd")
+             # drawCloudWithCoord(cloud_disp)
+            res_cloud = mergeClouds(res_cloud, cloud_disp)
+        drawCloudWithCoord(res_cloud)

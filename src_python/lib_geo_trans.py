@@ -30,6 +30,14 @@ def invRp(R, p):
     R_inv, p_inv = get_Rp_from_T(T)
     return R_inv, p_inv
 
+def transXYZ(x=None, y=None, z=None):
+    T=np.identity(4)
+    data=[x, y, z]
+    for i in range(3):
+        if data[i] is not None:
+            T[i, 3]=data[i]
+    return T
+    
 # ---------------- Euler angles
 
 

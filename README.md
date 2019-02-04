@@ -76,7 +76,7 @@ Subscribe: (a) Message from node 1. (b) Point cloud from depth camera.
 
 Publish: (b) Rotated cloud to rviz. (c) Segmented cloud to node 3.
 
-Meanwhile, it also saves the (a) orignal cloud and (c) segmented cloud to the [data/](data/) folder. 
+Meanwhile, it also saves the (a) orignal cloud and (c) segmented cloud to the [data/data/](data/data/) folder. 
 
 ## 2.4. Node3: Register clouds
 file: [src_main/n3_register_clouds_to_object.py](src_main/n3_register_clouds_to_object.py)
