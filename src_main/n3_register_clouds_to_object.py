@@ -15,8 +15,7 @@ from sensor_msgs.msg import PointCloud2
 # Include my lib
 sys.path.append(PYTHON_FILE_PATH + "../src_python")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos, convertCloudFromRosToOpen3d
-from lib_cloud_registration import CloudRegister, drawTwoClouds, registerClouds, copyOpen3dCloud
-from lib_cloud_registration import resizeCloudXYZ, filtCloudByRange
+from lib_cloud_registration import CloudRegister, resizeCloudXYZ
 
 from lib_geo_trans import rotx, roty, rotz
 
@@ -107,8 +106,11 @@ if __name__ == "__main__":
     # -- Loop
     rate = rospy.Rate(100)
     cnt = 0
-    cloud_register = CloudRegister(voxel_size_regi=0.005, voxel_size_output=0.005,
-        USE_ICP=True, USE_COLORED_ICP=False)
+    cloud_register = CloudRegister(
+        voxel_size_regi=0.005, global_regi_ratio=2.0, 
+        voxel_size_output=0.001,
+        USE_ICP=False, USE_COLORED_ICP=False)
+
 
     while not rospy.is_shutdown():
         if cloud_subscriber.hasNewCloud():

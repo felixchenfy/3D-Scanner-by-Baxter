@@ -131,7 +131,7 @@ def filtCloud(cloud, criteria):
         colors[valid_indices[:cnt_valid],:]
     )
     
-# -------------- MAIN! REGISTRATION ----------------
+# -------------- MAIN! REGISTRATION (Mainly copied from Open3D website) ----------------
  
 def computeFeaturesForGlobalRegistration(pcd, voxel_size):
     # http://www.open3d.org/docs/tutorial/Advanced/global_registration.html#global-registration
@@ -165,20 +165,29 @@ def execute_global_registration(
             RANSACConvergenceCriteria(4000000, 500))
     return result.transformation
 
-def registerClouds_Global(src, dst, radius_regi=0.01, 
-    # Settings for refine using registerClouds_Local
-    REFINE=True, REFINE_radius_ratio=0.4, REFINE_use_ICP=True, REFINE_use_colored_ICP=False):
+def execute_fast_global_registration(source_down, target_down,
+        source_fpfh, target_fpfh, voxel_size):
+    # http://www.open3d.org/docs/tutorial/Advanced/fast_global_registration.html
+    distance_threshold = voxel_size * 0.5
+    print(":: Apply fast global registration with distance threshold %.3f" \
+            % distance_threshold)
+    result = registration_fast_based_on_feature_matching(
+            source_down, target_down, source_fpfh, target_fpfh,
+            FastGlobalRegistrationOption(
+            maximum_correspondence_distance = distance_threshold))
+    return result.transformation
+    
+def registerClouds_Global(src, dst, voxel_size=0.01, FAST_REGI=True):
+    # http://www.open3d.org/docs/tutorial/Advanced/fast_global_registration.html
+    src_down, src_fpfh = computeFeaturesForGlobalRegistration(src, voxel_size)
+    dst_down, dst_fpfh = computeFeaturesForGlobalRegistration(dst, voxel_size)
+    if FAST_REGI:
+        T = execute_fast_global_registration(src_down, dst_down, src_fpfh, dst_fpfh, voxel_size)
+    else:
+        T = execute_global_registration(src_down, dst_down, src_fpfh, dst_fpfh, voxel_size)
+    return T, src_down, dst_down
 
-    src_down, src_fpfh = computeFeaturesForGlobalRegistration(src, radius_regi)
-    dst_down, dst_fpfh = computeFeaturesForGlobalRegistration(dst, radius_regi)
-    T = execute_global_registration(src_down, dst_down, src_fpfh, dst_fpfh, radius_regi)
-
-    if REFINE:
-        T = registerClouds_Local(src_down, dst_down,radius_regi*REFINE_radius_ratio, T, 
-            ICP=REFINE_use_ICP, COLORED_ICP=REFINE_use_colored_ICP)
-    return T
-
-def registerClouds_Local(src, target, radius_regi=0.01, current_T=None, 
+def registerClouds_Local(src, target, voxel_size=0.01, current_T=None, 
     ICP = True, COLORED_ICP = False, ICP_OPTION="PointToPlane",
     DRAW_INIT_POSE = False, DRAW_ICP = False, DRAW_COLORED_ICP = False):
     
@@ -187,26 +196,25 @@ def registerClouds_Local(src, target, radius_regi=0.01, current_T=None,
     # http://www.open3d.org/docs/tutorial/Advanced/colored_pointcloud_registration.html
     
     # -- Params
-    ICP_distance_threshold = radius_regi*4
-    voxel_radiuses = [radius_regi*4, radius_regi*2, radius_regi]
+    ICP_distance_threshold = voxel_size*4
+    voxel_radiuses = [voxel_size, voxel_size/2.0, voxel_size/4.0]
     max_iters = [50, 25, 10]
     if current_T is None:
         current_T = np.identity(4)
 
     if DRAW_INIT_POSE:
-        tmp = mergeClouds(src, target, radius_regi)
+        tmp = mergeClouds(src, target, voxel_size)
         drawCloudWithCoord(tmp, coord_axis_length=0.1, num_points_in_axis=50)
 
     # -- Point to plane ICP
     if ICP:
         print("Running ICP ...")
-        radius = radius_regi
-        src_down = voxel_down_sample(src, radius)
-        target_down = voxel_down_sample(target, radius)
+        src_down = voxel_down_sample(src, voxel_size)
+        target_down = voxel_down_sample(target, voxel_size)
         estimate_normals(src_down, KDTreeSearchParamHybrid(
-                radius=radius * 2, max_nn=50))
+                radius=voxel_size * 2, max_nn=30))
         estimate_normals(target_down, KDTreeSearchParamHybrid(
-                radius=radius * 2, max_nn=50))
+                radius=voxel_size * 2, max_nn=30))
         
         if ICP_OPTION == "PointToPlane": # or "PointToPoint"
             result_trans = registration_icp(src_down, target_down, ICP_distance_threshold,
@@ -258,17 +266,18 @@ def registerClouds_Local(src, target, radius_regi=0.01, current_T=None,
             my_sleep(1)
             drawTwoClouds(
                 src, target, result_trans.transformation)
-    print "Cloud registration completes.\n",    
+    print "Local registration completes.\n",    
     return current_T
 
 
 
 class CloudRegister(object):
-    def __init__(self, voxel_size_regi=0.005, voxel_size_output=0.005, 
+    def __init__(self, voxel_size_regi=0.005, global_regi_ratio=2.0, voxel_size_output=0.005, 
         USE_ICP=True, USE_COLORED_ICP=False):
 
         # copy params
         self.voxel_size_regi=voxel_size_regi # for registration
+        self.global_regi_ratio=global_regi_ratio 
         self.voxel_size_output=voxel_size_output # for downsampling the res_cloud and output
         self.USE_ICP = USE_ICP;
         self.USE_COLORED_ICP = USE_COLORED_ICP
@@ -288,13 +297,18 @@ class CloudRegister(object):
         else:
             # compute transformation matrix to rotate new_cloud to the res_cloud frame
 
-            T_new_to_res = registerClouds_Global( self.new_cloud, self.res_cloud, 
-                    self.voxel_size_regi,
-                    REFINE=True, REFINE_radius_ratio=0.4,
-                    REFINE_use_ICP=True, REFINE_use_colored_ICP=False)
+            # Global regi
+            T, src_down, dst_down = registerClouds_Global(
+                self.new_cloud, self.res_cloud, self.voxel_size_regi * self.global_regi_ratio,
+                FAST_REGI=True)
+            
+            # Local regi
+            T = registerClouds_Local(self.new_cloud, self.res_cloud, self.voxel_size_regi, 
+                T, ICP=self.USE_ICP, COLORED_ICP=self.USE_COLORED_ICP)
 
+            # Merge
             self.res_cloud = mergeClouds(
-                self.new_cloud, self.res_cloud, self.voxel_size_output, T_new_to_res)
+                self.new_cloud, self.res_cloud, self.voxel_size_output, T)
 
         # self.res_cloud, 
         return self.res_cloud
@@ -317,22 +331,24 @@ class CloudRegister(object):
 def test_registration():
   
     # -- Settings
-    # filename_=PYTHON_FILE_PATH+"../data/with_board/segmented_0"
+    filename_=PYTHON_FILE_PATH+"../data/with_board/segmented_"
     # filename_=PYTHON_FILE_PATH+"../data/without_board/segmented_0"
-    filename_=PYTHON_FILE_PATH+"../data/segmented_0"
-    cloud_register = CloudRegister(voxel_size_regi=0.005, voxel_size_output=0.005,
-        USE_ICP=True, USE_COLORED_ICP=False)
+    # filename_=PYTHON_FILE_PATH+"../data/segmented_0"
+    cloud_register = CloudRegister(
+        voxel_size_regi=0.005, global_regi_ratio=2.0, 
+        voxel_size_output=0.005,
+        USE_ICP=True, USE_COLORED_ICP=True)
 
     # -- Loop
     FILE_INDEX_BEGIN=1
-    FILE_INDEX_END=2
+    FILE_INDEX_END=11
     cnt = 0
     for file_index in range(FILE_INDEX_BEGIN, FILE_INDEX_END+1):
         print "==================== {}th file ======================".format(file_index)
         cnt+=1
         
         # Read point cloud
-        filename = filename_+str(file_index)+".pcd"
+        filename = filename_+"{:02d}".format(file_index)+".pcd"
         new_cloud = read_point_cloud(filename)
         
         # Process cloud
@@ -340,8 +356,8 @@ def test_registration():
         
         # Print and plot
         print(cloud_register.res_cloud)
-        my_sleep(0.3)
-        cloud_register.drawRegisterInput()
+        # my_sleep(0.3)
+        # cloud_register.drawRegisterInput()
         # cloud_register.drawRegisterOutput()
 
     cloud_register.drawRegisterOutput()
@@ -351,5 +367,10 @@ if __name__ == "__main__":
     test_registration()
 
     # if 1:
-    #     cloud_disp = read_point_cloud(PYTHON_FILE_PATH+"../data/segmented_05.pcd")
-    #     drawCloudWithCoord(cloud_disp)
+    #     res_cloud = open3d.PointCloud()
+    #     for i in range(1, 1+11):
+    #         print i
+    #         cloud_disp = read_point_cloud(PYTHON_FILE_PATH+"../data/segmented_"+"{:02d}".format(i)+".pcd")
+    #          # drawCloudWithCoord(cloud_disp)
+    #         res_cloud = mergeClouds(res_cloud, cloud_disp)
+    #     drawCloudWithCoord(res_cloud)
