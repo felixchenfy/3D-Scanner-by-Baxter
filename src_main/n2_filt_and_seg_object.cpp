@@ -143,10 +143,10 @@ int main(int argc, char **argv)
     initAllROSParams();
 
     // Subscriber and Publisher
-    ros::Subscriber sub_from_node1 = nh.subscribe(topic_n1_to_n2, 1, subCallbackFromNode1); // 1 is queue size
-    ros::Subscriber sub_from_kinect = nh.subscribe(topic_name_rgbd_cloud, 1, subCallbackFromKinect);
-    ros::Publisher pub_to_node3 = nh.advertise<sensor_msgs::PointCloud2>(topic_n2_to_n3, 1);
-    ros::Publisher pub_to_rviz = nh.advertise<sensor_msgs::PointCloud2>(topic_n2_to_rviz, 1);
+    ros::Subscriber sub_from_node1 = nh.subscribe(topic_n1_to_n2, 10, subCallbackFromNode1); // 10 is queue size
+    ros::Subscriber sub_from_kinect = nh.subscribe(topic_name_rgbd_cloud, 10, subCallbackFromKinect);
+    ros::Publisher pub_to_node3 = nh.advertise<sensor_msgs::PointCloud2>(topic_n2_to_n3, 10);
+    ros::Publisher pub_to_rviz = nh.advertise<sensor_msgs::PointCloud2>(topic_n2_to_rviz, 10);
 
     // -- Loop, subscribe ros_cloud, and view
     main_loop(pub_to_node3, pub_to_rviz);

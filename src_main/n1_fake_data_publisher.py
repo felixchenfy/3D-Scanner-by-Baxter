@@ -27,7 +27,7 @@ from scan3d_by_baxter.msg import T4x4
 
 # -------------------------------------------------------------
 # ------------------ Variables 
-FILE_FOLDER = PYTHON_FILE_PATH+"../data/data/driller_floor/"
+FILE_FOLDER = PYTHON_FILE_PATH+"../data/data/driller_2/"
 ith_goalpose = 0
 
 # -------------------------------------------------------------
@@ -114,7 +114,7 @@ if __name__ == "__main__":
     pub_clouds = ClassPubPointClous()
 
     # Move Baxter to all goal positions
-    num_goalposes = 11
+    num_goalposes = rospy.get_param("num_goalposes")
     while ith_goalpose < num_goalposes and not rospy.is_shutdown():
         ith_goalpose += 1
         print "\n----------------------------------------"
@@ -124,8 +124,9 @@ if __name__ == "__main__":
         rospy.sleep(1)
         if ith_goalpose == num_goalposes:
             pub_poses.closeFile()
-            pub_poses.openFile()
-            ith_goalpose = 0
+            break
+            # pub_poses.openFile()
+            # ith_goalpose = 0
                     
     print("!!!!! Node 1 stops.")
     pub_poses.closeFile()

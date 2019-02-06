@@ -19,9 +19,6 @@
         rosrun baxter_tools camera_control.py -o left_hand_camera -r 1280x800 -->
 
         <!-- Chessboard params -->
-        <!-- <param name="chessboard_square_size" value="0.03425"  /> -->
-        <!-- <param name="chessboard_checker_rows" value="4"  /> -->
-        <!-- <param name="chessboard_checker_cols" value="6"  /> -->
         <param name="chessboard_square_size" value="0.02455555"  />
         <param name="chessboard_checker_rows" value="7"  />
         <param name="chessboard_checker_cols" value="9"  />

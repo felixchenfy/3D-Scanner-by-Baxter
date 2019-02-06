@@ -15,7 +15,7 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler, eul
 # -- My lib
 sys.path.append(PYTHON_FILE_PATH + "../src_python")
 from lib_baxter import MyBaxter
-from lib_geo_trans_ros import form_T, quaternion_to_R, toRosPose, pose2T
+from lib_geo_trans_ros import form_T, quaternion_to_R, toRosPose, pose2T, transXYZ
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos
 
 # -- Message types
@@ -52,7 +52,7 @@ def readKinectCameraPose():
     return T
 
 
-# Change int to str wwith specified width filled by 0
+# Change int to str and filled prefix with 0s
 def int2str(x, width): return ("{:0"+str(width)+"d}").format(x)
 
 # Write ndarray to file
@@ -117,6 +117,13 @@ if __name__ == "__main__":
     #   sends the pose to node2 to tell it to take the picture.
     def publishPose(pose):
         T = pose
+        
+        # This seems like existing an offset on cloud in Baxter base frame.
+        T_rgb_to_depth = transXYZ(x=0, y=-0.025, z=0.1) # This is I manually set to amend the bug.
+        T = T.dot(T_rgb_to_depth)
+        # Test result:  increase x makes object move along -y direction
+        #               increase z makes object move along -z direction
+        #               increase y makes object move along -x direction
 
         # Trans to 1x16 array
         pose_1x16 = []
@@ -130,48 +137,30 @@ if __name__ == "__main__":
     # -- Speicify the goalpose_joint_angles that the Baxter needs to move to
     # 7 numbers of the 7 joint angles
     NUM_JOINTS = 7
-    base_angles = [-1.0, -0.29145634174346924, 0.021859226748347282, 1.4894953966140747, -3.0480198860168457, -0.9146360158920288, -3.0269274711608887]
+    # base_angles = [-1.0, -0.29145634174346924, 0.021859226748347282, 1.4894953966140747, -3.0480198860168457, -0.9146360158920288, -3.0269274711608887]
+    base_angles = [-1.0, 0.0019174759509041905, -0.003451456781476736, 1.2252671718597412, -3.0491702556610107, -1.0227817296981812, -3.0480198860168457]
+
     def addListVal(l0, idx, val):
         l = copy(l0)
         l[idx]+=val
         return l
     goalposes_joint_angles =list()
-    # -1.0, -0.5, 0.0, 0.5, 1.0, 1.5, 2.0
     for i in range(num_goalposes):
         goalposes_joint_angles.append(
             addListVal(base_angles, 0, i*0.58/2)
         )
     assert len(goalposes_joint_angles)>=num_goalposes
 
-    # -- Settings for debug kinect:
-    #   Simulate fake point cloud publisher by reading point_cloud from file.
-    if DEBUG_MODE_FOR_RGBDCAM:
-        debug_file_folder = rospy.get_param("debug_file_folder")
-        debug_file_name = rospy.get_param(
-            "debug_file_name")  # without suffix "i.pcd"
-        topic_name_rgbd_cloud = rospy.get_param("topic_name_rgbd_cloud")
-
-        pub_sim_cloud = rospy.Publisher(topic_name_rgbd_cloud,
-                                        PointCloud2, queue_size=10)
-
-        def sim_pub_point_cloud(ith_goalpose):
-            filename = debug_file_name+str(ith_goalpose)+".pcd"
-            filename_whole = debug_file_folder+filename
-            open3d_cloud = open3d.read_point_cloud(filename_whole)
-            rospy.loginfo("Node 1: sim: load cloud file: " + filename +
-                          ", points = " + str(getCloudSize(open3d_cloud)))
-            ros_cloud = convertCloudFromOpen3dToRos(open3d_cloud)
-            rospy.loginfo("Node 1: sim: publishing cloud "+str(ith_goalpose))
-            pub_sim_cloud.publish(ros_cloud)
-
     # Move Baxter to initial position
-    rospy.sleep(1)
-    rospy.loginfo("]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]")
-    init_joint_angles = goalposes_joint_angles[0]
-    rospy.loginfo("Node 1: Initialization. Move Baxter to init pose: "+str(init_joint_angles))
-    moveBaxterToJointAngles(init_joint_angles, time_cost=3.0)
-    rospy.loginfo("Node 1: Baxter reached the initial pose!\n\n")
-    rospy.loginfo("[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[")
+    DEBUG_NOT_MOVE_BAXTER=False
+    if not DEBUG_NOT_MOVE_BAXTER:
+        rospy.sleep(1)
+        rospy.loginfo("]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]")
+        init_joint_angles = goalposes_joint_angles[0]
+        rospy.loginfo("Node 1: Initialization. Move Baxter to init pose: "+str(init_joint_angles))
+        moveBaxterToJointAngles(init_joint_angles, time_cost=3.0)
+        rospy.loginfo("Node 1: Baxter reached the initial pose!\n\n")
+        rospy.loginfo("[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[")
 
     # Move Baxter to all goal positions
     ith_goalpose = 0
@@ -181,11 +170,12 @@ if __name__ == "__main__":
         joint_angles = goalposes_joint_angles[ith_goalpose-1]
 
         # Move robot to the next pose for taking picture
-        rospy.loginfo("--------------------------------")
-        rospy.loginfo("Node 1: {}th pos".format(ith_goalpose))
-        rospy.loginfo("Node 1: Baxter is moving to pos: "+str(joint_angles))
-        moveBaxterToJointAngles(joint_angles, 4.0)
-        rospy.loginfo("Node 1: Baxter reached the pose!")
+        if not DEBUG_NOT_MOVE_BAXTER:
+            rospy.loginfo("--------------------------------")
+            rospy.loginfo("Node 1: {}th pos".format(ith_goalpose))
+            rospy.loginfo("Node 1: Baxter is moving to pos: "+str(joint_angles))
+            moveBaxterToJointAngles(joint_angles, 4.0)
+            rospy.loginfo("Node 1: Baxter reached the pose!")
 
         # Publish the signal to node2
         rospy.loginfo("Node 1: Wait until stable for 1 more second")

@@ -15,12 +15,13 @@ from sensor_msgs.msg import PointCloud2
 # Include my lib
 sys.path.append(PYTHON_FILE_PATH + "../src_python")
 from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dToRos, convertCloudFromRosToOpen3d
-from lib_cloud_registration import CloudRegister, resizeCloudXYZ, mergeClouds, createXYZAxis
+from lib_cloud_registration import CloudRegister, resizeCloudXYZ, mergeClouds, createXYZAxis, getCloudSize, filtCloudByRange
 
 from lib_geo_trans import rotx, roty, rotz
 
 VIEW_RES_BY_OPEN3D=True # This is difficult to set orientation. And has some bug.
 VIEW_RES_BY_RVIZ=~VIEW_RES_BY_OPEN3D
+OBJECT_RANGE = 0.12 #The object is inside a region of x=(-r,r) && y=(-r,r)
 
 # ---------------------------- Two viewers (choose one) ----------------------------
 class Open3DViewer(object):
@@ -53,9 +54,12 @@ class RvizViewer(object):
         self.cloud_XYZaxis = createXYZAxis(coord_axis_length=0.1, num_points_in_axis=50)
 
     def updateCloud(self, new_cloud):
-        new_cloud = mergeClouds(new_cloud, self.cloud_XYZaxis)
-        new_cloud = resizeCloudXYZ(new_cloud, 5.0) # Resize cloud, so rviz has better view
-        self.pub.publish(convertCloudFromOpen3dToRos(new_cloud))
+        try:
+            new_cloud = mergeClouds(new_cloud, self.cloud_XYZaxis)
+            new_cloud = resizeCloudXYZ(new_cloud, 5.0) # Resize cloud, so rviz has better view
+            self.pub.publish(convertCloudFromOpen3dToRos(new_cloud))
+        except:
+            print "Node 3 fails to update cloud, due to the input is empty!\n"
 
 def chooseViewer():
     if 0: 
@@ -92,6 +96,7 @@ class SubscriberOfCloud(object):
 # ---------------------------- Main ----------------------------
 if __name__ == "__main__":
     rospy.init_node("node3")
+    num_goalposes = rospy.get_param("num_goalposes")
 
     # -- Set output filename
     file_folder = rospy.get_param("file_folder") 
@@ -109,13 +114,13 @@ if __name__ == "__main__":
     rate = rospy.Rate(100)
     cnt = 0
     cloud_register = CloudRegister(
-        voxel_size_regi=0.005, global_regi_ratio=2.0, 
-        voxel_size_output=0.001,
-        USE_GLOBAL_REGI=False, USE_ICP=False, USE_COLORED_ICP=True)
+        voxel_size_regi=0.005, global_regi_ratio=4.0, 
+        voxel_size_output=0.002,
+        USE_GLOBAL_REGI=True, USE_ICP=True, USE_COLORED_ICP=False)
 
 
     while not rospy.is_shutdown():
-        if cloud_subscriber.hasNewCloud():
+        if cnt<num_goalposes and cloud_subscriber.hasNewCloud():
             
             cnt += 1
             rospy.loginfo("=========================================")
@@ -124,11 +129,26 @@ if __name__ == "__main__":
 
             # Register Point Cloud
             new_cloud = cloud_subscriber.popCloud()
+            if getCloudSize(new_cloud)==0:
+                print "  The received cloud is empty. Not processing it."
+                continue
             res_cloud = cloud_register.addCloud(new_cloud)
                 
             # Update and save to file
             viewer.updateCloud(res_cloud)
             open3d.write_point_cloud(file_folder+file_name_cloud_final, res_cloud)
+            
+            if cnt==num_goalposes:
+                rospy.loginfo("================== Cloud Registration Completes ====================")
+                rospy.sleep(1.0)
+                rospy.loginfo("=====================================================================")
+                
+                obj_range=OBJECT_RANGE
+                open3d.write_point_cloud(file_folder+"finala_"+file_name_cloud_final, res_cloud)
+                res_cloud = filtCloudByRange(res_cloud, xmin=-obj_range, xmax=obj_range, ymin=-obj_range, ymax=obj_range )
+
+                viewer.updateCloud(res_cloud)
+                open3d.write_point_cloud(file_folder+"finalb_"+file_name_cloud_final, res_cloud)
 
         # Update viewer
         viewer.updateView()

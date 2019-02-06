@@ -15,6 +15,7 @@ rosservice call my/PrintBaxterJointAngles
 ## tf_echo to print Baxter pose
 rosrun tf tf_echo /base /left_hand_camera
 rosrun tf tf_echo /base /left_gripper
+rosrun tf view_frames
 
 ## ===============================
 ## rostopic to print Baxter joint angles
