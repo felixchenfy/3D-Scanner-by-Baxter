@@ -29,6 +29,7 @@ string int2str(int num, int width, char char_to_fill='0');
 vector<int> getIntersection(vector<int> v1, vector<int> v2);
 
 void preTranslatePoint(const float T[4][4], float &x, float &y, float &z);
+void preTranslatePoint(const vector<vector<float>> &T, float &x, float &y, float &z);
 
 void inv(const float T_src[4][4], float T_dst[4][4]);
 

@@ -27,8 +27,9 @@ from scan3d_by_baxter.msg import T4x4
 
 # -------------------------------------------------------------
 # ------------------ Variables 
-FILE_FOLDER = PYTHON_FILE_PATH+"../data/data/driller_2/"
-ith_goalpose = 0
+FILE_FOLDER = PYTHON_FILE_PATH+"../data/data/driller_1/" # 10 goals
+# FILE_FOLDER = PYTHON_FILE_PATH+"../data/data/bottle_1/" # 11 goals
+
 
 # -------------------------------------------------------------
 # ------------------ Functions 
@@ -68,9 +69,11 @@ class ClassPubDepthCamPose(object):
 
     def pub_pose(self):
         T = self.readNextPose()
-        # ------ DEBUG ------
-        # T = T.dot(transXYZ(x=0, y=0, z=0.1))
-        # ------
+
+        # Manual offset
+        T_rgb_to_depth = transXYZ(x=0, y=-0.025, z=0.1) 
+        T = T.dot(T_rgb_to_depth)
+
         # Trans to 1x16 array
         pose_1x16 = []
         for i in range(4):
@@ -99,8 +102,8 @@ class ClassPubPointClous(object):
         print "  points = " + str(getCloudSize(open3d_cloud))
         
         ros_cloud = convertCloudFromOpen3dToRos(open3d_cloud)
-        print("Node 1: sim: publishing cloud "+str(ith_goalpose))
         self.pub.publish(ros_cloud)
+        print("Node 1: sim: publishing cloud "+str(ith_goalpose))
 
 
 # -- Main
@@ -115,18 +118,21 @@ if __name__ == "__main__":
 
     # Move Baxter to all goal positions
     num_goalposes = rospy.get_param("num_goalposes")
+    ith_goalpose = 0
+    rospy.sleep(3.0)
     while ith_goalpose < num_goalposes and not rospy.is_shutdown():
         ith_goalpose += 1
         print "\n----------------------------------------"
         print "Node 1: Moving to ", ith_goalpose,"th pose:"
         pub_poses.pub_pose()
         pub_clouds.pub_cloud()
-        rospy.sleep(1)
+        rospy.sleep(1.0)
         if ith_goalpose == num_goalposes:
             pub_poses.closeFile()
             break
             # pub_poses.openFile()
             # ith_goalpose = 0
-                    
-    print("!!!!! Node 1 stops.")
+
     pub_poses.closeFile()
+    rospy.spin()
+    print("!!!!! Node 1 stops.")

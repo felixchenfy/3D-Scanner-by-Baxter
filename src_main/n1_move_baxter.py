@@ -20,7 +20,6 @@ from lib_cloud_conversion_between_Open3D_and_ROS import convertCloudFromOpen3dTo
 
 # -- Message types
 # from std_msgs.msg import Int32  # used for indexing the ith robot pose
-from sensor_msgs.msg import PointCloud2  # for DEBUG_MODE_FOR_BAXTER
 from geometry_msgs.msg import Pose, Point, Quaternion
 from scan3d_by_baxter.msg import T4x4
 
@@ -31,25 +30,15 @@ from scan3d_by_baxter.msg import T4x4
 
 
 def moveBaxterToJointAngles(joint_angles, time_cost = 3.0):
-    if DEBUG_MODE_FOR_BAXTER:
-        None
-    else:
-        my_Baxter.moveToJointAngles(joint_angles, time_cost)
-    return
+    my_Baxter.moveToJointAngles(joint_angles, time_cost)
 
 
 def readKinectCameraPose():
-    if DEBUG_MODE_FOR_BAXTER:  # Manually define the T4x4 matrix
-        pos = Point(0, 0, 0)
-        quaternion = quaternion_from_euler(0, 0, 0, 'rxyz')
-        T = pose2T(pos, quaternion)
-    else:
-        # (pos, quaternion) = my_Baxter.getFramePose('/left_hand_camera')
-        # (pos, quaternion) = my_Baxter.getFramePose('/left_gripper')
-        T_base_to_arm = my_Baxter.getFramePose('/left_lower_forearm')
-        T_arm_to_depth  # This is read from file
-        T = T_base_to_arm.dot(T_arm_to_depth)
-    return T
+    # (pos, quaternion) = my_Baxter.getFramePose('/left_hand_camera')
+    # (pos, quaternion) = my_Baxter.getFramePose('/left_gripper')
+    T_base_to_arm = my_Baxter.getFramePose('/left_lower_forearm')
+    T_arm_to_depth  # This is read from file
+    T = T_base_to_arm.dot(T_arm_to_depth)
 
 
 # Change int to str and filled prefix with 0s
@@ -88,9 +77,6 @@ def getCloudSize(open3d_cloud):
 # -- Main
 if __name__ == "__main__":
     rospy.init_node('Node 1')
-    DEBUG_MODE_FOR_BAXTER = rospy.get_param("~DEBUG_MODE_FOR_BAXTER")
-    DEBUG_MODE_FOR_RGBDCAM = rospy.get_param("~DEBUG_MODE_FOR_RGBDCAM")
-
     file_folder = rospy.get_param("file_folder")
     file_name_pose = rospy.get_param("file_name_pose")
     file_name_index_width = rospy.get_param("file_name_index_width")
@@ -101,9 +87,8 @@ if __name__ == "__main__":
     # T_baxter_to_chess = np.loadtxt(config_folder+"T_baxter_to_chess.txt")
 
     # Set Baxter
-    if not DEBUG_MODE_FOR_BAXTER:
-        my_Baxter = MyBaxter(['left', 'right'][0])
-        my_Baxter.enableBaxter()
+    my_Baxter = MyBaxter(['left', 'right'][0])
+    my_Baxter.enableBaxter()
 
     # Start node when pressing enter
     rospy.loginfo("\n\nWaiting for pressing 'enter' to start ...")
@@ -118,8 +103,10 @@ if __name__ == "__main__":
     def publishPose(pose):
         T = pose
         
-        # This seems like existing an offset on cloud in Baxter base frame.
-        T_rgb_to_depth = transXYZ(x=0, y=-0.025, z=0.1) # This is I manually set to amend the bug.
+        # The segmented and rotated object in Chessboard frame is NOT at the center of chessboard, but has a offset.
+        # Maybe I ignored some offset inside /tf. I've double checked but still could find it.
+        # Here I manually set a translation to amend the offset.
+        T_rgb_to_depth = transXYZ(x=0, y=-0.025, z=0.1) 
         T = T.dot(T_rgb_to_depth)
         # Test result:  increase x makes object move along -y direction
         #               increase z makes object move along -z direction
@@ -132,11 +119,11 @@ if __name__ == "__main__":
                 pose_1x16 += [T[i, j]]
         pub_pose.publish(pose_1x16)
         return
+
     pub_pose = rospy.Publisher(topic_endeffector_pos, T4x4, queue_size=10)
 
     # -- Speicify the goalpose_joint_angles that the Baxter needs to move to
     # 7 numbers of the 7 joint angles
-    NUM_JOINTS = 7
     # base_angles = [-1.0, -0.29145634174346924, 0.021859226748347282, 1.4894953966140747, -3.0480198860168457, -0.9146360158920288, -3.0269274711608887]
     base_angles = [-1.0, 0.0019174759509041905, -0.003451456781476736, 1.2252671718597412, -3.0491702556610107, -1.0227817296981812, -3.0480198860168457]
 
@@ -152,8 +139,8 @@ if __name__ == "__main__":
     assert len(goalposes_joint_angles)>=num_goalposes
 
     # Move Baxter to initial position
-    DEBUG_NOT_MOVE_BAXTER=False
-    if not DEBUG_NOT_MOVE_BAXTER:
+    NOT_MOVE_BAXTER=False
+    if not NOT_MOVE_BAXTER:
         rospy.sleep(1)
         rospy.loginfo("]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]")
         init_joint_angles = goalposes_joint_angles[0]
@@ -170,7 +157,7 @@ if __name__ == "__main__":
         joint_angles = goalposes_joint_angles[ith_goalpose-1]
 
         # Move robot to the next pose for taking picture
-        if not DEBUG_NOT_MOVE_BAXTER:
+        if not NOT_MOVE_BAXTER:
             rospy.loginfo("--------------------------------")
             rospy.loginfo("Node 1: {}th pos".format(ith_goalpose))
             rospy.loginfo("Node 1: Baxter is moving to pos: "+str(joint_angles))
@@ -186,11 +173,7 @@ if __name__ == "__main__":
         publishPose(pose)
         savePoseToFile(pose, ith_goalpose)
 
-        if DEBUG_MODE_FOR_RGBDCAM:  # simulate publishing a point cloud
-            rospy.sleep(0.01)
-            sim_pub_point_cloud(ith_goalpose)
         rospy.loginfo("--------------------------------")
-
         rospy.sleep(3)
         # if ith_goalpose==num_goalposes: ith_goalpose = 0
 

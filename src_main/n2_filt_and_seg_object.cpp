@@ -8,6 +8,7 @@ Main function:
 #include <string>
 #include <stdio.h>
 #include <vector>
+#include <queue>
 
 #include <ros/ros.h>
 #include <pcl_conversions/pcl_conversions.h>
@@ -63,12 +64,11 @@ int min_cluster_size, max_cluster_size;
 
 // ------------------------------------- Vars -------------------------------------
 
-// Vars for workflow control
-bool flag_receive_from_node1 = false;
-bool flag_receive_kinect_cloud = false;
-
 // Data contents
-float T_baxter_to_depthcam[4][4];
+queue<PointCloud<PointXYZRGB>::Ptr> buff_cloud_src;     // When sub cloud from topic, save it to the buff first,
+queue<vector<vector<float>>> buff_T_baxter_to_depthcam; // to avoid that new data flush the old ones.
+
+vector<vector<float>> T_baxter_to_depthcam;
 PointCloud<PointXYZRGB>::Ptr cloud_src(new PointCloud<PointXYZRGB>);
 PointCloud<PointXYZRGB>::Ptr cloud_rotated(new PointCloud<PointXYZRGB>);   // this pubs to rviz
 PointCloud<PointXYZRGB>::Ptr cloud_segmented(new PointCloud<PointXYZRGB>); // this pubs to node3
@@ -76,13 +76,12 @@ PointCloud<PointXYZRGB>::Ptr cloud_segmented(new PointCloud<PointXYZRGB>); // th
 // ------------------------------------- Functions -------------------------------------
 // -- Read params from ROS parameter server
 void initAllROSParams();
-#define NH_GET_PARAM(param_name, returned_val)                          \
+#define NH_GET_PARAM(param_name, returned_val)                              \
     if (!nh.getParam(param_name, returned_val))                             \
-    {                                                                \
+    {                                                                       \
         cout << "Error in reading ROS param named: " << param_name << endl; \
-        assert(0);                                                   \
+        assert(0);                                                          \
     }
-
 
 // -- Input/Output and Sub/Publisher
 
@@ -102,10 +101,15 @@ void main_loop(ros::Publisher &pub_to_node3, ros::Publisher &pub_to_rviz)
     int cnt_cloud = 0;
     while (ros::ok())
     {
-        if (flag_receive_kinect_cloud)
+        if (!buff_cloud_src.empty() && !buff_T_baxter_to_depthcam.empty())
         {
-            flag_receive_kinect_cloud = false;
             cnt_cloud++;
+
+            // Get data from buff
+            T_baxter_to_depthcam = buff_T_baxter_to_depthcam.front();
+            buff_T_baxter_to_depthcam.pop();
+            cloud_src = buff_cloud_src.front();
+            buff_cloud_src.pop();
 
             // Process cloud
             process_to_get_cloud_rotated();
@@ -126,7 +130,6 @@ void main_loop(ros::Publisher &pub_to_node3, ros::Publisher &pub_to_rviz)
 
             string f2 = file_folder + file_name_cloud_segmented + suffix;
             my_pcl::write_point_cloud(f2, cloud_segmented);
-
         }
         ros::spinOnce(); // In python, sub is running in different thread. In C++, same thread. So need this.
         ros::Duration(0.01).sleep();
@@ -273,20 +276,20 @@ void read_T_from_file(float T_16x1[16], string filename)
 
 void subCallbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message)
 {
-    flag_receive_from_node1 = true;
     const vector<float> &trans_mat_16x1 = pose_message->TransformationMatrix;
+    vector<vector<float>> tmp(4, vector<float>(4,0));
     for (int cnt = 0, i = 0; i < 4; i++)
         for (int j = 0; j < 4; j++)
-            T_baxter_to_depthcam[i][j] = trans_mat_16x1[cnt++];
+            tmp[i][j] = trans_mat_16x1[cnt++];
+    buff_T_baxter_to_depthcam.push(tmp);
 }
 void subCallbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud)
 {
-    if (flag_receive_from_node1)
-    {
-        flag_receive_from_node1 = false;
-        flag_receive_kinect_cloud = true;
-        fromROSMsg(ros_cloud, *cloud_src);
-    }
+    static int cnt=0;
+    PointCloud<PointXYZRGB>::Ptr tmp(new PointCloud<PointXYZRGB>);
+    fromROSMsg(ros_cloud, *tmp);
+    buff_cloud_src.push(tmp);
+    printf("Node 2 has subscribed the %dth cloud. ", ++cnt);
 }
 void pubPclCloudToTopic(ros::Publisher &pub, PointCloud<PointXYZRGB>::Ptr pcl_cloud)
 {
@@ -296,29 +299,27 @@ void pubPclCloudToTopic(ros::Publisher &pub, PointCloud<PointXYZRGB>::Ptr pcl_cl
     pub.publish(ros_cloud_to_pub);
 }
 
-
 void initAllROSParams()
 {
     {
         ros::NodeHandle nh;
 
         // Topic names
-        NH_GET_PARAM("topic_n1_to_n2",topic_n1_to_n2)
-        NH_GET_PARAM("topic_n2_to_n3",topic_n2_to_n3)
-        NH_GET_PARAM("topic_name_rgbd_cloud",topic_name_rgbd_cloud)
-        NH_GET_PARAM("topic_n2_to_rviz",topic_n2_to_rviz)
+        NH_GET_PARAM("topic_n1_to_n2", topic_n1_to_n2)
+        NH_GET_PARAM("topic_n2_to_n3", topic_n2_to_n3)
+        NH_GET_PARAM("topic_name_rgbd_cloud", topic_name_rgbd_cloud)
+        NH_GET_PARAM("topic_n2_to_rviz", topic_n2_to_rviz)
 
         // File names for saving point cloud
-        NH_GET_PARAM("file_folder",file_folder)
-        NH_GET_PARAM("file_name_cloud_src",file_name_cloud_src)
-        NH_GET_PARAM("file_name_cloud_segmented",file_name_cloud_segmented)
-        NH_GET_PARAM("file_name_index_width",file_name_index_width)
-
+        NH_GET_PARAM("file_folder", file_folder)
+        NH_GET_PARAM("file_name_cloud_src", file_name_cloud_src)
+        NH_GET_PARAM("file_name_cloud_segmented", file_name_cloud_segmented)
+        NH_GET_PARAM("file_name_index_width", file_name_index_width)
 
         // Filename for reading chessboard's pose
-        NH_GET_PARAM("file_folder_config",file_folder_config)
-        NH_GET_PARAM("file_name_T_baxter_to_chess",file_name_T_baxter_to_chess)
-  
+        NH_GET_PARAM("file_folder_config", file_folder_config)
+        NH_GET_PARAM("file_name_T_baxter_to_chess", file_name_T_baxter_to_chess)
+
         float tmpT[16] = {0};
         read_T_from_file(tmpT, file_folder_config + file_name_T_baxter_to_chess);
         for (int cnt = 0, i = 0; i < 4; i++)
@@ -335,27 +336,26 @@ void initAllROSParams()
         ros::NodeHandle nh("~");
 
         // -- filtByPassThrough
-        NH_GET_PARAM("flag_do_range_filt",flag_do_range_filt)
-        NH_GET_PARAM("x_range_radius",x_range_radius)
-        NH_GET_PARAM("y_range_radius",y_range_radius)
-        NH_GET_PARAM("z_range_low",z_range_low)
-        NH_GET_PARAM("z_range_up",z_range_up)
+        NH_GET_PARAM("flag_do_range_filt", flag_do_range_filt)
+        NH_GET_PARAM("x_range_radius", x_range_radius)
+        NH_GET_PARAM("y_range_radius", y_range_radius)
+        NH_GET_PARAM("z_range_low", z_range_low)
+        NH_GET_PARAM("z_range_up", z_range_up)
 
         // -- filtByVoxelGrid
-        NH_GET_PARAM("x_grid_size",x_grid_size)
-        NH_GET_PARAM("y_grid_size",y_grid_size)
-        NH_GET_PARAM("z_grid_size",z_grid_size)
+        NH_GET_PARAM("x_grid_size", x_grid_size)
+        NH_GET_PARAM("y_grid_size", y_grid_size)
+        NH_GET_PARAM("z_grid_size", z_grid_size)
 
         // -- Segment plane
-        NH_GET_PARAM("plane_distance_threshold",plane_distance_threshold)
-        NH_GET_PARAM("plane_max_iterations",plane_max_iterations)
-        NH_GET_PARAM("num_planes",num_planes)
+        NH_GET_PARAM("plane_distance_threshold", plane_distance_threshold)
+        NH_GET_PARAM("plane_max_iterations", plane_max_iterations)
+        NH_GET_PARAM("num_planes", num_planes)
 
         // -- Clustering
-        NH_GET_PARAM("flag_do_clustering",flag_do_clustering)
-        NH_GET_PARAM("cluster_tolerance",cluster_tolerance)
-        NH_GET_PARAM("min_cluster_size",min_cluster_size)
-        NH_GET_PARAM("max_cluster_size",max_cluster_size)
+        NH_GET_PARAM("flag_do_clustering", flag_do_clustering)
+        NH_GET_PARAM("cluster_tolerance", cluster_tolerance)
+        NH_GET_PARAM("min_cluster_size", min_cluster_size)
+        NH_GET_PARAM("max_cluster_size", max_cluster_size)
     }
-
 }

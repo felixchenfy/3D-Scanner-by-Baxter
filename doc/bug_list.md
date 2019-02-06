@@ -61,6 +61,10 @@ p_A_to_B, q_A_to_B = self.tf_listener.lookupTransform(
 Besides, it might returns error if the node has just been initialized.
 rospy.sleep(1) for one second and then call this function.
 
+* When starting a node, sleep for 2 seconds!!!
+I run a node, in which it immediately publishes a lot of data. However, the 1st data was never really published out.
+After I set it sleep 2 seconds after init node, the problem was solved.
+
 # ============================================================
 # Bugs related to Hardware
 

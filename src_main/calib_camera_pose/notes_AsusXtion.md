@@ -21,7 +21,7 @@ $ rviz
 Set fix frame to "camera_rgb_frame" (because I need to use rgb image to do PnP with the chessboard.)  
 Set PointCloud2's topic to: "camera/depth_registered/points"
 
-# Frames
+# Frames and their poses
 
 $ rosrun tf tf_echo /camera_link /camera_rgb_frame
 - Translation: [0.000, -0.045, 0.000]
@@ -56,5 +56,11 @@ At time 0.000
 - Rotation: in Quaternion [0.000, 0.000, 0.000, 1.000]
             in RPY (radian) [0.000, -0.000, 0.000]
             in RPY (degree) [0.000, -0.000, 0.000]
+
+
+# Hardware
+
+The connection of the wire is very loose on the camera side.
+Push it tight, and use tape to fix it.
 
 

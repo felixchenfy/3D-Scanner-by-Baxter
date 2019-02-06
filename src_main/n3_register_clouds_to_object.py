@@ -133,7 +133,8 @@ if __name__ == "__main__":
                 print "  The received cloud is empty. Not processing it."
                 continue
             res_cloud = cloud_register.addCloud(new_cloud)
-                
+            print "Size of the registered cloud: ", getCloudSize(res_cloud)
+            
             # Update and save to file
             viewer.updateCloud(res_cloud)
             open3d.write_point_cloud(file_folder+file_name_cloud_final, res_cloud)
