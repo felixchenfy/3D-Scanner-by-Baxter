@@ -1,5 +1,7 @@
 
-(I just found there is a Asus camera in the lab, and it is very easy to use! So this notes is not useful anymore.)  
+[
+    This notes is Deprecated! I'm not using Kinect camera.
+]
 
 # Camera specifications   
 RGB：1920 x 1080 @ 30 / 15 FPS  

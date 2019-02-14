@@ -3,11 +3,12 @@
     <!-- roslaunch scan3d_by_baxter test_open3d_read_pub_sub_display.launch -->
 
     <!-- The topic for pub/sub PointCloud2 -->
-    <param name="topic_name_rgbd_cloud" value="/camera/depth_registered/points" /> 
+    <param name="topic_name_rgbd_cloud" value="/my_camera/depth_registered/points" /> 
 
     <!-- The filename to read the point cloud from -->
-    <param name="file_folder" value="$(find scan3d_by_baxter)/data/data_debug/" /> 
-    <param name="file_name" value="cloud_cluster_0.pcd"/> 
+    <param name="file_folder" value="$(find scan3d_by_baxter)/data/data/" /> 
+    <param name="file_name" value="segmented_06.pcd"/> 
+    
 
     <!-- ==================================================================== -->
 

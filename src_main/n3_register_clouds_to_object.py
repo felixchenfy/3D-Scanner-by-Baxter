@@ -79,7 +79,15 @@ class SubscriberOfCloud(object):
         self.cloud_buff = deque()
 
     def sub_callback(self, ros_cloud):
-        open3d_cloud = convertCloudFromRosToOpen3d(ros_cloud)
+        if 1:
+            rospy.sleep(2.0)
+            filename=file_folder+file_name_cloud_segmented+"{:02d}".format(cnt+1)+".pcd"
+            open3d_cloud = open3d.read_point_cloud(filename)
+        else: # Here has a bug. The received cloud is very sparse when running the ROS server on Baxter.
+                # The bug disapears when running the ROS server on my laptop (by using my fake node1 to debug).
+                # So the conclusion is that I still don't know what the bug is.
+            open3d_cloud = convertCloudFromRosToOpen3d(ros_cloud)
+        # open3d.write_point_cloud(file_folder+"n3_subed_cloud_"+str(cnt)+".pcd", open3d_cloud)
         # self.rotateCloudForBetterViewing(open3d_cloud)
         self.cloud_buff.append(open3d_cloud)
     
@@ -101,6 +109,7 @@ if __name__ == "__main__":
     # -- Set output filename
     file_folder = rospy.get_param("file_folder") 
     file_name_cloud_final = rospy.get_param("file_name_cloud_final")
+    file_name_cloud_segmented = rospy.get_param("file_name_cloud_segmented")
 
     # -- Subscribe to cloud + Visualize it
     cloud_subscriber = SubscriberOfCloud() # set subscriber
@@ -117,6 +126,7 @@ if __name__ == "__main__":
         voxel_size_regi=0.005, global_regi_ratio=4.0, 
         voxel_size_output=0.002,
         USE_GLOBAL_REGI=True, USE_ICP=True, USE_COLORED_ICP=False)
+        # USE_GLOBAL_REGI=False, USE_ICP=False, USE_COLORED_ICP=False)
 
 
     while not rospy.is_shutdown():
@@ -129,6 +139,7 @@ if __name__ == "__main__":
 
             # Register Point Cloud
             new_cloud = cloud_subscriber.popCloud()
+            # open3d.write_point_cloud(file_folder+"n3_subed_cloud_"+str(cnt)+".pcd", new_cloud)
             if getCloudSize(new_cloud)==0:
                 print "  The received cloud is empty. Not processing it."
                 continue

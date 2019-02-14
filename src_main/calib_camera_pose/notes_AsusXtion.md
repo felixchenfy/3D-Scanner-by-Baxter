@@ -1,5 +1,11 @@
-Xtion PRO LIVE
-2013/11/05
+[
+    I'm using this camera for the 1st stage of my project.
+    However:    (1) its scanning range is >0.8m, too large if placing it on Baxter's forearm.
+                (2) Besides, its size is kind of big.
+    I'm switching to using RealSense depth camera.
+]
+
+Xtion PRO LIVE, made in 2013/11/05
 
 # Camera specifications
 https://www.asus.com/us/3D-Sensor/Xtion_PRO_LIVE/specifications/

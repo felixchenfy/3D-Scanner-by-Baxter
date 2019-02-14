@@ -195,7 +195,7 @@ def registerClouds_Local(src, target, voxel_size=0.01, current_T=None,
     
     # -- Params
     ICP_distance_threshold = voxel_size*4
-    voxel_radiuses = [voxel_size, voxel_size/2.0, voxel_size/4.0]
+    voxel_radiuses = [voxel_size*2.0, voxel_size, voxel_size/2.0]
     max_iters = [50, 25, 10]
     if current_T is None:
         current_T = np.identity(4)
@@ -369,10 +369,17 @@ if __name__ == "__main__":
     # test_registration()
 
     if 1:
+        filename="/home/feiyu/baxterws/src/winter_prj/scan3d_by_baxter/data/data/segmented_06.pcd"
+        cloud_disp = read_point_cloud(filename)
+        drawCloudWithCoord(cloud_disp)
+    if 0:
         res_cloud = open3d.PointCloud()
-        for i in range(1, 1+11):
+        for i in range(1, 1+10):
             print i
-            cloud_disp = read_point_cloud(PYTHON_FILE_PATH+"../data/data/driller/segmented_"+"{:02d}".format(i)+".pcd")
+            
+            cloud_disp = read_point_cloud(PYTHON_FILE_PATH+"../data/data/driller_1/segmented_"+"{:02d}".format(i)+".pcd")
+            # cloud_disp = read_point_cloud(PYTHON_FILE_PATH+"../data/data/driller_color_board/segmented_"+"{:02d}".format(i)+".pcd")
+            # cloud_disp = read_point_cloud(PYTHON_FILE_PATH+"../data/data/driller_floor/segmented_"+"{:02d}".format(i)+".pcd")
              # drawCloudWithCoord(cloud_disp)
             res_cloud = mergeClouds(res_cloud, cloud_disp)
         drawCloudWithCoord(res_cloud)

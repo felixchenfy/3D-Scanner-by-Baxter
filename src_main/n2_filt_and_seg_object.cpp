@@ -118,9 +118,6 @@ void main_loop(ros::Publisher &pub_to_node3, ros::Publisher &pub_to_rviz)
             // print
             print_cloud_processing_result(cnt_cloud); // Print info
 
-            // Publish
-            pubPclCloudToTopic(pub_to_rviz, cloud_rotated);
-            pubPclCloudToTopic(pub_to_node3, cloud_segmented);
 
             // Save to file
             string suffix = my_basics::int2str(cnt_cloud, file_name_index_width) + ".pcd";
@@ -130,6 +127,11 @@ void main_loop(ros::Publisher &pub_to_node3, ros::Publisher &pub_to_rviz)
 
             string f2 = file_folder + file_name_cloud_segmented + suffix;
             my_pcl::write_point_cloud(f2, cloud_segmented);
+
+            // Publish
+            pubPclCloudToTopic(pub_to_rviz, cloud_rotated);
+            pubPclCloudToTopic(pub_to_node3, cloud_segmented);
+
         }
         ros::spinOnce(); // In python, sub is running in different thread. In C++, same thread. So need this.
         ros::Duration(0.01).sleep();
@@ -286,10 +288,12 @@ void subCallbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message)
 void subCallbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud)
 {
     static int cnt=0;
-    PointCloud<PointXYZRGB>::Ptr tmp(new PointCloud<PointXYZRGB>);
-    fromROSMsg(ros_cloud, *tmp);
-    buff_cloud_src.push(tmp);
-    printf("Node 2 has subscribed the %dth cloud. ", ++cnt);
+    if(buff_T_baxter_to_depthcam.size()>buff_cloud_src.size()){
+        PointCloud<PointXYZRGB>::Ptr tmp(new PointCloud<PointXYZRGB>);
+        fromROSMsg(ros_cloud, *tmp);
+        buff_cloud_src.push(tmp);
+        printf("Node 2 has subscribed the %dth cloud. ", ++cnt);
+    }
 }
 void pubPclCloudToTopic(ros::Publisher &pub, PointCloud<PointXYZRGB>::Ptr pcl_cloud)
 {

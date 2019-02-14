@@ -39,6 +39,7 @@ def readKinectCameraPose():
     T_base_to_arm = my_Baxter.getFramePose('/left_lower_forearm')
     T_arm_to_depth  # This is read from file
     T = T_base_to_arm.dot(T_arm_to_depth)
+    return T
 
 
 # Change int to str and filled prefix with 0s
