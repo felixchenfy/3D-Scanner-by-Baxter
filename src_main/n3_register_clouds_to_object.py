@@ -156,11 +156,11 @@ if __name__ == "__main__":
                 rospy.loginfo("=====================================================================")
                 
                 obj_range=OBJECT_RANGE
-                open3d.write_point_cloud(file_folder+"finala_"+file_name_cloud_final, res_cloud)
+                # open3d.write_point_cloud(file_folder+"finala_"+file_name_cloud_final, res_cloud)
                 res_cloud = filtCloudByRange(res_cloud, xmin=-obj_range, xmax=obj_range, ymin=-obj_range, ymax=obj_range )
 
                 viewer.updateCloud(res_cloud)
-                open3d.write_point_cloud(file_folder+"finalb_"+file_name_cloud_final, res_cloud)
+                # open3d.write_point_cloud(file_folder+"finalb_"+file_name_cloud_final, res_cloud)
 
         # Update viewer
         viewer.updateView()

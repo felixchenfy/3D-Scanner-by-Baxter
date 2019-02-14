@@ -1,20 +1,26 @@
 
-Object 3D Scan by Baxter Robot and Depth Camera
+Object 3D Scan by a Depth Camera on Baxter's Limb
 ========================
 
-This is a project of scanning object's 3D point cloud by using a depth camera mounted on Baxter Robot's limb.
+This is part of my winter project at Northwestern University. 
 
-[Video]  
-[Scanned models]
+I'm using PCL and Open3D for point cloud processing, and using ROS for controlling Baxter's limb to different poses to take depth images. 
 
-I'm using PCL and Open3D for point cloud processing, and using ROS for controlling Baxter Robot to move its arm to different pose for taking depth images. 
 
-This project can be useful if you are interested in: 3D Scanning, ROS (Python, c++), common filters in PCL, basic usage of Open3D, Sub/Pub and Display point cloud by PCL and Open3D, Calib Camera Pose by Chessboard.
+The video demo of 3D scanning a colored bottle is [here](http://feiyuchen.com/wp-content/uploads/3D_scanner_v1_demo.mp4). A GIF and image is shown below.
 
+![](https://github.com/felixchenfy/Data-Storage/raw/master/3dscan-gif.gif)
+![](http://feiyuchen.com/wp-content/uploads/3dscan-frame-076.jpg)
+
+**TODO:** In current version, 3/4 of the bottle cannot be seen by the AsusXtion camera, because the camera's limited scanning range causes a limited taskspace of Baxter Robot. I will switch to a better camera (Intel Realsense), and then make an improved demo before March 10th.
+
+**For Reader:** This project can be useful to you if you are interested in: 3D Scanning, ROS (Python, c++), common filters in PCL, basic usage of Open3D, Sub/Pub and Display point cloud by PCL and Open3D, Calib Camera Pose by Chessboard.
+
+**Content:**
 
 <!-- TOC -->
 
-- [Object 3D Scan by Baxter Robot and Depth Camera](#object-3d-scan-by-baxter-robot-and-depth-camera)
+- [Object 3D Scan by a Depth Camera on Baxter's Limb](#object-3d-scan-by-a-depth-camera-on-baxters-limb)
 - [1. Procedures of 3D Scanning](#1-procedures-of-3d-scanning)
 - [2. Workflow of the Program](#2-workflow-of-the-program)
   - [2.1. Overview](#21-overview)
@@ -37,10 +43,10 @@ This project can be useful if you are interested in: 3D Scanning, ROS (Python, c
 
 1. Place a depth camera on Baxter's lower forearm to collect 3d point clouds.
 2. Before scanning, place a chessboard on the ground. Caliberate its pose and depth_camera's pose in the Baxter Robot's coordinate frame.
-3. Place a flat board on the ground, and place the object on the board. I've drawn some colored patterns (English words, circles, cross, etc.) on the board to assist the registration of point cloud.
-4. Move Baxter's limb to several positions, and take depth pictures of the object from different view angles.
-5. Filter the point cloud, and register them into a single 3D model.
-6. (TODO) Rotate the board and object for 180°, and do a second scan to get a more complete point cloud. It's due to the problem that Baxter's limb can only move around the object for about 200°, not 360°.
+3. Place the object on the chessboard.
+4. Move Baxter's limb to several positions to take depth imagesfrom different view angles.
+5. Filter the point clouds, and register them into a single 3D model.
+
 
 # 2. Workflow of the Program
 
@@ -81,7 +87,7 @@ Meanwhile, it also saves the (a) orignal cloud and (c) segmented cloud to the [d
 ## 2.4. Node3: Register clouds
 file: [src_main/n3_register_clouds_to_object.py](src_main/n3_register_clouds_to_object.py)
 
-This node subsribes from node2 of the segmented cloud containing the object. Then it does a registration to obtain the complete 3D model of the object. Finally, the result is saved to file.
+This node subsribes the segmented cloud (which contains the object) from node2. Then it does a registration to obtain the complete 3D model of the object. Finally, the result is saved to file.
 
 Subscribe: Segmented cloud from node2.
 
@@ -124,18 +130,20 @@ Main functions are defined in [lib_cam_calib.py](src_python/lib_cam_calib.py) an
 
 After acquiring the point cloud, I do following processes (by using PCL's library): 
 * Filter by voxel grid and outlier removal.
-* Rotate cloud to the Baxter's frame.
-* Range filtering. Retrain only points that are near the chessboard.
-* Segment out planes (optional).
-* Do a clustering and choose the largest object (optional).
+* Rotate cloud to the Baxter/chessboard coordinate.
+* Range filtering: remove points 35cm away from chessboard center.
+* Remove the floor by detecting plane.
+* Do a clustering and choose the largest object (added but disabled).
 
 Functions are declared in [pcl_filters.h](include/my_pcl/pcl_filters.h) and [pcl_advanced.h](include/my_pcl/pcl_advanced.h).
 
 ## 3.3. Registration
 
-Register pieces of clouds together using ICP and colored-ICP (directly using Open3D's library function).
+Do a [global registration](http://www.open3d.org/docs/tutorial/Advanced/fast_global_registration.html) and an [ICP registration](http://www.open3d.org/docs/tutorial/Basic/icp_registration.html). 
 
-TODO: Add more detials
+The colored ICP was tested but had little effect for my scenario, because I use background objects to assist the registration, and there is no large need for color info. Thus I disabled the colored-ICP. 
+
+Then, I use a range filter to retain only the target object.
 
 Functions are defined in [lib_cloud_registration.py](src_python/lib_cloud_registration.py).
 
@@ -218,10 +226,8 @@ The current implementation has following problems:
 2. Baxter can only move around the object for about 200 degrees.
 
 To do:
-1. Try solving the above problems.
-2. Deal with the case when a person manually flip the object in order to scan the object parts that cannot be seen in current view. Maybe It requires tracking, and more advanced registration algorithm.
-3. Replace Baxter trajectory from hard-coding to a more intellgent motion planner. For example, automatically facing the object and moving to directions that can see the unscaned parts of object.
-4. Use a better depth camera with larger minimum scanning range and higher accuracy.
+1. Use Intel Realsense camera. This can solve the above problem 2.
+2. Replace Baxter trajectory from hard-coding to a more intellgent motion planner. For example, automatically facing the object and moving to directions that can see the unscaned parts of object.
 
 # 7. Reference
 
