@@ -39,18 +39,12 @@
  
    <!--=============================== Debug Settings ======================================== -->
 
-    <arg name="run_node1"  default="true" doc="DEBUG: whether run node 1"/>
-    <!-- <arg name="run_node1"  default="false" doc="DEBUG: whether run node 1"/> -->
+    <arg name="run_real_node1"  default="false" doc="DEBUG: whether run node 1"/>
     <arg name="run_node2"  default="true" doc="DEBUG: whether run node 2"/>
     <arg name="run_node3"  default="true" doc="DEBUG: whether run node 3"/>
 
-    <!--    Run a fake node 1. All data are read from file. No need for Baxter or Kinect.
-            This should be false, if run_node1==true  -->
-    <arg name="run_node1_fake"  default="false"/>
-    <!-- <arg name="run_node1_fake"  default="true"/> -->
-
    <!--=============================== Run setup nodes =========================================== -->
-    <group if="$(arg run_node1)">
+    <group if="$(arg run_real_node1)">
 
        <!-- trajectory action server -->
         <node name="joint_trajectory_action_server" pkg="baxter_interface"
@@ -62,11 +56,11 @@
    <!--=============================== Nodes: Main 3 =========================================== -->
 
    <!-- node 1: main node for controlling work flow -->
-    <node if="$(arg run_node1)" 
+    <node if="$(arg run_real_node1)" 
         name="node1" type="n1_move_baxter.py"  pkg="scan3d_by_baxter" output = "screen">
     </node>
 
-    <node if="$(arg run_node1_fake)" 
+    <node unless="$(arg run_real_node1)" 
         name="n1_fake_data_publisher" pkg="scan3d_by_baxter" type="n1_fake_data_publisher.py" output = "screen">
     </node>
 

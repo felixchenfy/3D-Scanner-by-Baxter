@@ -15,7 +15,7 @@
 
   <!-- ============================ RVIZ ============================-->
 
-  <node type="rviz" name="rviz" pkg="rviz" args="-d $(find scan3d_by_baxter)/config/rviz_with_baxter.rviz" />
+  <!-- <node type="rviz" name="rviz" pkg="rviz" args="-d $(find scan3d_by_baxter)/config/rviz_with_baxter.rviz" /> -->
 
   <!-- ============================ MY SERVICE ============================-->
 

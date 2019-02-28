@@ -139,7 +139,6 @@ if __name__ == "__main__":
 
             # Register Point Cloud
             new_cloud = cloud_subscriber.popCloud()
-            # open3d.write_point_cloud(file_folder+"n3_subed_cloud_"+str(cnt)+".pcd", new_cloud)
             if getCloudSize(new_cloud)==0:
                 print "  The received cloud is empty. Not processing it."
                 continue
@@ -148,19 +147,18 @@ if __name__ == "__main__":
             
             # Update and save to file
             viewer.updateCloud(res_cloud)
-            open3d.write_point_cloud(file_folder+file_name_cloud_final, res_cloud)
             
             if cnt==num_goalposes:
-                rospy.loginfo("================== Cloud Registration Completes ====================")
+                rospy.loginfo("=========== Cloud Registration Completes ===========")
+                rospy.loginfo("====================================================")
                 rospy.sleep(1.0)
-                rospy.loginfo("=====================================================================")
                 
-                obj_range=OBJECT_RANGE
-                # open3d.write_point_cloud(file_folder+"finala_"+file_name_cloud_final, res_cloud)
-                res_cloud = filtCloudByRange(res_cloud, xmin=-obj_range, xmax=obj_range, ymin=-obj_range, ymax=obj_range )
-
+                # Filter by range to remove things around our target
+                res_cloud = filtCloudByRange(res_cloud, xmin=-OBJECT_RANGE, xmax=OBJECT_RANGE, ymin=-OBJECT_RANGE, ymax=OBJECT_RANGE )
                 viewer.updateCloud(res_cloud)
-                # open3d.write_point_cloud(file_folder+"finalb_"+file_name_cloud_final, res_cloud)
+            
+            # Save resultant point cloud
+            open3d.write_point_cloud(file_folder+file_name_cloud_final, res_cloud)
 
         # Update viewer
         viewer.updateView()
@@ -168,9 +166,6 @@ if __name__ == "__main__":
         # Sleep
         rate.sleep()
 
-    # -- Save final cloud to file
-    rospy.loginfo("!!!!! Node 3 ready to stop ...")
-    
     # -- Node stops
     viewer.destroy_window()
     rospy.loginfo("!!!!! Node 3 stops.")

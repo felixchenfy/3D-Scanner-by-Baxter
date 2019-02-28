@@ -28,11 +28,6 @@ from scan3d_by_baxter.msg import T4x4
 
 # -- Functions
 
-
-def moveBaxterToJointAngles(joint_angles, time_cost = 3.0):
-    my_Baxter.moveToJointAngles(joint_angles, time_cost)
-
-
 def readKinectCameraPose():
     # (pos, quaternion) = my_Baxter.getFramePose('/left_hand_camera')
     # (pos, quaternion) = my_Baxter.getFramePose('/left_gripper')
@@ -140,13 +135,13 @@ if __name__ == "__main__":
     assert len(goalposes_joint_angles)>=num_goalposes
 
     # Move Baxter to initial position
-    NOT_MOVE_BAXTER=False
-    if not NOT_MOVE_BAXTER:
+    DEBUG_WHEN_NO_BAXTER=False
+    if not DEBUG_WHEN_NO_BAXTER:
         rospy.sleep(1)
         rospy.loginfo("]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]")
         init_joint_angles = goalposes_joint_angles[0]
         rospy.loginfo("Node 1: Initialization. Move Baxter to init pose: "+str(init_joint_angles))
-        moveBaxterToJointAngles(init_joint_angles, time_cost=3.0)
+        my_Baxter.moveToJointAngles(init_joint_angles, time_cost=3.0)
         rospy.loginfo("Node 1: Baxter reached the initial pose!\n\n")
         rospy.loginfo("[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[[")
 
@@ -158,22 +153,24 @@ if __name__ == "__main__":
         joint_angles = goalposes_joint_angles[ith_goalpose-1]
 
         # Move robot to the next pose for taking picture
-        if not NOT_MOVE_BAXTER:
+        if not DEBUG_WHEN_NO_BAXTER:
             rospy.loginfo("--------------------------------")
             rospy.loginfo("Node 1: {}th pos".format(ith_goalpose))
             rospy.loginfo("Node 1: Baxter is moving to pos: "+str(joint_angles))
-            moveBaxterToJointAngles(joint_angles, 4.0)
+            my_Baxter.moveToJointAngles(joint_angles, 4.0)
             rospy.loginfo("Node 1: Baxter reached the pose!")
 
-        # Publish the signal to node2
         rospy.loginfo("Node 1: Wait until stable for 1 more second")
         rospy.sleep(1.0)
         rospy.loginfo("Node 1: publish "+str(ith_goalpose) +
                       "th camera pose to node2")
+
+        # Publish camera pose to node2
         pose = readKinectCameraPose()
         publishPose(pose)
+        
+        # End
         savePoseToFile(pose, ith_goalpose)
-
         rospy.loginfo("--------------------------------")
         rospy.sleep(3)
         # if ith_goalpose==num_goalposes: ith_goalpose = 0
