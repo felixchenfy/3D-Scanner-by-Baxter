@@ -12,10 +12,10 @@
         
         <!-- Input image topics -->
         <param name="topic_baxter_left_hand_camera" value="/cameras/left_hand_camera/image" />     
-        <param name="topic_rgbd_camera" value="/camera/rgb/image_rect_color" />     
-        <!-- WARNING: Baxter's camera info is for its 1280x800 size image. If image resized, info is not changed! S**t!
-            So either manually reset the camera size, or manually input the camera info.
-            Here I choose to use the command below to set its camera size:
+        <param name="topic_rgbd_camera" value="/camera/color/image_raw" />     
+        <!-- WARNING: Baxter's camera info is for its 1280x800 size image. If image resized, info won't changed, which is wrong! S**t!
+            So if you resize the image, you need to manually input the camera info.
+            Here I simply use the default camera size, which is 1280x800:
         rosrun baxter_tools camera_control.py -o left_hand_camera -r 1280x800 -->
 
         <!-- Chessboard params -->

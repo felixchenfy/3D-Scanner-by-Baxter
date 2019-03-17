@@ -6,10 +6,10 @@
    <!--=============================== Parameters ======================================== -->
 
     <!-- Number of poses the Baxter will move to for taking picture -->
-    <param name="num_goalposes" type="int" value="10" /> 
+    <param name="num_goalposes" type="int" value="9" /> 
 
     <!-- The topic for receiving PointCloud2 from RgbdCam -->
-    <param name="topic_name_rgbd_cloud" value="/camera/depth_registered/points" /> 
+    <param name="topic_name_rgbd_cloud" value="/camera/depth/color/points" /> 
 
     <!-- File names for saving results -->
     <param name="file_folder" value="$(find scan3d_by_baxter)/data/data/" /> 
@@ -79,18 +79,15 @@
 
             <!-- filtering by range. Centered at the chessboard -->
             <param name="flag_do_range_filt" type="bool" value="true" />     
-            <!-- <param name="x_range_low" type="double" value="0.0" />     
-            <param name="x_range_up" type="double" value="0.0" />     
-            <param name="y_range_low" type="double" value="0.0" />     
-            <param name="y_range_up" type="double" value="0.0" /> -->
-            <param name="z_range_low" type="double" value="-0.1" />     
-            <param name="z_range_up" type="double" value="0.5" />     
-            <param name="x_range_radius" type="double" value="0.35" />     
-            <param name="y_range_radius" type="double" value="0.35" />     
+            <param name="z_range_low" type="double" value="-0.05" />     
+            <param name="z_range_up" type="double" value="0.35" />     
+            <param name="x_range_radius" type="double" value="0.25" />     
+            <param name="y_range_radius" type="double" value="0.25" />
 
             <!-- segment plane -->
             <param name="num_planes" type="int" value="1" />     
-            <param name="plane_distance_threshold" type="double" value="0.01" />     
+            <param name="plane_distance_threshold_0" type="double" value="0.05" />     
+            <param name="plane_distance_threshold" type="double" value="0.02" />     
             <param name="plane_max_iterations" type="int" value="100" />     
 
             <!-- divide cloud into clusters -->

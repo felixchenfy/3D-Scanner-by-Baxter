@@ -52,7 +52,7 @@ float chessboard_x, chessboard_y, chessboard_z;
 float T_baxter_to_chess[4][4] = {0}, T_chess_to_baxter[4][4] = {0};
 
 // Filter: plane segmentation
-float plane_distance_threshold;
+float plane_distance_threshold, plane_distance_threshold_0;
 int plane_max_iterations;
 int num_planes;
 float ratio_of_rest_points = -1; // disabled
@@ -170,17 +170,23 @@ int main(int argc, char **argv)
 void process_to_get_cloud_rotated()
 {
     // Func: Filtering; Rotate cloud to Baxter robot frame
+    pcl::copyPointCloud(*cloud_src, *cloud_rotated);
 
     // -- filtByVoxelGrid
-    pcl::copyPointCloud(*cloud_src, *cloud_rotated);
+    printf("Node2: filtByVoxelGrid ...");
     cloud_rotated = my_pcl::filtByVoxelGrid(cloud_rotated, x_grid_size, y_grid_size, z_grid_size);
+    printf("done\n");
 
     // -- filtByStatisticalOutlierRemoval
-    cloud_rotated = my_pcl::filtByStatisticalOutlierRemoval(cloud_rotated, mean_k, std_dev);
+    // printf("Node2: filtByStatisticalOutlierRemoval ... ");
+    // cloud_rotated = my_pcl::filtByStatisticalOutlierRemoval(cloud_rotated, mean_k, std_dev);
+    // printf("done\n");
 
     // -- rotate cloud to Baxter's frame
+    printf("Node2: rotate cloud to Baxter's frame ...");
     for (PointXYZRGB &p : cloud_rotated->points)
         my_basics::preTranslatePoint(T_baxter_to_depthcam, p.x, p.y, p.z);
+    printf("done\n");
 }
 
 // -----------------------------------------------------
@@ -190,29 +196,57 @@ void process_to_get_cloud_segmented()
     // Func:    Range filtering，
     //          Optional: Remove plane (table); Do clustering; Choose the largest one
 
-    // -- filtByPassThrough (by range)
+    // -- rotate cloud to Chessboard's frame
     copyPointCloud(*cloud_rotated, *cloud_segmented);
+    for (PointXYZRGB &p : cloud_segmented->points)
+        my_basics::preTranslatePoint(T_chess_to_baxter, p.x, p.y, p.z);
+
+    // -- filtByPassThrough (by range)
     if (flag_do_range_filt)
     {
-        // cout<<"Debug: before range filter"<<endl;
+        printf("Node2: do_range_filt ... ");
         // my_pcl::printCloudSize(cloud_segmented);
         cloud_segmented = my_pcl::filtByPassThrough(
-            cloud_segmented, "x", chessboard_x + x_range_radius, chessboard_x - x_range_radius);
+            // cloud_segmented, "x", chessboard_x + x_range_radius, chessboard_x - x_range_radius);
+            cloud_segmented, "x", 0 + x_range_radius, 0 - x_range_radius);
 
         cloud_segmented = my_pcl::filtByPassThrough(
-            cloud_segmented, "y", chessboard_y + y_range_radius, chessboard_y - y_range_radius);
+            // cloud_segmented, "y", chessboard_y + y_range_radius, chessboard_y - y_range_radius);
+            cloud_segmented, "y", 0 + y_range_radius, 0 - y_range_radius);
 
         cloud_segmented = my_pcl::filtByPassThrough(
-            cloud_segmented, "z", chessboard_z + z_range_up, chessboard_z + z_range_low);
-        // cout<<"Debug: after range filter"<<endl;
+            // cloud_segmented, "z", chessboard_z + z_range_up, chessboard_z + z_range_low);
+            cloud_segmented, "z", 0 + z_range_up, 0 + z_range_low);
+        printf("done\n");
         // my_pcl::printCloudSize(cloud_segmented);
     }
 
     // -- Remove planes
+    // 1. Seprate cloud into {near plane} & {far from plane}
+    PointCloud<PointXYZRGB>::Ptr cld_near_plane(new PointCloud<PointXYZRGB>);
+    PointCloud<PointXYZRGB>::Ptr cld_far_plane(new PointCloud<PointXYZRGB>);
+    double th = plane_distance_threshold_0;
+    for(PointXYZRGB &pt:cloud_segmented->points){
+        if(pt.z<=th && pt.z>=-th){
+            cld_near_plane->points.push_back(pt);
+        }else{
+            cld_far_plane->points.push_back(pt);
+        }
+    }
+    cld_near_plane->width  = cld_near_plane->points.size();
+    cld_far_plane->width  = cld_far_plane->points.size();
+    cld_near_plane->height = cld_far_plane->height = 1;
+
+    // 2. Remove plane in {near plane} 
     int num_removed_planes = my_pcl::removePlanes(
-        cloud_segmented,
+        cld_near_plane,
         plane_distance_threshold, plane_max_iterations,
-        num_planes, ratio_of_rest_points);
+        num_planes, ratio_of_rest_points, true);
+
+    // 3. Combine {near plane} & {far from plane} and save back to cloud_segmented
+    *cld_near_plane += *cld_far_plane;
+    pcl::copyPointCloud(*cld_near_plane, *cloud_segmented);
+
 
     // -- Clustering: Divide the remaining point cloud into different clusters
     if (flag_do_clustering)
@@ -226,9 +260,6 @@ void process_to_get_cloud_segmented()
         cloud_segmented = cloud_clusters[0];
     }
 
-    // -- rotate cloud to Chessboard's frame, for better viewing in PCL viewer
-    for (PointXYZRGB &p : cloud_segmented->points)
-        my_basics::preTranslatePoint(T_chess_to_baxter, p.x, p.y, p.z);
 }
 
 // -----------------------------------------------------
@@ -284,6 +315,7 @@ void subCallbackFromNode1(const scan3d_by_baxter::T4x4::ConstPtr &pose_message)
         for (int j = 0; j < 4; j++)
             tmp[i][j] = trans_mat_16x1[cnt++];
     buff_T_baxter_to_depthcam.push(tmp);
+    printf("Node 2: subscribe camera pose from node 1.\n");
 }
 void subCallbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud)
 {
@@ -292,8 +324,9 @@ void subCallbackFromKinect(const sensor_msgs::PointCloud2 &ros_cloud)
         PointCloud<PointXYZRGB>::Ptr tmp(new PointCloud<PointXYZRGB>);
         fromROSMsg(ros_cloud, *tmp);
         buff_cloud_src.push(tmp);
-        printf("Node 2 has subscribed the %dth cloud. ", ++cnt);
+        printf("Node 2 has subscribed the %dth cloud with size %d\n ", ++cnt, (int)tmp->points.size());
     }
+    return;
 }
 void pubPclCloudToTopic(ros::Publisher &pub, PointCloud<PointXYZRGB>::Ptr pcl_cloud)
 {
@@ -353,6 +386,7 @@ void initAllROSParams()
 
         // -- Segment plane
         NH_GET_PARAM("plane_distance_threshold", plane_distance_threshold)
+        NH_GET_PARAM("plane_distance_threshold_0", plane_distance_threshold_0)
         NH_GET_PARAM("plane_max_iterations", plane_max_iterations)
         NH_GET_PARAM("num_planes", num_planes)
 

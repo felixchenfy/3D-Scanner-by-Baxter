@@ -27,9 +27,7 @@ from scan3d_by_baxter.msg import T4x4
 
 # -------------------------------------------------------------
 # ------------------ Variables 
-FILE_FOLDER = PYTHON_FILE_PATH+"../data/data/driller_1/" # 10 goals
-# FILE_FOLDER = PYTHON_FILE_PATH+"../data/data/bottle_1/" # 11 goals
-
+FILE_FOLDER = "/home/feiyu/baxterws/src/winter_prj/scan3d_by_baxter/data/testing_log/03-08/volt_Box_ICP/" # 10 goals
 
 # -------------------------------------------------------------
 # ------------------ Functions 
@@ -46,7 +44,7 @@ class ClassPubDepthCamPose(object):
         self.openFile()
 
         # Topic to publish pose
-        topic_endeffector_pos = "my/robot_end_effector_pose"
+        topic_endeffector_pos = rospy.get_param("topic_n1_to_n2")
         self.pub = rospy.Publisher(topic_endeffector_pos, T4x4, queue_size=10)
 
     def openFile(self):
@@ -70,16 +68,13 @@ class ClassPubDepthCamPose(object):
     def pub_pose(self):
         T = self.readNextPose()
 
-        # Manual offset
-        T_rgb_to_depth = transXYZ(x=0, y=-0.025, z=0.1) 
-        T = T.dot(T_rgb_to_depth)
-
         # Trans to 1x16 array
         pose_1x16 = []
         for i in range(4):
             for j in range(4):
                 pose_1x16 += [T[i, j]]
         self.pub.publish(pose_1x16)
+        print("Node 1: publish camera pose.\n")
         return
 
 class ClassPubPointClous(object):
@@ -91,9 +86,9 @@ class ClassPubPointClous(object):
             "{:02d}".format(ith_goalpose)+".pcd"
         
         # Topic to publish cloud
-        topic_name_rgbd_cloud = "/camera/depth_registered/points"
+        self.topic_name_rgbd_cloud = rospy.get_param("topic_name_rgbd_cloud")
         self.pub = rospy.Publisher(
-            topic_name_rgbd_cloud, PointCloud2, queue_size=10)
+            self.topic_name_rgbd_cloud, PointCloud2, queue_size=10)
 
     def pub_cloud(self):
         filename = self.getFileName()
@@ -101,9 +96,9 @@ class ClassPubPointClous(object):
         print "Node 1: sim: load cloud file:\n  " + filename
         print "  points = " + str(getCloudSize(open3d_cloud))
         
-        ros_cloud = convertCloudFromOpen3dToRos(open3d_cloud)
+        ros_cloud = convertCloudFromOpen3dToRos(open3d_cloud, frame_id="base")
         self.pub.publish(ros_cloud)
-        print("Node 1: sim: publishing cloud "+str(ith_goalpose))
+        print("Node 1: sim: publishing cloud "+str(ith_goalpose) + "to: " + self.topic_name_rgbd_cloud)
 
 
 # -- Main
@@ -129,9 +124,11 @@ if __name__ == "__main__":
         rospy.sleep(1.0)
         if ith_goalpose == num_goalposes:
             pub_poses.closeFile()
-            break
-            # pub_poses.openFile()
-            # ith_goalpose = 0
+            if 0:
+                break
+            else:
+                pub_poses.openFile()
+                ith_goalpose = 0
 
     pub_poses.closeFile()
     rospy.spin()

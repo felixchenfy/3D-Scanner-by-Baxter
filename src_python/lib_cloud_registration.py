@@ -186,7 +186,7 @@ def registerClouds_Global(src, dst, voxel_size=0.01, FAST_REGI=True):
     return T, src_down, dst_down
 
 def registerClouds_Local(src, target, voxel_size=0.01, current_T=None, 
-    ICP = True, COLORED_ICP = False, ICP_OPTION="PointToPlane",
+    ICP = True, COLORED_ICP = False, ICP_OPTION="Point2Point",
     DRAW_INIT_POSE = False, DRAW_ICP = False, DRAW_COLORED_ICP = False):
     
     # -- Use colored ICP to register src onto dst, and return the combined cloud
@@ -333,17 +333,15 @@ class CloudRegister(object):
 def test_registration():
   
     # -- Settings
-    filename_=PYTHON_FILE_PATH+"../data/data/driller/segmented_"
-    # filename_=PYTHON_FILE_PATH+"../data/data/driller_floor/segmented_0"
-    # filename_=PYTHON_FILE_PATH+"../data/data/segmented_0"
+    filename_=PYTHON_FILE_PATH+"../data/testing_log/03-07/volt_colorICP2/segmented_"
     cloud_register = CloudRegister(
-        voxel_size_regi=0.005, global_regi_ratio=2.0, 
-        voxel_size_output=0.005,
-        USE_ICP=True, USE_COLORED_ICP=True)
+        voxel_size_regi=0.01, global_regi_ratio=2.0, 
+        voxel_size_output=0.002,
+        USE_GLOBAL_REGI=False, USE_ICP=True, USE_COLORED_ICP=False)
 
     # -- Loop
     FILE_INDEX_BEGIN=1
-    FILE_INDEX_END=11
+    FILE_INDEX_END=9
     cnt = 0
     for file_index in range(FILE_INDEX_BEGIN, FILE_INDEX_END+1):
         print "==================== {}th file ======================".format(file_index)
@@ -366,9 +364,9 @@ def test_registration():
 
 
 if __name__ == "__main__":
-    # test_registration()
+    test_registration()
 
-    if 1:
+    if 0:
         filename="/home/feiyu/baxterws/src/winter_prj/scan3d_by_baxter/data/data/segmented_06.pcd"
         cloud_disp = read_point_cloud(filename)
         drawCloudWithCoord(cloud_disp)

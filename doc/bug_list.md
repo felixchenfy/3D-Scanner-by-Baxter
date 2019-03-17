@@ -65,6 +65,10 @@ rospy.sleep(1) for one second and then call this function.
 I run a node, in which it immediately publishes a lot of data. However, the 1st data was never really published out.
 After I set it sleep 2 seconds after init node, the problem was solved.
 
+* TCP, 
+[pcl::VoxelGrid::applyFilter] Leaf size is too small for the input dataset. Integer indices would overflow.
+[WARN] [1551893957.286127]: Inbound TCP/IP connection failed: connection from sender terminated before handshake header received. 0 bytes were received. Please check sender for additional details.
+
 # ============================================================
 # Bugs related to Hardware
 

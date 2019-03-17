@@ -123,9 +123,9 @@ if __name__ == "__main__":
     rate = rospy.Rate(100)
     cnt = 0
     cloud_register = CloudRegister(
-        voxel_size_regi=0.005, global_regi_ratio=4.0, 
-        voxel_size_output=0.002,
-        USE_GLOBAL_REGI=True, USE_ICP=True, USE_COLORED_ICP=False)
+        voxel_size_regi=0.02, global_regi_ratio=4.0, 
+        voxel_size_output=0.001,
+        USE_GLOBAL_REGI=False, USE_ICP=True, USE_COLORED_ICP=False)
         # USE_GLOBAL_REGI=False, USE_ICP=False, USE_COLORED_ICP=False)
 
 
@@ -142,6 +142,13 @@ if __name__ == "__main__":
             if getCloudSize(new_cloud)==0:
                 print "  The received cloud is empty. Not processing it."
                 continue
+            
+            # Filter
+            cl,ind = open3d.statistical_outlier_removal(new_cloud, # Statistical oulier removal
+                nb_neighbors=20, std_ratio=2.0)
+            new_cloud = open3d.select_down_sample(new_cloud, ind)
+            
+            # Regi
             res_cloud = cloud_register.addCloud(new_cloud)
             print "Size of the registered cloud: ", getCloudSize(res_cloud)
             
@@ -155,6 +162,9 @@ if __name__ == "__main__":
                 
                 # Filter by range to remove things around our target
                 res_cloud = filtCloudByRange(res_cloud, xmin=-OBJECT_RANGE, xmax=OBJECT_RANGE, ymin=-OBJECT_RANGE, ymax=OBJECT_RANGE )
+                cl,ind = open3d.statistical_outlier_removal(res_cloud, # Statistical oulier removal
+                        nb_neighbors=20, std_ratio=2.0)
+                res_cloud = open3d.select_down_sample(res_cloud, ind)
                 viewer.updateCloud(res_cloud)
             
             # Save resultant point cloud
