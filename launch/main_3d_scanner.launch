@@ -39,7 +39,7 @@
  
    <!--=============================== Debug Settings ======================================== -->
 
-    <arg name="run_real_node1"  default="false" doc="DEBUG: whether run node 1"/>
+    <arg name="run_real_node1"  default="true" doc="DEBUG: whether run node 1"/>
     <arg name="run_node2"  default="true" doc="DEBUG: whether run node 2"/>
     <arg name="run_node3"  default="true" doc="DEBUG: whether run node 3"/>
 

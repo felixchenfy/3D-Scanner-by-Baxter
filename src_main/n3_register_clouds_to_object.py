@@ -123,7 +123,7 @@ if __name__ == "__main__":
     rate = rospy.Rate(100)
     cnt = 0
     cloud_register = CloudRegister(
-        voxel_size_regi=0.02, global_regi_ratio=4.0, 
+        voxel_size_regi=0.01, global_regi_ratio=4.0, 
         voxel_size_output=0.001,
         USE_GLOBAL_REGI=False, USE_ICP=True, USE_COLORED_ICP=False)
         # USE_GLOBAL_REGI=False, USE_ICP=False, USE_COLORED_ICP=False)
