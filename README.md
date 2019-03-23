@@ -1,28 +1,23 @@
+This is part of my [Winter Project at NWU](https://github.com/felixchenfy/Detect-Object-and-6D-Pose).
 
-Object 3D Scan by a Depth Camera on Baxter's Limb
+
+Object 3D Scanning by Baxter Robot
 ========================
 
-This is part of my winter project at Northwestern University. 
+![](doc/fig_scan_bottle_result.png)
 
-I'm using PCL and Open3D for point cloud processing, and using ROS for controlling Baxter's limb to different poses to take depth images. 
+Videos of scanning a bottle and a meter are put [here](https://github.com/felixchenfy/Data-Storage/raw/master/3D-Scan-by-Baxter/demo1_bottle_speedx3.mp4) and [here](https://github.com/felixchenfy/Data-Storage/raw/master/3D-Scan-by-Baxter/demo1_meter_speedx3.mp4).  
+An animation is shown below:      
+![](https://github.com/felixchenfy/Data-Storage/raw/master/3D-Scan-by-Baxter/demo1_bottle_speedx3.gif)
 
 
-The video demo of 3D scanning a colored bottle is [here](http://feiyuchen.com/wp-content/uploads/3D_scanner_v1_demo.mp4). A GIF and image is shown below.
 
-![](https://github.com/felixchenfy/Data-Storage/raw/master/3dscan-gif.gif)
-![](http://feiyuchen.com/wp-content/uploads/3dscan-frame-076.jpg)
-
-**TODO:** In current version, 3/4 of the bottle cannot be seen by the AsusXtion camera, because the camera's limited scanning range causes a limited taskspace of Baxter Robot. I will switch to a better camera (Intel Realsense), and then make an improved demo before March 10th.
-
-**For Reader:** This project can be useful to you if you are interested in: 3D Scanning, ROS (Python, c++), common filters in PCL, basic usage of Open3D, Sub/Pub and Display point cloud by PCL and Open3D, Calib Camera Pose by Chessboard.
-
-**Content:**
-
+**Contents:**
 <!-- TOC -->
 
-- [Object 3D Scan by a Depth Camera on Baxter's Limb](#object-3d-scan-by-a-depth-camera-on-baxters-limb)
-- [1. Procedures of 3D Scanning](#1-procedures-of-3d-scanning)
-- [2. Workflow of the Program](#2-workflow-of-the-program)
+- [Object 3D Scanning by Baxter Robot](#object-3d-scanning-by-baxter-robot)
+- [1. Workflow](#1-workflow)
+- [2. Communication between ROS nodes](#2-communication-between-ros-nodes)
   - [2.1. Overview](#21-overview)
   - [2.2. Node1: Move Baxter](#22-node1-move-baxter)
   - [2.3. Node2: Filter cloud](#23-node2-filter-cloud)
@@ -39,16 +34,23 @@ The video demo of 3D scanning a colored bottle is [here](http://feiyuchen.com/wp
 
 <!-- /TOC -->
 
-# 1. Procedures of 3D Scanning 
+# 1. Workflow
 
-1. Place a depth camera on Baxter's lower forearm to collect 3d point clouds.
-2. Before scanning, place a chessboard on the ground. Caliberate its pose and depth_camera's pose in the Baxter Robot's coordinate frame.
-3. Place the object on the chessboard.
-4. Move Baxter's limb to several positions to take depth imagesfrom different view angles.
-5. Filter the point clouds, and register them into a single 3D model.
+Before 3D scanning:
+
+1. Place a depth camera on Baxter's lower forearm.  
+2. Place a chessboard on the table. 
+3. Calibrate the pose of chessboard by Baxter's wrist camera. 
+4. Calibrate the pose of the depth camera by (1) chessboard and (2) forward kinematics.
+5. Place the object on the chessboard.
+
+During 3D scanning:
+
+1. Move Baxter's limb to several positions to take depth images from different view angles.
+2. Filter the point clouds, and register them into a single 3D model.
 
 
-# 2. Workflow of the Program
+# 2. Communication between ROS nodes
 
 ## 2.1. Overview
 I wrote **1 ROS node** for calibration and **3 ROS nodes** for 3D scanning.
@@ -132,31 +134,27 @@ After acquiring the point cloud, I do following processes (by using PCL's librar
 * Filter by voxel grid and outlier removal.
 * Rotate cloud to the Baxter/chessboard coordinate.
 * Range filtering: remove points 35cm away from chessboard center.
-* Remove the floor by detecting plane.
-* Do a clustering and choose the largest object (added but disabled).
+* Remove the table surface by detecting a plane near z=0 .
 
 Functions are declared in [pcl_filters.h](include/my_pcl/pcl_filters.h) and [pcl_advanced.h](include/my_pcl/pcl_advanced.h).
 
 ## 3.3. Registration
 
-Do a [global registration](http://www.open3d.org/docs/tutorial/Advanced/fast_global_registration.html) and an [ICP registration](http://www.open3d.org/docs/tutorial/Basic/icp_registration.html). 
+Do a [global registration](http://www.open3d.org/docs/tutorial/Advanced/fast_global_registration.html) and an [ICP registration](http://www.open3d.org/docs/tutorial/Basic/icp_registration.html). Then, I use a range filter to retain only the target object.
 
-The colored ICP was tested but had little effect for my scenario, because I use background objects to assist the registration, and there is no large need for color info. Thus I disabled the colored-ICP. 
-
-Then, I use a range filter to retain only the target object.
+The colored ICP was not used, because the light changes as robot arm moves to different locations, which makes the color different. 
 
 Functions are defined in [lib_cloud_registration.py](src_python/lib_cloud_registration.py).
 
 # 4. File Structure
 
-[launch/](launch)  
-Launch files, including scripts for starting **my 3D scanner** and **debug and test files**. All my ROS nodes have at least one corresponding launch file stored here.
+[launch/](launch)    
+  Launch files, including scripts for starting **my 3D scanner** and **debug and test files**. All my ROS nodes have at least one corresponding launch file stored here.
 
 [config/](config): configuration files: 
-* ".rviz" settings
-* calibration result of chessboard pose and depth_camera pose.  
-
-(Configrations of algorithm params are set in launch file.)
+  * ".rviz" settings
+  * calibration result of chessboard pose and depth_camera pose.  
+   (Configrations of algorithm params are set in launch file.)
 
 [include/](include): c++ header files. Mainly wrapped up PCL filters.
 
@@ -222,12 +220,11 @@ This is really nice tutorial for install OpenCV 4.0: [link](https://www.pyimages
 
 # 6. Problems to Solve
 The current implementation has following problems:
-1. Bottom of the object cannot be scanned.
-2. Baxter can only move around the object for about 200 degrees.
-
-To do:
-1. Use Intel Realsense camera. This can solve the above problem 2.
-2. Replace Baxter trajectory from hard-coding to a more intellgent motion planner. For example, automatically facing the object and moving to directions that can see the unscaned parts of object.
+1. Bottom of the object cannot be scanned. 
+2. Some part of the object may not be scanned due to occulation of itself.
+3. Need additional objects to assist the scan.
+4. The accuracy needs improvement.
+5. Need intelligent trajectory of the robot arm to scan the object.
 
 # 7. Reference
 
